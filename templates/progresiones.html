@@ -1,0 +1,76 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='progresiones.css') }}">
+
+<div class="progresiones-container">
+    <!-- Botón regresar -->
+    <div>
+        <button class="btn-regresar" onclick="window.location.href='/grupos'">
+            ← Regresar a grupos
+        </button>
+    </div>
+
+    <h2>PROGRESIONES</h2>
+
+    <!-- Sección cuando no hay progresiones -->
+    <section id="seccionVacia" class="seccion-prog activa">
+        <p class="mensaje-vacio-prog">
+            No existen progresiones disponibles,<br>¡Crea la primera!
+        </p>
+        <button class="btn-crear-progresion" onclick="abrirModalProgresion()">
+            + Crear Progresión
+        </button>
+    </section>
+
+    <!-- Sección cuando hay progresiones -->
+    <section id="seccionProgresiones" class="seccion-prog">
+        <div id="listaProgresiones"></div>
+        <button class="btn-crear-progresion" onclick="abrirModalProgresion()">
+            + Crear Progresión
+        </button>
+    </section>
+</div>
+
+<!-- Modales -->
+<div id="modalCrearProgresion" class="modal">
+    <div class="modal-overlay" onclick="cerrarModalProgresion()"></div>
+    <div class="contenedor-modal-prog">
+        <h2>Crear nueva progresión</h2>
+        <p>Tema:</p>
+        <input type="text" id="inputNombreProgresion" placeholder="Ej: Introducción a variables" autocomplete="off">
+        <div class="botones">
+            <button type="button" class="btn-back" onclick="cerrarModalProgresion()">Cancelar</button>
+            <button type="button" class="btn-save" onclick="confirmarCrearProgresion()">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<div id="modalEditarProgresion" class="modal">
+    <div class="modal-overlay" onclick="cerrarModalEditarProgresion()"></div>
+    <div class="contenedor-modal-prog">
+        <h2>Editar progresión</h2>
+        <p>Tema:</p>
+        <input type="text" id="inputEditarProgresion" placeholder="Nombre del tema" autocomplete="off">
+        <div class="botones">
+            <button type="button" class="btn-back" onclick="cerrarModalEditarProgresion()">Cancelar</button>
+            <button type="button" class="btn-save" onclick="confirmarEditarProgresion()">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<div id="modalEliminarProgresion" class="modal">
+    <div class="modal-overlay" onclick="cerrarModalEliminarProgresion()"></div>
+    <div class="contenedor-eliminar-prog">
+        <h2>⚠ Eliminar</h2>
+        <p>¿Estás seguro de que deseas eliminar esta progresión?</p>
+        <p>Se perderán los datos de forma permanente.</p>
+        <div class="botones-eliminar-prog">
+            <button class="btn-cancelar-eliminar-prog" onclick="cerrarModalEliminarProgresion()">Cancelar</button>
+            <button class="btn-confirmar-eliminar-prog" onclick="ejecutarEliminarProgresion()">Eliminar</button>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/progresiones.js') }}"></script>
+{% endblock %}

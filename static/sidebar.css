@@ -1,0 +1,119 @@
+@font-face {
+    font-family: 'Inder';
+    /* La ruta sube un nivel (..) para salir de css y entra a fonts */
+    src: url('../fonts/Inder-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+}
+
+/* =========================================
+   ESTRUCTURA GENERAL
+   ========================================= */
+body {
+    font-family: 'Inder', sans-serif;
+    /* ... resto de tu css ... */
+}
+/* sidebar.css */
+.sidebar {
+    position: fixed; /* Fija la barra en la pantalla */
+    top: 0;
+    left: 0;
+    width: 250px;
+    height: 100vh;
+    background: linear-gradient(180deg, #161C5F 0%, #203982 56%, #045FC8 100%);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 0;
+    z-index: 1000; /* Asegura que esté por encima de otros elementos */
+    overflow-y: auto; /* Permite scroll dentro de la sidebar si hay muchos items */
+}
+
+.sidebar-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 0 15px;
+}
+
+.logo-sidebar {
+    width: 80px;
+    margin-bottom: 15px;
+}
+
+.sidebar-header p {
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.menu {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.msenu-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 25px;
+    color: white;
+    text-decoration: none;
+    transition: background 0.3s;
+    font-size: 1rem;
+}
+
+/* Estilo para el botón activo (Verde como en tu imagen) */
+.menu-item.active {
+    background-color: #33743A; /* Verde oscuro similar a la captura */
+    margin: 0 15px;
+    border-radius: 8px;
+    border-left: 3px solid #ffffff; /* La pequeña línea blanca lateral */
+}
+
+.menu-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Ajuste para iconos si decides agregarlos después */
+.menu-item i {
+    margin-right: 15px;
+    width: 20px;
+    text-align: center;
+}
+
+hr {
+    border: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    margin: 20px 15px;
+}
+
+.menu-item {
+    display: flex;         /* Alinea icono y texto en la misma línea */
+    align-items: center;   /* Centra verticalmente el contenido */
+    padding: 12px 25px;
+    color: white;
+    text-decoration: none;
+    transition: background 0.3s;
+}
+
+.menu-icon {
+    width: 20px;           /* Ajusta el tamaño según prefieras */
+    height: 20px;
+    margin-right: 15px;    /* Espacio entre el icono y la palabra */
+    object-fit: contain;   /* Evita que el PNG se deforme */
+    filter: brightness(0) invert(1); /* Truco: Convierte iconos oscuros a blancos automáticamente */
+}
+
+.main-content {
+    flex: 1;
+    padding: 40px;
+    /* IMPORTANTE: El margen izquierdo debe ser igual al ancho de la sidebar */
+    margin-left: var(--sidebar-width); 
+    
+    /* Ya no necesitas overflow-y: auto aquí si quieres que el scroll sea el de la página principal */
+    min-height: 100vh;
+}
+
+/* Efecto para que el icono también resalte cuando está activo */
+/*.menu-item.active .menu-icon {
+/*    filter: none; /* Si tu PNG ya es de color, esto lo muestra original al estar activo */
+/*} Le quite el resaltado porques veia feo

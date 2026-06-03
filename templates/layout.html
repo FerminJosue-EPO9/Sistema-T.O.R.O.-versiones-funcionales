@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SISTEMA T.O.R.O.</title>
+    <link rel="icon" href="{{ url_for('static', filename='img/logo_cbta.png') }}" type="image/png">
+    <link rel="stylesheet" href="{{ url_for('static', filename='sidebar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='global.css') }}">
+    {% block styles %}{% endblock %}
+</head>
+<body>
+    <div class="dashboard-wrapper">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="{{ url_for('static', filename='img/logo_cbta_blanco.png') }}" class="logo-sidebar" alt="Logo CBTA">
+                <p>¡Bienvenido,<br><strong>{{ session.get('profesor', 'Profesor') }}</strong>!</p>
+            </div>
+
+            <nav class="menu">
+                <a href="{{ url_for('vista_grupos') }}" class="menu-item {{ 'active' if active_page == 'grupos' else '' }}">
+                    <img src="{{ url_for('static', filename='img/grupo.png') }}" class="menu-icon" alt="Grupos">
+                    Grupos
+                </a>
+                <a href="{{ url_for('vista_contenido') }}" class="menu-item {{ 'active' if active_page == 'contenido' else '' }}">
+                    <img src="{{ url_for('static', filename='img/contenido.png') }}" class="menu-icon" alt="Contenido">
+                    Contenido
+                </a>
+                <a href="{{ url_for('vista_calificaciones') }}" class="menu-item {{ 'active' if active_page == 'calificaciones' else '' }}">
+                    <img src="{{ url_for('static', filename='img/calificaciones.png') }}" class="menu-icon" alt="Calificaciones">
+                    Calificaciones
+                </a>
+                <a href="{{ url_for('vista_estadisticas') }}" class="menu-item {{ 'active' if active_page == 'estadisticas' else '' }}">
+                    <img src="{{ url_for('static', filename='img/estadisticas.png') }}" class="menu-icon" alt="Estadísticas">
+                    Estadísticas
+                </a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</body>
+</html>

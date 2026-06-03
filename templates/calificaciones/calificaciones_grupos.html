@@ -1,0 +1,34 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='calificaciones_grupos.css') }}">
+
+<div class="selector-shell">
+    
+    <div class="header-selector">
+        <div class="breadcrumbs">Grupos > Calificaciones</div>
+        <div class="page-title">Calificaciones</div>
+    </div>
+
+    <div class="main-card">
+        <div class="card-header-bar">
+            Grupos Existentes
+        </div>
+
+        <div class="group-list-container">
+            {% if grupos %}
+                {% for grupo in grupos %}
+                <a href="{{ url_for('vista_tabla_calificaciones', nombre_grupo=grupo) }}" class="group-item">
+                    <span>{{ grupo }}</span> <span class="arrow-icon">➔</span>
+                </a>
+                {% endfor %}
+            {% else %}
+                <div style="padding: 20px; text-align: center; color: #888;">
+                    No hay grupos creados en la carpeta data/GRUPOS
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

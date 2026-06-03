@@ -1,0 +1,53 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='grupos.css') }}">
+<div class="grupos-container">
+    <!-- Sección por defecto (cuando no hay grupos) -->
+    <section id="seccionDefault" class="seccion activa">
+        <h2>GRUPOS</h2>
+        <p>Formato correcto para subir un txt de alumnos:</p>
+        <p>Matricula del alumno | Nombre/s | Apellidos</p>
+        <div class="ejemplo-txt">
+            <p>2026001|Juan Carlos|García López</p>
+            <p>2026002|Valentina|Morales Torres</p>
+            <p>2026003|Luis Fernando|Hernández Ruiz</p>
+            <p>2026004|María Fernanda|Cruz Sánchez</p>
+            <p>2026005|José Ángel|Ramírez Pérez</p>
+            <p>2026006|Ana Sofía|Vargas Castillo</p>
+            <p>2026007|Carlos Eduardo|Mendoza Flores</p>
+            <p>2026008|Daniela|Ortiz Navarro</p>
+            <p>2026009|Miguel Ángel|Salinas Romero</p>
+            <p>2026010|Paola Andrea|Reyes Montoya</p>
+        </div>
+        <button id="primer-grupo" class="btn-primario" onclick="abrirModal()">Crear mi primer grupo</button>
+    </section>
+
+    <div id="modalNuevoGrupo" class="modal">
+        <div class="modal-contenido">
+            <h2>CREAR NUEVO GRUPO</h2>
+            <p>Nombre del grupo:</p>
+            <input type="text" id="nombreGrupo" placeholder="Ej: 204" required>
+            <p>Archivo de alumnos (.txt):</p>
+            <input type="file" id="archivoAlumnos" accept=".txt">
+            <p class="texto-ayuda">Al darle click en el botón cargar lista de alumnos se abrirá su explorador de
+                archivos para seleccionar el txt.</p>
+            <!-- CONTENEDOR DE MENSAJES -->
+            <div id="mensajeModal" class="mensaje-modal"></div>
+            <div class="botones-modal">
+                <button type="button" class="btn-modal btn-cancelar" onclick="cerrarModal()">Regresar</button>
+                <button type="button" class="btn-modal btn-guardar" onclick="guardarGrupo()">Guardar grupo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección que muestra la lista de grupos (cuando ya existen) -->
+    <section id="mostrarGrupos" class="seccion">
+        <h2>GRUPOS</h2>
+        <div id="listaGrupos"></div>
+        <button class="bnt-agregarGrupo" onclick="abrirModal()">+ Agregar grupo</button>
+    </section>
+</div>
+
+<script src="{{ url_for('static', filename='js/grupos.js') }}"></script>
+{% endblock %}

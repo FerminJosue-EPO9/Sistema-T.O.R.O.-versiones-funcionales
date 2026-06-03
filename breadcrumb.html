@@ -1,0 +1,19 @@
+{% macro render_breadcrumb(items) %}
+<nav class="breadcrumb-component" aria-label="breadcrumb">
+    <div class="breadcrumb-list">
+        <a href="{{ url_for('vista_calificaciones') }}" class="breadcrumb-link">Grupos</a>
+        
+        {% for item in items %}
+            <span class="breadcrumb-separator">›</span>
+            
+            {% if item.url %}
+                <a href="{{ item.url }}" class="breadcrumb-link">{{ item.texto }}</a>
+            {% elif item.accion %}
+                <button onclick="{{ item.accion }}" class="breadcrumb-btn">{{ item.texto }}</button>
+            {% else %}
+                <span class="breadcrumb-active">{{ item.texto }}</span>
+            {% endif %}
+        {% endfor %}
+    </div>
+</nav>
+{% endmacro %}

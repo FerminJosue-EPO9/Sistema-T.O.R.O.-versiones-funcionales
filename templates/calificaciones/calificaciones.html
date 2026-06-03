@@ -1,0 +1,79 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='calificaciones.css') }}">
+
+<div class="calificaciones-shell">
+    
+    <div class="shell-header">
+        <div class="titles">
+            <h2>{{ info_grupo.materia }}</h2>
+            <div class="breadcrumbs">Grupos > {{ info_grupo.nombre }} > {{ info_grupo.parcial }}</div>
+        </div>
+        <div class="badges">
+            <span class="badge">{{ info_grupo.nombre }}</span>
+            <span class="badge">{{ info_grupo.parcial }}</span>
+        </div>
+    </div>
+
+    <div class="toolbar">
+        <div class="left">
+            <button class="btn-action btn-back" onclick="window.history.back()">
+                ← Volver a Grupos
+            </button>
+        </div>
+        </div>
+
+    <div class="table-container">
+        <div class="table-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nombre del Alumno</th>
+                        
+                        {% for col in columnas %}
+                            <th>{{ col }}</th>
+                        {% endfor %}
+                        
+                        <th>Promedio</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fila in filas %}
+                    <tr>
+                        <td style="font-weight: 600; color: #333;">
+                            {{ fila.nombre }}
+                            <div style="font-size: 0.8em; color: #888; font-weight: normal;">
+                                {{ fila.matricula }}
+                            </div>
+                        </td>
+
+                        {% for nota in fila.notas %}
+                            <td>
+                                <span class="
+                                    {% if nota >= 9 %}nota-alta
+                                    {% elif nota >= 6 %}nota-media
+                                    {% else %}nota-baja{% endif %}">
+                                    {{ nota }}
+                                </span>
+                            </td>
+                        {% endfor %}
+
+                        <td class="promedio-cell">{{ fila.promedio }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="100%" class="empty-state">
+                            <div class="empty-icon">📂</div>
+                            <p>No hay datos para mostrar en este grupo.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

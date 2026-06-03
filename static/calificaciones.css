@@ -1,0 +1,181 @@
+    /* --- Layout Principal --- */
+    .calificaciones-shell {
+        padding: 30px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* --- Encabezado --- */
+    .shell-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 30px;
+        border-bottom: 2px solid #e0e0e0;
+        padding-bottom: 15px;
+    }
+
+    .titles h2 {
+        color: #052672; /* Azul Orión */
+        margin: 0;
+        font-size: 1.8rem;
+    }
+
+    .breadcrumbs {
+        color: #666;
+        font-size: 0.9rem;
+        margin-top: 5px;
+    }
+
+    .badges {
+        display: flex;
+        gap: 10px;
+    }
+
+    .badge {
+        background-color: #e3f2fd;
+        color: #052672;
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        border: 1px solid #bbdefb;
+    }
+
+    /* --- Barra de Herramientas --- */
+    .toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        background: #fff;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+
+    .btn-action {
+        padding: 10px 20px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-back {
+        background: transparent;
+        color: #666;
+        border: 1px solid #ccc;
+    }
+
+    .btn-back:hover { background: #f5f5f5; color: #333; }
+
+    .btn-import {
+        background-color: #052672;
+        color: white;
+    }
+
+    .btn-import:hover { background-color: #2a5298; transform: translateY(-2px); }
+
+    .btn-export {
+        background-color: #2e7d32; /* Verde Excel */
+        color: white;
+        margin-left: 10px;
+    }
+
+    /* --- CONTENEDOR DE LA TABLA (Lo importante) --- */
+    .table-container {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        overflow: hidden; /* Para los bordes redondos */
+        border: 1px solid #e0e0e0;
+        position: relative;
+    }
+
+    .table-scroll {
+        overflow-x: auto; /* SCROLL HORIZONTAL MÁGICO */
+        width: 100%;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: separate; /* Necesario para el sticky */
+        border-spacing: 0;
+        min-width: 800px;
+    }
+
+    /* --- Cabecera de la Tabla --- */
+    thead th {
+        background-color: #f8f9fa;
+        color: #052672;
+        font-weight: 700;
+        padding: 18px 15px;
+        text-align: center;
+        border-bottom: 2px solid #052672;
+        white-space: nowrap;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    /* --- PRIMERA COLUMNA FIJA (Sticky) --- */
+    th:first-child, td:first-child {
+        position: sticky;
+        left: 0;
+        background-color: white;
+        z-index: 20; /* Encima del resto */
+        border-right: 2px solid #eee; /* Sombra separadora */
+        text-align: left;
+        padding-left: 25px;
+        min-width: 250px;
+        font-weight: 600;
+        color: #333;
+    }
+
+    thead th:first-child {
+        background-color: #f8f9fa; /* Mismo color que el header */
+        z-index: 30; /* La esquina superior izquierda siempre visible */
+    }
+
+    /* --- Celdas --- */
+    tbody td {
+        padding: 15px;
+        text-align: center;
+        border-bottom: 1px solid #eee;
+        color: #555;
+    }
+
+    tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    tbody tr:hover td {
+        background-color: #fcfcfc;
+    }
+    
+    /* Mantenemos el blanco en la fija al hacer hover */
+    tbody tr:hover td:first-child {
+        background-color: #fff; 
+    }
+
+    /* --- ESTADO VACÍO (Empty State) --- */
+    .empty-state {
+        padding: 60px;
+        text-align: center;
+        color: #888;
+    }
+    
+    .empty-icon {
+        font-size: 40px;
+        margin-bottom: 10px;
+        opacity: 0.5;
+    }
+
+    .nota-alta { color: #2e7d32; font-weight: 700; background: #e8f5e9; padding: 4px 8px; border-radius: 4px; }
+    .nota-media { color: #f57c00; font-weight: 700; background: #fff3e0; padding: 4px 8px; border-radius: 4px; }
+    .nota-baja { color: #c62828; font-weight: 700; background: #ffebee; padding: 4px 8px; border-radius: 4px; }
+    .promedio-cell { font-weight: 800; color: #052672; }

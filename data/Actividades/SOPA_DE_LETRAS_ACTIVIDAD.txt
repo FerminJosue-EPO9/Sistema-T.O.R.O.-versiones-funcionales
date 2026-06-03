@@ -1,0 +1,42 @@
+ID_ACTIVIDAD: ACT-029
+FECHA: 31/05/2026
+NOMBRE: SOPA DE LETRAS ACTIVIDAD
+LECCION: General
+INTENTOS: 3
+TIEMPO: 79 minutos
+PONDERACION: 12
+FECHA_VENCIMIENTO: 2026-06-02
+ID_PLANTILLA: P004
+---
+
+const descripciones = [
+            "Aparato para realizar operaciones matemáticas",
+            "Artefacto para escribir",
+            "Artefacto para corregir errores escritos con granito",
+            "Artefacto para corregir errores escritos con pluma",
+            "Artefacto para escribir con granito o tinta"
+        ];
+
+const palabras = [
+            "CALCULADORA",
+            "LAPIZ",
+            "BORRADOR",
+            "CORRECTOR",
+            "CUADERNO"
+        ];
+
+const respuestas = {
+            "Aparato para realizar operaciones matemáticas": "CALCULADORA",
+            "Artefacto para escribir": "LAPIZ",
+            "Artefacto para corregir errores escritos con granito": "BORRADOR",
+            "Artefacto para corregir errores escritos con pluma": "CORRECTOR",
+            "Artefacto para escribir con granito o tinta": "CUADERNO"
+        };
+
+@@@ Métricas: 
+tipo:sopa-letras
+nombre:SOPA DE LETRAS ACTIVIDAD
+intentos:3
+tiempo:79
+fecha-vencimiento:2026-06-02
+ponderacion:12

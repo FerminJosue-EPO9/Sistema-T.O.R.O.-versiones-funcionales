@@ -1,0 +1,18 @@
+%
+@204@
+#M1#
+*P1*
+&PRO1&
+-
+2026001|Juan Carlos|García López
+2026002|Valentina|Morales Torres
+2026003|Luis Fernando|Hernández Ruiz
+2026004|María Fernanda|Cruz Sánchez
+2026005|José Ángel|Ramírez Pérez
+2026006|Ana Sofía|Vargas Castillo
+2026007|Carlos Eduardo|Mendoza Flores
+2026008|Daniela|Ortiz Navarro
+2026009|Miguel Ángel|Salinas Romero
+2026010|Paola Andrea|Reyes Montoya
+-
+%

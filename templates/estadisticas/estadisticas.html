@@ -1,0 +1,119 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+    <script src="{{ url_for('static', filename='js/chart.js') }}"></script>    
+    <link rel="stylesheet" href="{{ url_for('static', filename='estadisticas.css') }}">
+
+    <header class="encabezado-superior">
+        <div class="migas-pan" id="migas-pan">
+            <span class="enlace-miga">Estadísticas</span>
+        </div>
+        <h1 class="titulo-pagina">Estadísticas</h1>
+    </header>
+
+    <div id="vista-grupos" class="vista-contenido">
+        <div class="tarjeta-contenedor">
+            <div class="tarjeta-cabecera-azul">
+                <h2>Grupos Existentes</h2>
+            </div>
+            
+            <div class="tarjeta-cuerpo">
+                <div class="lista-scroll">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="vista-seleccion" class="vista-contenido" style="display: none;">
+        <div class="contenedor-seleccion">
+            <h2 class="titulo-seccion">Elige una opción para ver estadísticas:</h2>
+            
+            <div class="rejilla-tarjetas">
+                <div class="tarjeta-opcion tarjeta-lecciones" onclick="cargarGrafico('actividad')">
+                    <div class="icono-tarjeta"><i class="fa-solid fa-book-open"></i></div>
+                    <h3>Lecciones</h3>
+                    <p>Ver desempeño por actividad</p>
+                </div>
+
+                <div class="tarjeta-opcion tarjeta-alumnos" onclick="cargarGrafico('alumno')">
+                    <div class="icono-tarjeta"><i class="fa-solid fa-user-graduate"></i></div>
+                    <h3>Alumnos</h3>
+                    <p>Ver desempeño individual</p>
+                </div>
+
+                <div class="tarjeta-opcion tarjeta-grupos" onclick="cargarGrafico('grupo')">
+                    <div class="icono-tarjeta"><i class="fa-solid fa-users-rectangle"></i></div>
+                    <h3>Grupos</h3>
+                    <p>Promedio general del grupo</p>
+                </div>
+            </div>
+
+            <button onclick="regresarAGrupos()" class="btn-regresar-simple" style="margin-top: 40px;">
+                Atrás
+            </button>
+        </div>
+    </div>
+
+    <div id="vista-lista-alumnos" class="vista-contenido" style="display: none;">
+        <div class="contenedor-ancho">
+            <h2 class="titulo-seccion">Seleccione un alumno para ver las estadísticas:</h2>
+            
+            <div class="grid-alumnos">
+                </div>
+            
+            <button onclick="regresarASeleccion()" class="btn-regresar-simple">Atrás</button>
+        </div>
+    </div>
+
+    <div id="vista-tabla-actividades" class="vista-contenido" style="display: none;">
+        <div class="contenedor-ancho">
+            <h2 class="titulo-seccion">Seleccione una actividad para ver las estadísticas:</h2>
+
+            <table class="tabla-actividades">
+                <thead>
+                    <tr>
+                        <th>Tipo</th>
+                        <th>Tema</th>
+                        <th>Fecha de asignación</th>
+                        <th>Ponderación</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    </tbody>
+            </table>
+
+            <button onclick="regresarASeleccion()" class="btn-regresar-simple">Atrás</button>
+        </div>
+    </div>
+
+    <div id="vista-graficos" class="vista-contenido" style="display: none;">
+        <div class="contenedor-grafico">
+            
+            <div class="info-detalle-grafico">
+                <h3 id="grafico-grupo">Grupo 204-A</h3>
+                
+                <p>
+                    <span class="etiqueta-negrita">Materia:</span> 
+                    <span id="grafico-materia">Programación estructurada</span>
+                </p>
+                
+                <p>
+                    <span class="etiqueta-negrita" id="label-tipo-dato">Alumno:</span> 
+                    <span id="grafico-dato-especifico">Nombre del Alumno</span>
+                </p>
+            </div>
+
+            <div class="area-canvas">
+                <canvas id="miGrafico"></canvas>
+            </div>
+
+            <button onclick="regresar()" class="btn-regresar">
+                <i class="fa-solid fa-arrow-left"></i> Regresar
+            </button>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+{% endblock %}

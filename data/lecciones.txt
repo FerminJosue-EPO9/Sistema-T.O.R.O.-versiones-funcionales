@@ -1,0 +1,7 @@
+Introducción a la Programación en Python
+Manejo de Archivos Planos (.txt)
+Diseño de Interfaces Web con CSS Flexbox
+Fundamentos de Bases de Datos Relacionales
+Multimedia: Edición de Imágenes para la Web
+Desarrollo de Aplicaciones con Flask
+Estructuras de Control y Lógica de Programación

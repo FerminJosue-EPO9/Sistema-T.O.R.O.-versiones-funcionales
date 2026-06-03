@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SISTEMA T.O.R.O.</title> 
+    <link rel="icon" href="{{ url_for('static', filename='img/logo_cbta.png') }}" type="image/png">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}"></head>
+<body class="login-body">
+    <div class="login-wrapper">
+        <img src="{{ url_for('static', filename='img/logo_cbta.png') }}" alt="Logo CBTA 251" class="main-logo">
+
+        <div class="login-card">
+            <h1>INICIAR SESIÓN</h1>
+            <form action="/login" method="POST">
+                <div class="input-group">
+                    <label for="nombre">Nombre/s:</label>
+                    <input type="text" id="nombre" name="nombre" placeholder="José Luis" required>
+                </div>
+                
+                <div class="input-group">
+                    <label for="apellidos">Apellidos:</label>
+                    <input type="text" id="apellidos" name="apellidos" placeholder="Cruz Licea" required>
+                </div>
+
+                <button type="submit" class="btn-ingresar">Ingresar al sistema</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

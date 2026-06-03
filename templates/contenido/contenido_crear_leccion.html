@@ -1,0 +1,330 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='contenido_crear_leccion.css') }}">
+
+<div class="card">
+    <h1>Crear nueva lección</h1>
+
+    <form action="{{ url_for('subir_leccion') }}" method="POST" enctype="multipart/form-data" id="formLeccion">
+
+        <div class="content-wrapper">
+
+            <div class="data-zone" style="margin-bottom: 20px; padding: 15px; background: #f9f9f9; border-radius: 8px;">
+                <h3>1. Configuración de la lección</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                        <label>Grupo:</label>
+                        <select name="grupo_idx" id="selectGrupo" required class="input-toro">
+                            <option value="" disabled selected>Cargando grupos...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Materia:</label>
+                        <select name="materia_idx" id="selectMateria" required class="input-toro" disabled>
+                            <option value="" disabled selected>...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Parcial:</label>
+                        <select name="parcial_idx" id="selectParcial" required class="input-toro" disabled>
+                            <option value="" disabled selected>...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Tema (Progresión):</label>
+                        <select name="tema_idx" id="selectTema" required class="input-toro" disabled>
+                            <option value="" disabled selected>...</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="margin-top: 10px;">
+                    <label>Nombre de la lección:</label>
+                    <input type="text" name="actividad" required class="input-toro" style="width: 100%;"
+                        placeholder="Ej: Ecuaciones de primer grado">
+                </div>
+            </div>
+
+            <!-- Zona de subida de archivos -->
+            <div class="upload-zone" id="drop-zone">
+                <div class="cloud-icon">☁️</div>
+                <h3>
+                    Por favor, seleccione sus archivos (PDF, video, audio e imágenes)<br>
+                    desde su almacenamiento.<br>
+                    <small>Por favor, presione la tecla Ctrl mientras selecciona un nuevo documento.</small>
+                </h3>
+                <button type="button" id="btnSeleccionar" class="btn-primary">Buscar archivos</button>
+                <input type="file" name="archivos" id="inputArchivo" style="display: none;" multiple
+                    onchange="mostrarArchivos(this)">
+            </div>
+
+            <div class="status-zone">
+                <h2>Archivos seleccionados</h2>
+                <ul id="listaArchivos" style="list-style: none; padding: 0; margin-top: 10px; color: #555;">
+                    <li class="empty-state-text">No hay archivos seleccionados todavía</li>
+                </ul>
+                <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top:10px;">
+                    <strong>Total archivos:</strong> <span id="contador">0</span>
+                </div>
+            </div>
+
+            <!-- Selector de actividades -->
+            <div class="actividad-selector" style="margin-top: 20px; text-align: left; width: 100%;">
+                <label for="actividad_seleccionada"
+                    style="display: block; margin-bottom: 5px; font-weight: bold;">Seleccione la actividad de la
+                    lección:</label>
+                <select name="actividad_seleccionada" id="actividad_seleccionada" class="input-toro" required
+                    style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc;">
+                    <option value="" disabled selected>Selecciona una actividad</option>
+                    {% for act in actividades %}
+                    <option value="{{ act['ARCHIVO'] }}">{{ act['NOMBRE'] }} ({{ act['TIPO_LEGIBLE'] }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+        </div>
+        <input type="hidden" name="orden_archivos" id="ordenArchivos">
+
+        <!-- Campos ocultos para enviar los nombres reales -->
+        <input type="hidden" name="grupo" id="hiddenGrupo">
+        <input type="hidden" name="materia" id="hiddenMateria">
+        <input type="hidden" name="parcial" id="hiddenParcial">
+        <input type="hidden" name="tema" id="hiddenTema">
+
+        <div class="footer-actions">
+            <a href="{{ url_for('vista_contenido') }}" class="btn-secondary"
+                style="text-decoration: none; display:inline-block; text-align:center; padding: 10px 20px;">Regresar</a>
+            <button type="submit" id="btnContinuar" disabled class="btn-primary">Guardar lección</button>
+        </div>
+
+        <p class="footer-note">Asegúrate de llenar todos los campos antes de guardar.</p>
+    </form>
+</div>
+
+<script>
+    const btnSeleccionar = document.getElementById('btnSeleccionar');
+    const inputArchivo = document.getElementById('inputArchivo');
+    const listaArchivos = document.getElementById('listaArchivos');
+    const contador = document.getElementById('contador');
+    const btnContinuar = document.getElementById('btnContinuar');
+
+    // ==========================================
+    // SELECCIÓN DINÁMICA DE GRUPOS, MATERIAS, PARCIALES Y TEMAS
+    // ==========================================
+    let gruposData = [];
+    let grupoIdxActual = null, materiaIdxActual = null, parcialIdxActual = null;
+
+    const selectGrupo = document.getElementById('selectGrupo');
+    const selectMateria = document.getElementById('selectMateria');
+    const selectParcial = document.getElementById('selectParcial');
+    const selectTema = document.getElementById('selectTema');
+
+    // Campos ocultos
+    const hiddenGrupo = document.getElementById('hiddenGrupo');
+    const hiddenMateria = document.getElementById('hiddenMateria');
+    const hiddenParcial = document.getElementById('hiddenParcial');
+    const hiddenTema = document.getElementById('hiddenTema');
+
+    function actualizarCampoOculto(hiddenField, valor) {
+        if (hiddenField) hiddenField.value = valor || '';
+    }
+
+    // Cargar grupos al inicio
+    function cargarGrupos() {
+        fetch('/api/grupos')
+            .then(response => response.json())
+            .then(data => {
+                gruposData = data;
+                if (gruposData.length === 0) {
+                    selectGrupo.innerHTML = '<option value="" disabled>No hay grupos creados</option>';
+                } else {
+                    let options = '<option value="" disabled selected>Selecciona un grupo</option>';
+                    gruposData.forEach((grupo, idx) => {
+                        options += `<option value="${idx}">${grupo.nombre}</option>`;
+                    });
+                    selectGrupo.innerHTML = options;
+                    selectGrupo.disabled = false;
+                }
+                resetearSelects(selectMateria, selectParcial, selectTema);
+                actualizarCampoOculto(hiddenGrupo, '');
+                actualizarCampoOculto(hiddenMateria, '');
+                actualizarCampoOculto(hiddenParcial, '');
+                actualizarCampoOculto(hiddenTema, '');
+            })
+            .catch(error => {
+                console.error('Error cargando grupos:', error);
+                selectGrupo.innerHTML = '<option value="" disabled>Error al cargar grupos</option>';
+            });
+    }
+
+    // Al cambiar grupo, cargar materias y actualizar campo oculto
+    selectGrupo.addEventListener('change', function() {
+        grupoIdxActual = this.value;
+        if (grupoIdxActual === "") {
+            resetearSelects(selectMateria, selectParcial, selectTema);
+            actualizarCampoOculto(hiddenGrupo, '');
+            return;
+        }
+        const grupo = gruposData[grupoIdxActual];
+        actualizarCampoOculto(hiddenGrupo, grupo.nombre);
+        if (!grupo || !grupo.materias || grupo.materias.length === 0) {
+            selectMateria.innerHTML = '<option value="" disabled selected>No hay materias creadas</option>';
+            resetearSelects(selectParcial, selectTema);
+            return;
+        }
+        let options = '<option value="" disabled selected>Selecciona una materia</option>';
+        grupo.materias.forEach((materia, idx) => {
+            options += `<option value="${idx}">${materia.nombre}</option>`;
+        });
+        selectMateria.innerHTML = options;
+        selectMateria.disabled = false;
+        resetearSelects(selectParcial, selectTema);
+        actualizarCampoOculto(hiddenMateria, '');
+        actualizarCampoOculto(hiddenParcial, '');
+        actualizarCampoOculto(hiddenTema, '');
+    });
+
+    // Al cambiar materia, cargar parciales y actualizar campo oculto
+    selectMateria.addEventListener('change', function() {
+        materiaIdxActual = this.value;
+        if (grupoIdxActual === "" || materiaIdxActual === "") {
+            resetearSelects(selectParcial, selectTema);
+            actualizarCampoOculto(hiddenMateria, '');
+            return;
+        }
+        const grupo = gruposData[grupoIdxActual];
+        const materia = grupo.materias[materiaIdxActual];
+        actualizarCampoOculto(hiddenMateria, materia.nombre);
+        if (!materia || !materia.parciales || materia.parciales.length === 0) {
+            selectParcial.innerHTML = '<option value="" disabled selected>No hay parciales creados</option>';
+            resetearSelects(selectTema);
+            return;
+        }
+        let options = '<option value="" disabled selected>Selecciona un parcial</option>';
+        materia.parciales.forEach((parcial, idx) => {
+            options += `<option value="${idx}">${parcial.nombre}</option>`;
+        });
+        selectParcial.innerHTML = options;
+        selectParcial.disabled = false;
+        resetearSelects(selectTema);
+        actualizarCampoOculto(hiddenParcial, '');
+        actualizarCampoOculto(hiddenTema, '');
+    });
+
+    // Al cambiar parcial, cargar progresiones (temas) y actualizar campo oculto
+    selectParcial.addEventListener('change', function() {
+        parcialIdxActual = this.value;
+        if (grupoIdxActual === "" || materiaIdxActual === "" || parcialIdxActual === "") {
+            resetearSelects(selectTema);
+            actualizarCampoOculto(hiddenParcial, '');
+            return;
+        }
+        const grupo = gruposData[grupoIdxActual];
+        const materia = grupo.materias[materiaIdxActual];
+        const parcial = materia.parciales[parcialIdxActual];
+        actualizarCampoOculto(hiddenParcial, parcial.nombre);
+        if (!parcial || !parcial.progresiones || parcial.progresiones.length === 0) {
+            selectTema.innerHTML = '<option value="" disabled selected>No hay progresiones creadas</option>';
+            selectTema.disabled = false;
+            actualizarCampoOculto(hiddenTema, '');
+            return;
+        }
+        let options = '<option value="" disabled selected>Selecciona un tema</option>';
+        parcial.progresiones.forEach((prog, idx) => {
+            options += `<option value="${idx}">${prog}</option>`;
+        });
+        selectTema.innerHTML = options;
+        selectTema.disabled = false;
+        actualizarCampoOculto(hiddenTema, '');
+    });
+
+    // Al cambiar tema (progresión), actualizar campo oculto
+    selectTema.addEventListener('change', function() {
+        const temaIdx = this.value;
+        if (grupoIdxActual === "" || materiaIdxActual === "" || parcialIdxActual === "" || temaIdx === "") {
+            actualizarCampoOculto(hiddenTema, '');
+            return;
+        }
+        const grupo = gruposData[grupoIdxActual];
+        const materia = grupo.materias[materiaIdxActual];
+        const parcial = materia.parciales[parcialIdxActual];
+        const temaNombre = parcial.progresiones[temaIdx];
+        actualizarCampoOculto(hiddenTema, temaNombre);
+    });
+
+    function resetearSelects(...selects) {
+        selects.forEach(select => {
+            if (select) {
+                select.innerHTML = '<option value="" disabled selected>...</option>';
+                select.disabled = true;
+            }
+        });
+    }
+
+    // ==========================================
+    // MANEJO DE ARCHIVOS Y ACTIVIDAD (sin cambios)
+    // ==========================================
+    btnSeleccionar.addEventListener('click', () => {
+        inputArchivo.click();
+    });
+
+    function actualizarEstadoBoton() {
+        const archivos = inputArchivo.files;
+        const actividadSelect = document.getElementById('actividad_seleccionada');
+        const grupoValido = selectGrupo.value && selectGrupo.value !== "";
+        const materiaValido = selectMateria.value && selectMateria.value !== "";
+        const parcialValido = selectParcial.value && selectParcial.value !== "";
+        const temaValido = selectTema.value && selectTema.value !== "";
+        const actividadValida = actividadSelect && actividadSelect.value !== "";
+        const nombreActividad = document.querySelector('input[name="actividad"]').value.trim();
+
+        if (archivos.length > 0 && grupoValido && materiaValido && parcialValido && temaValido && actividadValida && nombreActividad) {
+            btnContinuar.disabled = false;
+            btnContinuar.style.opacity = "1";
+            btnContinuar.style.cursor = "pointer";
+        } else {
+            btnContinuar.disabled = true;
+            btnContinuar.style.opacity = "0.6";
+            btnContinuar.style.cursor = "not-allowed";
+        }
+    }
+
+    function mostrarArchivos(input) {
+        const archivos = input.files;
+        listaArchivos.innerHTML = '';
+        if (archivos.length > 0) {
+            for (let i = 0; i < archivos.length; i++) {
+                const li = document.createElement('li');
+                li.style.padding = "5px 0";
+                li.style.borderBottom = "1px solid #eee";
+                li.innerHTML = `📄 <strong>${archivos[i].name}</strong> <small>(${(archivos[i].size / 1024 / 1024).toFixed(2)} MB)</small>`;
+                listaArchivos.appendChild(li);
+            }
+            contador.innerText = archivos.length;
+        } else {
+            listaArchivos.innerHTML = '<li class="empty-state-text">Ningún archivo seleccionado todavía :(</li>';
+            contador.innerText = '0';
+        }
+        actualizarEstadoBoton();
+    }
+
+    inputArchivo.addEventListener('change', function() {
+        mostrarArchivos(this);
+        const orden = Array.from(this.files).map(f => f.name).join(',');
+        document.getElementById('ordenArchivos').value = orden;
+        actualizarEstadoBoton();
+    });
+
+    selectGrupo.addEventListener('change', actualizarEstadoBoton);
+    selectMateria.addEventListener('change', actualizarEstadoBoton);
+    selectParcial.addEventListener('change', actualizarEstadoBoton);
+    selectTema.addEventListener('change', actualizarEstadoBoton);
+    document.querySelector('input[name="actividad"]').addEventListener('input', actualizarEstadoBoton);
+    document.getElementById('actividad_seleccionada').addEventListener('change', actualizarEstadoBoton);
+
+    document.addEventListener('DOMContentLoaded', function () {
+        cargarGrupos();
+        actualizarEstadoBoton();
+    });
+</script>
+{% endblock %}

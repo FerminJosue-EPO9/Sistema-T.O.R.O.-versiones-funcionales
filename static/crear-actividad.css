@@ -1,0 +1,1825 @@
+/* ================= CONFIGURACIÓN GENERAL ================= */
+@font-face {
+    font-family: 'Inder';
+    /* La ruta sube un nivel (..) para salir de css y entra a fonts */
+    src: url('../fonts/Inder-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+}
+
+
+
+/* =========================================
+   ESTRUCTURA GENERAL
+   ========================================= */
+body {
+    font-family: 'Inder', sans-serif;
+    /* ... resto de tu css ... */
+}
+
+.contenedor-creacAct {
+    max-width: 900px;
+    margin: 30px auto;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.header-center h3 {
+    text-align: center;
+    color: #161C5F;
+    /* Azul Toro */
+    margin-bottom: 30px;
+    font-weight: 600;
+}
+
+/* ================= STEPPER (BARRA DE PROGRESO) ================= */
+.stepper-wrapper {
+    background: #ffffff;
+    padding: 25px;
+    width: 80%;
+    margin: auto;
+    border-radius: 6px;
+    position: relative;
+    margin-bottom: 40px;
+}
+
+.progress-bar {
+    position: absolute;
+    top: 44px;
+    left: 12.5%;
+    width: 75%;
+    height: 4px;
+    background: #cfcfcf;
+    z-index: 1;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: #4caf50;
+    transition: width 0.3s ease;
+}
+
+.stepper {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    z-index: 2;
+}
+
+.step {
+    width: 25%;
+    text-align: center;
+}
+
+.circle {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #9e9e9e;
+    color: #fff;
+    line-height: 42px;
+    margin: auto;
+    font-weight: bold;
+    transition: background 0.3s;
+}
+
+.step.active .circle {
+    background: #4caf50;
+}
+
+.step p {
+    margin-top: 8px;
+    font-size: 14px;
+    color: #666;
+}
+
+.step.active p {
+    color: #4caf50;
+    font-weight: bold;
+}
+
+/* ================= PANELES Y TÍTULOS ================= */
+.step-pane {
+    display: none;
+    animation: fadeIn 0.4s ease;
+}
+
+.step-pane.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.step-title {
+    text-align: center;
+    font-size: 1.5rem;
+    margin-bottom: 25px;
+    color: #333;
+}
+
+/* ================= GRID DE TARJETAS ================= */
+.step-pane#step-1 .cards-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 20px;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.plantilla-card {
+    width: 220px;
+    height: 120px;
+    border-radius: 15px;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    border: 3px solid transparent;
+    background-color: #eee;
+}
+
+/* Tarjetas más grandes en el sub-menú */
+.sub-options-container .plantilla-card {
+    width: 280px;
+    height: 160px;
+}
+
+.plantilla-card:hover:not(.disabled) {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.plantilla-card.selected {
+    border-color: #161C5F;
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(22, 28, 95, 0.3);
+}
+
+/* ESTILO PARA TARJETAS DESHABILITADAS */
+.plantilla-card.disabled {
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+
+.plantilla-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.card-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(22, 28, 95, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+    text-align: center;
+    padding: 10px;
+    transition: background 0.3s;
+}
+
+.plantilla-card:hover:not(.disabled) .card-overlay {
+    background: rgba(22, 28, 95, 0.7);
+}
+
+/* ================= SUB-MENÚ (DESPLEGABLE) ================= */
+.sub-options-container {
+    background-color: transparent;
+    border: none;
+    border-radius: 20px;
+    padding: 30px;
+    margin: 20px 0;
+    display: none;
+    /* Se activa con JS */
+    animation: slideDown 0.4s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* ================= FORMULARIOS E INPUTS ================= */
+.form-group {
+    margin-bottom: 20px;
+    max-width: 500px;
+    margin: 20px auto;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #333;
+}
+
+.input-toro {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+
+.input-toro:focus {
+    border-color: #161C5F;
+    outline: none;
+    box-shadow: 0 0 5px rgba(22, 28, 95, 0.2);
+}
+
+/* ================= BOTONES DE NAVEGACIÓN ================= */
+.buttons-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid #ffffff;
+}
+
+.btn-wizard {
+    padding: 12px 40px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s;
+}
+
+.btn-wizard.prev {
+    background-color: white;
+    border: 2px solid #ccc;
+    color: #555;
+}
+
+.btn-wizard.next,
+.btn-wizard.finish {
+    background-color: #161C5F;
+    border: 2px solid #161C5F;
+    color: white;
+}
+
+/* --- TARJETAS DESHABILITADAS (PRÓXIMAMENTE) --- */
+.plantilla-card.disabled {
+    cursor: not-allowed;
+    pointer-events: none;
+    /* Esto evita que JS detecte el clic, muy importante */
+}
+
+/* Oscurecer la imagen */
+.plantilla-card.disabled img {
+    filter: grayscale(10%) brightness(90%);
+    /* Blanco y negro y oscuro */
+}
+
+/* Cambiar el texto del overlay */
+.plantilla-card.disabled .card-overlay {
+    background: rgba(0, 0, 0, 0.6);
+    flex-direction: column;
+    /* Para poner textos uno sobre otro */
+}
+
+/* Texto "PRÓXIMAMENTE" */
+.plantilla-card.disabled .card-overlay::before {
+    content: "PRÓXIMAMENTE";
+    color: #fdd835;
+    /* Amarillo para resaltar */
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    margin-bottom: 5px;
+    border: 1px solid #fdd835;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+/* Texto del nombre de la actividad (se ve más apagado) */
+.plantilla-card.disabled .card-overlay span {
+    color: #ccc;
+    font-size: 0.8rem;
+}
+
+
+/********************************************/
+/******Sección de las preguntas**************/
+/********************************************/
+/* Tarjeta de Pregunta Individual */
+.question-block {
+    background: #fdfdfd;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 25px;
+    position: relative;
+    animation: fadeIn 0.3s ease;
+}
+
+.question-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.question-number {
+    font-weight: bold;
+    color: #161C5F;
+    /* Azul Toro */
+}
+
+/* Grid de Opciones */
+.options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.option-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+.option-item input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.btn-add-question {
+    width: 100%;
+    padding: 15px;
+    background: #fff;
+    border: 2px dashed #161C5F;
+    color: #161C5F;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-add-question:hover {
+    background: #f0f2ff;
+}
+
+.btn-delete-q {
+    background: none;
+    border: none;
+    color: #e74c3c;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+/****************FASE 3 DEL STEPER*********************/
+/****************FASE 3 DEL STEPER*********************/
+/****************FASE 3 DEL STEPER*********************/
+.metrics-container {
+    max-width: 600px;
+    margin: 0 auto;
+    background: #f9f9f9;
+    padding: 30px;
+    border-radius: 15px;
+    border: 1px solid #eee;
+}
+
+.disabled-input {
+    background-color: #e9ecef;
+    color: #6c757d;
+    cursor: not-allowed;
+    border-style: dashed;
+}
+
+/* Estilo del Slider de Intentos  */
+.toro-range {
+    width: 100%;
+    margin: 20px 0 10px;
+    accent-color: #161C5F;
+    /* Tu azul Toro */
+    cursor: pointer;
+}
+
+.range-labels {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 5px;
+    color: #888;
+    font-size: 0.8rem;
+}
+
+.metrics-container .form-group label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#attempt-val {
+    background: #161C5F;
+    color: white;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+}
+
+/*************PASO 4****************/
+/*************PASO 4****************/
+/*************PASO 4****************/
+.summary-card {
+    background: #ffffff;
+    border: 2px solid #e0e0e0;
+    border-radius: 15px;
+    padding: 30px;
+    max-width: 600px;
+    margin: 0 auto;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+}
+
+.summary-header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.summary-header h5 {
+    color: #161C5F;
+    /* Azul Toro */
+    font-size: 1.4rem;
+    margin-top: 10px;
+}
+
+.summary-details {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed #eee;
+}
+
+.summary-item .label {
+    font-weight: bold;
+    color: #555;
+}
+
+.summary-item .value {
+    color: #161C5F;
+    font-weight: 600;
+}
+
+.summary-note {
+    margin-top: 25px;
+    font-size: 0.85rem;
+    color: #888;
+    text-align: center;
+    font-style: italic;
+}
+
+.check-icon {
+    width: 50px;
+    filter: sepia(100%) hue-rotate(90deg) saturate(300%);
+    /* Efecto verde si no tienes el PNG */
+}
+
+.btn-delete {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-delete:hover {
+    transform: scale(1.1);
+    /* Efecto de zoom al pasar el mouse */
+    opacity: 0.8;
+}
+
+.btn-delete img {
+    display: block;
+    /* Elimina espacios extra debajo de la imagen */
+}
+
+.question-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.q-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.q-number {
+    font-weight: bold;
+    color: #052672;
+}
+
+.btn-delete {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s;
+}
+
+.btn-delete:hover {
+    opacity: 0.7;
+    transform: scale(1.1);
+}
+
+.btn-add-question {
+    width: 100%;
+    padding: 12px;
+    background: #eef2f7;
+    border: 2px dashed #052672;
+    color: #052672;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 8px;
+    margin-top: 15px;
+}
+
+.btn-add-question:hover {
+    background: #e0e7ff;
+}
+
+.opt-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.q-input {
+    font-size: 1.05rem;
+    font-weight: 500;
+}
+
+/* ===== FORMULARIO COMPLETAR CAMINO (tabla palabra/pregunta) ===== */
+.tabla-palabra-pregunta {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 10px;
+}
+
+.tabla-header {
+    display: grid;
+    grid-template-columns: 1fr 2fr 40px;
+    font-weight: bold;
+    border-bottom: 2px solid #ccc;
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+    color: #052672;
+}
+
+.fila-palabra-pregunta {
+    display: grid;
+    grid-template-columns: 1fr 2fr 40px;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.fila-palabra-pregunta input {
+    width: 100%;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+.btn-eliminar-fila {
+    background-color: #dc3545;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: white;
+    cursor: pointer;
+    transition: background 0.2s;
+    line-height: 1;
+}
+
+.btn-eliminar-fila:hover {
+    background-color: #c82333;
+}
+
+#agregar-fila-camino {
+    background-color: #28a745 !important;
+    border: none !important;
+    color: white !important;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+
+#agregar-fila-camino:hover {
+    background-color: #218838 !important;
+}
+
+#agregar-fila-camino:disabled {
+    background-color: #6c757d !important;
+    cursor: not-allowed;
+}
+
+/* ===== ESTILOS ADICIONALES PARA BOTONES (no duplicados) ===== */
+.buttons-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid #ffffff;
+}
+
+.btn-wizard {
+    padding: 12px 40px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s;
+    background-color: #e2e8f0;
+    color: #1e293b;
+    border: none;
+}
+
+.btn-wizard.prev {
+    background-color: white;
+    border: 2px solid #ccc;
+    color: #555;
+}
+
+.btn-wizard.next,
+.btn-wizard.finish {
+    background-color: #161C5F;
+    border: 2px solid #161C5F;
+    color: white;
+}
+
+.btn-wizard:hover {
+    filter: brightness(0.95);
+    transform: translateY(-1px);
+}
+
+.step-pane#step-1 .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    justify-items: center;
+    margin-bottom: 20px;
+}
+
+/*BOTONES DE F/V*/
+
+/* ===== BOTÓN TOGGLE PARA FALSO/VERDADERO ===== */
+
+/* ===== TOGGLE FALSO/VERDADERO ESTILO CBTA ===== */
+.fv-toggle-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background-color: #28a745;
+    /* verde por defecto */
+    padding: 8px 16px;
+    border-radius: 40px;
+    transition: background-color 0.3s ease;
+    margin-top: 10px;
+    cursor: pointer;
+    width: fit-content;
+}
+
+.fv-toggle-container.estado-falso {
+    background-color: #dc3545;
+    /* rojo cuando es falso */
+}
+
+/* interruptor (slider) */
+.fv-switch {
+    position: relative;
+    display: inline-block;
+    width: 52px;
+    height: 28px;
+}
+
+.fv-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.fv-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.3s;
+    border-radius: 34px;
+}
+
+.fv-slider:before {
+    position: absolute;
+    content: "";
+    height: 22px;
+    width: 22px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+input:checked+.fv-slider {
+    background-color: #fff;
+}
+
+input:checked+.fv-slider:before {
+    transform: translateX(24px);
+    background-color: #333;
+}
+
+/* texto dentro del contenedor */
+.fv-toggle-text {
+    font-weight: bold;
+    color: white;
+    font-size: 1rem;
+    user-select: none;
+}
+
+.question-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.q-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.q-number,
+.fv-q-number {
+    font-weight: bold;
+    color: #052672;
+}
+
+.btn-delete {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s;
+}
+
+.btn-delete:hover {
+    opacity: 0.7;
+    transform: scale(1.1);
+}
+
+.btn-add-question {
+    width: 100%;
+    padding: 12px;
+    background: #eef2f7;
+    border: 2px dashed #052672;
+    color: #052672;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 8px;
+    margin-top: 15px;
+}
+
+.btn-add-question:hover {
+    background: #e0e7ff;
+}
+
+.opt-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.q-input {
+    font-size: 1.05rem;
+    font-weight: 500;
+}
+
+/* ===== FORMULARIO COMPLETAR CAMINO (tabla palabra/pregunta) ===== */
+.tabla-palabra-pregunta {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 10px;
+}
+
+.tabla-header {
+    display: grid;
+    grid-template-columns: 1fr 2fr 40px;
+    font-weight: bold;
+    border-bottom: 2px solid #ccc;
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+    color: #052672;
+}
+
+.fila-palabra-pregunta {
+    display: grid;
+    grid-template-columns: 1fr 2fr 40px;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.fila-palabra-pregunta input {
+    width: 100%;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+.btn-eliminar-fila {
+    background-color: #dc3545;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: white;
+    cursor: pointer;
+    transition: background 0.2s;
+    line-height: 1;
+}
+
+.btn-eliminar-fila:hover {
+    background-color: #c82333;
+}
+
+#agregar-fila-camino,
+#agregar-pregunta-fv,
+#agregar-fila-sopa {
+    background-color: #28a745 !important;
+    border: none !important;
+    color: white !important;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+
+#agregar-fila-camino:hover,
+#agregar-pregunta-fv:hover,
+#agregar-fila-sopa:hover {
+    background-color: #218838 !important;
+}
+
+#agregar-fila-camino:disabled,
+#agregar-pregunta-fv:disabled,
+#agregar-fila-sopa:disabled {
+    background-color: #6c757d !important;
+    cursor: not-allowed;
+}
+
+/* ===== TOGGLE FALSO/VERDADERO ESTILO CBTA ===== */
+.fv-toggle-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background-color: #28a745;
+    /* verde por defecto */
+    padding: 8px 16px;
+    border-radius: 40px;
+    transition: background-color 0.3s ease;
+    margin-top: 10px;
+    cursor: pointer;
+    width: fit-content;
+}
+
+.fv-toggle-container.estado-falso {
+    background-color: #dc3545;
+    /* rojo cuando es falso */
+}
+
+/* interruptor (slider) */
+.fv-switch {
+    position: relative;
+    display: inline-block;
+    width: 52px;
+    height: 28px;
+}
+
+.fv-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.fv-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.3s;
+    border-radius: 34px;
+}
+
+.fv-slider:before {
+    position: absolute;
+    content: "";
+    height: 22px;
+    width: 22px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+input:checked+.fv-slider {
+    background-color: #fff;
+}
+
+input:checked+.fv-slider:before {
+    transform: translateX(24px);
+    background-color: #333;
+}
+
+/* texto dentro del contenedor */
+.fv-toggle-text {
+    font-weight: bold;
+    color: white;
+    font-size: 1rem;
+    user-select: none;
+}
+
+/* ===== ESTILOS ADICIONALES PARA BOTONES ===== */
+.buttons-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid #ffffff;
+}
+
+.btn-wizard {
+    padding: 12px 40px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s;
+    background-color: #e2e8f0;
+    color: #1e293b;
+    border: none;
+}
+
+.btn-wizard.prev {
+    background-color: white;
+    border: 2px solid #ccc;
+    color: #555;
+}
+
+.btn-wizard.next,
+.btn-wizard.finish {
+    background-color: #161C5F;
+    border: 2px solid #161C5F;
+    color: white;
+}
+
+.btn-wizard:hover {
+    filter: brightness(0.95);
+    transform: translateY(-1px);
+}
+
+.step-pane#step-1 .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    justify-items: center;
+    margin-bottom: 20px;
+}
+
+/*ESTILOS PARA LAS PREGUNTAS DE FALSO Y VERDADERO*/
+
+/* ===== ESTILOS PARA TARJETAS DE PREGUNTA FALSO/VERDADERO ===== */
+
+.tarjeta-pregunta {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    position: relative;
+    transition: box-shadow 0.2s;
+}
+
+.tarjeta-pregunta:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* ===== ESTILOS ADICIONALES PARA EL PANEL F/V (COWORKER) ===== */
+/* Estos estilos complementan el diseño original del wizard */
+
+.encabezado-panel {
+    background-color: #171C52;
+    color: white;
+    padding: 15px 20px;
+    font-size: 1.8rem;
+    font-weight: bold;
+    border-radius: 8px 8px 0 0;
+    margin-bottom: 20px;
+}
+
+.contenido-panel {
+    position: relative;
+    min-height: 400px;
+    background: #f9f9f9;
+    border-radius: 0 0 8px 8px;
+    padding: 20px;
+}
+
+.estado-vacio {
+    text-align: center;
+    color: #8A8A8A;
+    font-size: 1.2rem;
+    margin: 40px auto;
+}
+
+.boton-agregar {
+    background-color: #33743A;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: 0.3s;
+    margin-top: 20px;
+    display: inline-block;
+}
+
+.boton-agregar:hover {
+    background-color: #2a5e2f;
+}
+
+/* Estilos para tarjetas en modo edición */
+.tarjeta-pregunta {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    position: relative;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.titulo-pregunta {
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.cerrar-pregunta {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 1.8rem;
+    color: #dc3545;
+    cursor: pointer;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.entrada-pregunta {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+    margin-bottom: 20px;
+    box-sizing: border-box;
+}
+
+.acciones-pregunta {
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.contenedor-toggle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #28a745;
+    border-radius: 10px;
+    padding: 8px 16px;
+    min-width: 95px;
+    transition: background-color 0.3s;
+}
+
+.contenedor-toggle.estado-falso {
+    background-color: #dc3545;
+}
+
+.texto-toggle {
+    color: white;
+    font-size: 0.9rem;
+    margin-top: 5px;
+    font-weight: bold;
+}
+
+.interruptor {
+    position: relative;
+    display: inline-block;
+    width: 52px;
+    height: 26px;
+}
+
+.interruptor input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.deslizador {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    border-radius: 34px;
+    transition: 0.3s;
+}
+
+.deslizador:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    border-radius: 50%;
+    transition: 0.3s;
+}
+
+input:checked+.deslizador {
+    background-color: #fff;
+}
+
+input:checked+.deslizador:before {
+    transform: translateX(26px);
+    background-color: #333;
+}
+
+.boton-guardar {
+    background-color: #171C52;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.boton-guardar:hover {
+    background-color: #0f1240;
+}
+
+/* Estilos para tarjetas guardadas */
+.tarjeta-pregunta.guardado {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.contenido-pregunta-guardada {
+    flex: 1;
+    padding-right: 60px;
+}
+
+.titulo-pregunta-guardada {
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+    color: #171C52;
+}
+
+.texto-pregunta-guardada {
+    font-size: 1rem;
+    color: #333;
+    line-height: 1.4;
+}
+
+.editar-pregunta {
+    position: absolute;
+    top: 20px;
+    right: 50px;
+    font-size: 1.4rem;
+    cursor: pointer;
+    color: #000000;
+}
+
+.cerrar-guardado {
+    top: 15px;
+    right: 15px;
+    color: #dc3545;
+    font-size: 1.6rem;
+}
+
+/* Modales (copiados del coworker) */
+.fondo-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: 0.3s;
+    z-index: 999;
+}
+
+.fondo-modal.activo {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-personalizado {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    max-width: 500px;
+    text-align: center;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.modal-personalizado p {
+    font-size: 1.2rem;
+    margin-bottom: 25px;
+}
+
+.boton-modal,
+.boton-cancelar-eliminar,
+.boton-confirmar-eliminar {
+    padding: 10px 20px;
+    margin: 0 10px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.boton-modal {
+    background-color: #28a745;
+    color: white;
+}
+
+.boton-cancelar-eliminar {
+    background-color: #6c757d;
+    color: white;
+}
+
+.boton-confirmar-eliminar {
+    background-color: #dc3545;
+    color: white;
+}
+
+.mensaje-exito {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #28a745;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    z-index: 1000;
+    animation: fadeOut 3s forwards;
+}
+
+@keyframes fadeOut {
+    0% {
+        opacity: 1;
+    }
+
+    70% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+        visibility: hidden;
+    }
+}
+
+/* Ajustes para contenedor fv-form-container */
+#fv-form-container {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.boton-info {
+    background-color: #0C3A7D;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    margin-top: 20px;
+    display: block;
+    margin-left: auto;
+}
+
+.oculto {
+    display: none;
+}
+
+/* ===== ESTILOS ADICIONALES PARA EL PANEL F/V (COWORKER) ===== */
+/* Estos estilos complementan el diseño original del wizard */
+
+.encabezado-panel {
+    background-color: #171C52;
+    color: white;
+    padding: 15px 20px;
+    font-size: 1.8rem;
+    font-weight: bold;
+    border-radius: 8px 8px 0 0;
+    margin-bottom: 20px;
+}
+
+.contenido-panel {
+    position: relative;
+    min-height: 400px;
+    background: #f9f9f9;
+    border-radius: 0 0 8px 8px;
+    padding: 20px;
+}
+
+.estado-vacio {
+    text-align: center;
+    color: #8A8A8A;
+    font-size: 1.2rem;
+    margin: 40px auto;
+}
+
+.boton-agregar {
+    background-color: #33743A;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: 0.3s;
+    margin-top: 20px;
+    display: inline-block;
+}
+
+.boton-agregar:hover {
+    background-color: #2a5e2f;
+}
+
+/* Tarjeta en modo edición: input y toggle en la misma línea */
+.tarjeta-pregunta {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    position: relative;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.titulo-pregunta {
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.cerrar-pregunta {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 1.8rem;
+    color: #dc3545;
+    cursor: pointer;
+    font-weight: bold;
+    line-height: 1;
+}
+
+/* Contenedor para input y acciones en línea */
+.fila-edicion {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.entrada-pregunta {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+
+.acciones-pregunta {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+/* Toggle horizontal: interruptor + texto en una línea */
+.contenedor-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background-color: #28a745;
+    border-radius: 40px;
+    padding: 6px 16px;
+    transition: background-color 0.3s;
+    white-space: nowrap;
+}
+
+.contenedor-toggle.estado-falso {
+    background-color: #dc3545;
+}
+
+.interruptor {
+    position: relative;
+    display: inline-block;
+    width: 52px;
+    height: 26px;
+}
+
+.interruptor input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.deslizador {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    border-radius: 34px;
+    transition: 0.3s;
+}
+
+.deslizador:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    border-radius: 50%;
+    transition: 0.3s;
+}
+
+input:checked+.deslizador {
+    background-color: #fff;
+}
+
+input:checked+.deslizador:before {
+    transform: translateX(26px);
+    background-color: #333;
+}
+
+.texto-toggle {
+    font-weight: bold;
+    color: white;
+    font-size: 0.9rem;
+    user-select: none;
+}
+
+.boton-guardar {
+    background-color: #171C52;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.boton-guardar:hover {
+    background-color: #0f1240;
+}
+
+/* Tarjeta guardada: también horizontal */
+.tarjeta-pregunta.guardado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.contenido-pregunta-guardada {
+    flex: 1;
+}
+
+.titulo-pregunta-guardada {
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+    color: #171C52;
+}
+
+.texto-pregunta-guardada {
+    font-size: 1rem;
+    color: #333;
+    line-height: 1.4;
+}
+
+.editar-pregunta {
+    position: static;
+    /* quitamos el absoluto para que no se superponga */
+    font-size: 1.4rem;
+    cursor: pointer;
+    color: #000000;
+    margin-left: 10px;
+}
+
+.cerrar-guardado {
+    position: static;
+    font-size: 1.6rem;
+    color: #dc3545;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+/* Modales */
+.fondo-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: 0.3s;
+    z-index: 999;
+}
+
+.fondo-modal.activo {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-personalizado {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    max-width: 500px;
+    text-align: center;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.modal-personalizado p {
+    font-size: 1.2rem;
+    margin-bottom: 25px;
+}
+
+.boton-modal,
+.boton-cancelar-eliminar,
+.boton-confirmar-eliminar {
+    padding: 10px 20px;
+    margin: 0 10px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.boton-modal {
+    background-color: #28a745;
+    color: white;
+}
+
+.boton-cancelar-eliminar {
+    background-color: #6c757d;
+    color: white;
+}
+
+.boton-confirmar-eliminar {
+    background-color: #dc3545;
+    color: white;
+}
+
+.mensaje-exito {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #28a745;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    z-index: 1000;
+    animation: fadeOut 3s forwards;
+}
+
+@keyframes fadeOut {
+    0% {
+        opacity: 1;
+    }
+
+    70% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+        visibility: hidden;
+    }
+}
+
+/* Ajustes para contenedor fv-form-container */
+#fv-form-container {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.boton-info {
+    background-color: #0C3A7D;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    margin-top: 20px;
+    display: block;
+    margin-left: auto;
+}
+
+.oculto {
+    display: none;
+}
+
+/* Antes: border-radius: 40px; (muy redondeado) */
+/* Después: border-radius: 8px; (casi cuadrado) */
+
+.contenedor-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background-color: #28a745;
+    border-radius: 8px;
+    /* <--- CAMBIO IMPORTANTE */
+    padding: 6px 16px;
+    transition: background-color 0.3s;
+    white-space: nowrap;
+}
+
+/* También si quieres que en estado falso herede el mismo radio, no es necesario cambiarlo */
+.contenedor-toggle.estado-falso {
+    background-color: #dc3545;
+    border-radius: 8px;
+    /* mismo radio */
+}
+
+/* Asegura que el panel de Opción Múltiple tenga fondo blanco y bordes redondeados */
+#opcion-multiple-container .contenido-panel {
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    margin-top: 0;
+}
+
+/* También da estilo al estado vacío si quieres que se vea integrado */
+#opcion-multiple-container .estado-vacio {
+    background: transparent;
+    text-align: center;
+    padding: 40px 20px;
+}
+
+#camino-form-container .contenido-panel {
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    margin-top: 0;
+}
+
+/* El estado vacío no es necesario para camino, pero por consistencia */
+#camino-form-container .estado-vacio {
+    display: none;
+}
+
+/*Tarjetas blancas de fondo para los elementos de las actividades*/
+
+/* Estilos para paneles de configuración */
+#camino-form-container .contenido-panel,
+#opcion-multiple-container .contenido-panel,
+#fv-form-container .contenido-panel,
+#sopa-form-container .contenido-panel {
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    margin-top: 0;
+}

@@ -1,0 +1,68 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='organizar_archivos.css') }}">
+
+<div class="contenedor-crear-leccion">
+    <h2>Organizar Archivos / Crear Lección</h2>
+
+    <form action="{{ url_for('subir_leccion') }}" method="POST" enctype="multipart/form-data">
+        
+        <div class="form-grid">
+            <div class="input-group">
+                <label>Grupo:</label>
+                <input type="text" name="grupo" required placeholder="Ej: 204">
+            </div>
+            
+            <div class="input-group">
+                <label>Materia:</label>
+                <input type="text" name="materia" required placeholder="Ej: Programacion">
+            </div>
+
+            <div class="input-group">
+                <label>Parcial:</label>
+                <select name="parcial">
+                    <option value="P1">Parcial 1</option>
+                    <option value="P2">Parcial 2</option>
+                    <option value="P3">Parcial 3</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>Tema:</label>
+                <input type="text" name="tema" required>
+            </div>
+
+            <div class="input-group">
+                <label>Actividad:</label>
+                <input type="text" name="actividad" required>
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="upload-area">
+            <label for="file-upload" class="custom-file-upload">
+                <i class="fa fa-cloud-upload"></i> Seleccionar Archivos
+            </label>
+            <input id="file-upload" type="file" name="archivos" multiple style="display:none;" onchange="mostrarNombres(this)">
+            <p id="file-list">Ningún archivo seleccionado</p>
+        </div>
+
+        <button type="submit" class="btn-toro">Guardar Lección</button>
+    </form>
+</div>
+
+<script>
+    // Pequeño JS para mostrar qué archivos seleccionaste
+    function mostrarNombres(input) {
+        const output = document.getElementById('file-list');
+        if (input.files.length > 0) {
+            let n = input.files.length;
+            output.innerText = n + " archivos seleccionados para subir.";
+        } else {
+            output.innerText = "Ningún archivo seleccionado";
+        }
+    }
+</script>
+{% endblock %}

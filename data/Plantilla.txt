@@ -1,0 +1,6 @@
+P001|CRUCIGRAMA|plantilla_crucigrama
+P002|CUESTIONARIO FALSO O VERDADERO|plantilla_vf
+P003|CUESTIONARIO OPCION MULTIPLE|plantilla_quiz
+P004|SOPA DE LETRAS|plantilla_sopa
+P005|COMPLETAR CAMINO|plantilla_camino
+P006|COMPLETAR PALABRA|plantilla_completar

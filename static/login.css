@@ -1,0 +1,80 @@
+:root {
+    --azul-orion: #171C52; /* El azul oscuro de tu barra lateral */
+    --gris-fondo: #f8f9fa;
+    --borde-input: #e0e0e0;
+}
+
+.login-body {
+    background-color: white; /* */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.login-wrapper {
+    text-align: center;
+    width: 100%;
+    max-width: 400px;
+}
+
+.main-logo {
+    margin-top: 29px;
+    width: 200px;
+    margin-bottom: 0px; /* */
+}
+
+.login-card {
+    background: white;
+    padding: 20px 20px ;
+    border-radius: 12px;
+    box-shadow: 0px 8px 32px rgba(5, 38, 114, 0.15);
+    border: 1px solid #f0f0f0;
+    margin-bottom: 40px;
+}
+
+h1 {
+    color: var(--azul-orion);
+    font-size: 22px;
+    letter-spacing: 2px;
+    margin-bottom: 30px;
+}
+
+.input-group {
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+.input-group label {
+    display: block;
+    color: #171C52;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--borde-input);
+    border-radius: 8px; /* Inputs redondeados */
+    box-sizing: border-box;
+}
+
+.btn-ingresar {
+    width: 100%;
+    padding: 14px;
+    background-color: var(--azul-orion); /* */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.btn-ingresar:hover {
+    background-color: #171C52;
+}
+
