@@ -1,591 +1,765 @@
-/* =========================================
-   1. CONFIGURACIÓN GENERAL Y FUENTES
-   ========================================= */
+/* ═══════════════════════════════════════════════
+   GRUPOS.CSS — Sistema de gestión de grupos
+   Paleta: Azul institucional + blanco + gris claro
+   ═══════════════════════════════════════════════ */
+
+/* ─── Variables ─── */
 :root {
-    --color-primary: #052672;      /* Azul Orión */
-    --color-primary-dark: #031b52;
-    --color-secondary: #2B8837;    /* Verde Acción */
-    --color-secondary-hover: #1e6326;
-    --color-bg: #F4F7FE;           /* Fondo gris dashboard */
-    --color-text: #333333;
-    --color-text-light: #666666;
-    --color-white: #ffffff;
-    --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.05);
-    --shadow-hover: 0 10px 25px rgba(0, 0, 0, 0.1);
-    --radius: 12px;
+    --azul:         #123B6E;
+    --azul-dark:    #0c2a50;
+    --azul-light:   #D0ECFF;
+    --verde:        #2B8837;
+    --verde-dark:   #1e6326;
+    --verde-light:  #DAE9DB;
+    --rojo:         #B00020;
+    --rojo-light:   #FFD9D9;
+    --gris-bg:      #F4F7FE;
+    --gris-borde:   #C5D0DC;
+    --gris-texto:   #555;
+    --blanco:       #ffffff;
+    --sombra:       0 4px 16px rgba(0,0,0,0.10);
+    --sombra-modal: 0 8px 32px rgba(0,0,0,0.18);
+    --radio:        12px;
+    --radio-btn:    8px;
+    --transicion:   0.25s ease;
 }
 
-@font-face {
-    font-family: 'Inder';
-    src: url('../fonts/Inder-Regular.ttf') format('truetype');
-    font-weight: 400;
-    font-style: normal;
-}
-
-* {
-    margin: 0;
-    padding: 0;
+/* ─── Contenedor principal ─── */
+.grupos-container {
+    width: 100%;
+    min-height: 100vh;
+    background: var(--gris-bg);
+    padding: 40px 32px 100px;
     box-sizing: border-box;
 }
 
-body {
-    font-family: 'Inder', sans-serif;
-    background-color: var(--color-bg);
-    color: var(--color-text);
-    margin: 0;
-    padding: 0;
-}
-
-/* =========================================
-   2. CONTENEDORES Y SECCIONES
-   ========================================= */
+/* ─── Secciones ─── */
 .seccion {
     display: none;
-    opacity: 0;
-    transition: opacity 0.3s ease-in;
-}
-
-.seccion.activa {
-    display: flex;
     flex-direction: column;
     align-items: center;
-    width: 100%;
-    max-width: 1200px;
+    max-width: 1100px;
     margin: 0 auto;
-    padding: 40px 20px;
-    opacity: 1;
-    box-sizing: border-box;
+}
+.seccion.activa {
+    display: flex;
 }
 
-h2 {
-    color: var(--color-primary);
-    font-family: 'Be Vietnam Pro', sans-serif;
+/* ─── Títulos ─── */
+.seccion h2 {
+    font-size: 1.6rem;
     font-weight: 700;
-    font-size: 1.8rem;
+    color: var(--azul);
+    letter-spacing: 1.5px;
     margin-bottom: 20px;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    align-self: flex-start;
 }
 
-/* =========================================
-   3. SECCIÓN DEFAULT (INSTRUCCIONES)
-   ========================================= */
-#seccionDefault {
-    text-align: center;
+/* ─── Sección default ─── */
+.subtitulo {
+    color: var(--gris-texto);
+    font-size: 1rem;
+    margin-bottom: 6px;
 }
-
-#seccionDefault p {
-    font-size: 1.1rem;
-    color: var(--color-text-light);
-    margin-bottom: 10px;
+.instruccion {
+    color: var(--gris-texto);
+    font-size: 0.95rem;
+    margin-bottom: 12px;
 }
 
 .ejemplo-txt {
-    background-color: var(--color-white);
-    padding: 30px;
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-card);
-    border-left: 5px solid var(--color-primary);
-    text-align: left;
-    margin-top: 20px;
-    font-family: 'Courier New', Courier, monospace;
-    color: #444;
-    max-width: 600px;
+    background: var(--blanco);
+    border-left: 5px solid var(--azul);
+    border-radius: var(--radio);
+    box-shadow: var(--sombra);
+    padding: 20px 28px;
     width: 100%;
+    max-width: 520px;
+    margin-bottom: 28px;
 }
-
 .ejemplo-txt p {
-    margin: 5px 0;
-    font-size: 0.95rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.88rem;
+    color: #444;
+    margin: 4px 0;
     border-bottom: 1px dashed #eee;
-    padding-bottom: 2px;
+    padding-bottom: 3px;
+}
+.ejemplo-txt p:last-child {
+    border-bottom: none;
 }
 
-/* Botón "Crear mi primer grupo" (estilo guía) */
 #primer-grupo {
-    width: 230px;
-    height: 40px;
-    background-color: #33743A;
-    color: white;
-    font-size: 15px;
-    text-align: center;
-    margin-top: 50px;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+    background: var(--verde);
+    color: var(--blanco);
     border: none;
-    border-radius: 10px;
+    border-radius: 50px;
+    padding: 12px 32px;
+    font-size: 1rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    box-shadow: 0 4px 14px rgba(43,136,55,0.35);
+    transition: background var(--transicion), transform var(--transicion);
 }
-
 #primer-grupo:hover {
-    background-color: #045FC8;
+    background: var(--verde-dark);
+    transform: translateY(-2px);
 }
 
-/* =========================================
-   4. MODAL NUEVO GRUPO
-   ========================================= */
-.modal {
+/* ─── Botón flotante agregar grupo ─── */
+.bnt-agregarGrupo {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-.modal.activa {
-    display: flex;
-}
-
-.modal-contenido {
-    background-color: #D0ECFF;
-    border-radius: 20px;
-    padding: 40px;
-    width: 90%;
-    max-width: 500px;
-    text-align: center;
-    box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.15);
-    animation: fadeIn 0.2s ease;
-}
-
-.modal-contenido h2 {
-    color: #161C5F;
-    margin-bottom: 20px;
-    font-size: 1.8rem;
-}
-
-.modal-contenido p {
-    text-align: left;
-    margin: 15px 0 5px;
-    font-weight: 600;
-    color: var(--color-primary);
-}
-
-.modal-contenido input[type="text"],
-.modal-contenido input[type="file"] {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    font-size: 1rem;
-    box-sizing: border-box;
-    background-color: white;
-}
-
-.modal-contenido input[type="file"] {
-    padding: 10px;
-}
-
-.modal-contenido input[type="file"]::file-selector-button {
-    background-color: #161C5F;
-    color: white;
+    bottom: 24px;
+    right: 24px;
+    background: var(--verde);
+    color: var(--blanco);
     border: none;
-    padding: 8px 16px;
-    border-radius: 5px;
+    border-radius: 50px;
+    padding: 14px 26px;
+    font-size: 0.95rem;
+    font-weight: 700;
     cursor: pointer;
-    margin-right: 15px;
-    font-weight: 600;
-    transition: background 0.3s;
-}
-.modal-contenido input[type="file"]::file-selector-button:hover {
-    background-color: #285d2f;
-}
-
-.botones-modal {
+    box-shadow: 0 4px 18px rgba(43,136,55,0.40);
+    transition: background var(--transicion), transform var(--transicion), box-shadow var(--transicion);
+    z-index: 500;
     display: flex;
-    justify-content: center;
-    gap: 20px;
-    margin-top: 30px;
+    align-items: center;
+    gap: 8px;
+}
+.bnt-agregarGrupo:hover {
+    background: var(--verde-dark);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(43,136,55,0.50);
 }
 
-.btn-modal {
-    padding: 10px 20px;
-    border-radius: 15px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    min-width: 120px;
-}
-
-.btn-cancelar {
-    background: transparent;
-    border: 2px solid #161C5F;
-    color: #161C5F;
-}
-.btn-cancelar:hover {
-    background-color: #7fbbff;
-    color: white;
-    border-color: #7fbbff;
-}
-
-.btn-guardar {
-    background: #161C5F;
-    border: 2px solid #161C5F;
-    color: white;
-}
-.btn-guardar:hover {
-    background-color: #7fbbff;
-    border-color: #7fbbff;
-    color: white;
-}
-
-.texto-ayuda {
-    text-align: left;
-    font-size: 0.8rem;
-    color: #666;
-    font-style: italic;
-    margin-top: -15px;
-    margin-bottom: 15px;
-    padding-left: 5px;
-}
-
-.mensaje-modal {
-    margin-top: 15px;
-    padding: 10px;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    text-align: center;
-    display: none;
-}
-.mensaje-modal.error {
-    background-color: #ffebee;
-    color: #c62828;
-    border-left: 4px solid #c62828;
-    display: block;
-}
-.mensaje-modal.exito {
-    background-color: #e8f5e9;
-    color: #2e7d32;
-    border-left: 4px solid #2e7d32;
-    display: block;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
-}
-
-/* =========================================
-   5. LISTA DE GRUPOS (CARDS) - Estilo profesional
-   ========================================= */
+/* ════════════════════════════════════
+   CARDS DE GRUPOS
+════════════════════════════════════ */
 #listaGrupos {
-    width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 25px;
+    gap: 20px;
+    width: 100%;
 }
 
 .grupo-card {
-    background: var(--color-white);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-card);
+    background: var(--blanco);
+    border-radius: var(--radio);
+    box-shadow: var(--sombra);
     overflow: hidden;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    border: 1px solid #e9ecef;
+    border: 1px solid #e2e8f0;
+    transition: box-shadow var(--transicion), transform var(--transicion);
 }
 .grupo-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-hover);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.13);
+    transform: translateY(-1px);
 }
 
+/* Header de la card */
 .grupo-header {
-    background: var(--color-primary);
-    color: white;
-    padding: 12px 20px;
+    background: var(--azul);
+    color: var(--blanco);
+    padding: 10px 18px;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
+    gap: 12px;
 }
 
 .nombreGrupo {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 700;
+    letter-spacing: 0.5px;
 }
 
+/* Botón eliminar grupo (header) */
+.btn-eliminar-grupo {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background var(--transicion);
+    flex-shrink: 0;
+}
+.btn-eliminar-grupo:hover {
+    background: rgba(255,255,255,0.30);
+}
+.btn-eliminar-grupo img {
+    width: 18px;
+    height: 18px;
+    pointer-events: none;
+    filter: brightness(10);
+}
+
+/* Botón agregar materia (header) */
+.btn-materia {
+    background: rgba(255,255,255,0.18);
+    color: var(--blanco);
+    border: 1px solid rgba(255,255,255,0.40);
+    border-radius: 50px;
+    padding: 6px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transicion);
+    white-space: nowrap;
+}
+.btn-materia:hover {
+    background: rgba(255,255,255,0.32);
+}
+
+/* Body de la card */
 .grupo-body {
-    padding: 20px;
+    padding: 12px 16px;
 }
 
-/* Materia individual */
+.mensaje-vacio {
+    text-align: center;
+    color: #999;
+    font-style: italic;
+    padding: 16px 0;
+    font-size: 0.9rem;
+}
+
+/* ════════════════════════════════════
+   FILAS DE MATERIA
+════════════════════════════════════ */
 .contenedor-materia-parcial {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: #f8fafc;
-    border-radius: 12px;
-    padding: 12px 16px;
-    margin-bottom: 12px;
-    border: 1px solid #e2e8f0;
-    transition: background 0.2s;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px 12px;
+    border-bottom: 1px solid #e8ecf0;
+    transition: background var(--transicion);
+    border-radius: 8px;
+}
+.contenedor-materia-parcial:last-child {
+    border-bottom: none;
 }
 .contenedor-materia-parcial:hover {
-    background: #f1f5f9;
+    background: #f8fafc;
 }
 
+/* Nombre + acciones materia */
 .contenedor-materia-acciones {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 20px;
-    min-width: 200px;
+    gap: 4px;
+    min-width: 130px;
 }
 
 .nombreMateria {
     font-weight: 700;
-    color: var(--color-primary);
-    font-size: 1rem;
+    color: var(--azul);
+    font-size: 0.95rem;
+    text-align: center;
 }
 
-/* Botones redondos editar/eliminar materia */
 .acciones-materia {
     display: flex;
     gap: 6px;
 }
+
 .btn-editar-materia,
 .btn-eliminar-materia {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: #eef2f7;
-    border: none;
-    font-size: 1rem;
-    cursor: pointer;
+    width: 40px;
+    height: 34px;
+    border-radius: 45%;
+    border: 3px solid var(--gris-borde);
+    background: #DEE7EB;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: 0.2s;
-    color: #4a5568;
+    cursor: pointer;
+    transition: background var(--transicion), transform var(--transicion);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.12);
+    margin: 2px;
+    padding: 0;
 }
 .btn-editar-materia:hover,
 .btn-eliminar-materia:hover {
-    background-color: #cbd5e0;
+    background: #a0cfee;
     transform: scale(1.05);
 }
+.btn-editar-materia img,
+.btn-eliminar-materia img {
+    width: 16px;
+    height: 16px;
+    pointer-events: none;
+}
 
-/* Contenedor de parciales */
-.parciales-container {
+/* ════════════════════════════════════
+   CHIPS DE PARCIALES
+════════════════════════════════════ */
+.parcial-contenedor {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 25px;
     align-items: center;
     flex: 1;
-    margin: 0 15px;
+    padding: 0 8px;
 }
 
-/* Chip de parcial */
-.parcial-chip {
-    background: #eef2f7;
-    border-radius: 30px;
-    padding: 5px 12px;
+.parciales-container {
+    width: 20%;
+    background: #DEE7EB;
+    border: 1px solid #b5b8da;
+    border-radius: 50px;
+    padding: 4px 10px 4px 14px;
     display: inline-flex;
+    justify-content: center;
     align-items: center;
-    gap: 8px;
-    border: 1px solid #cbd5e1;
-    transition: 0.2s;
+    gap: 6px;
+    transition: background var(--transicion);
 }
-.parcial-chip:hover {
-    background: #e2e8f0;
-    transform: translateY(-1px);
+.parciales-container:hover {
+    background: #ccdde6;
 }
 
-.parcial-texto {
+.parcial-item {
     background: none;
     border: none;
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     font-weight: 600;
     color: #2c3e50;
     cursor: pointer;
     padding: 0;
+    transition: color var(--transicion);
 }
-.parcial-texto:hover {
-    color: var(--color-primary);
+.parcial-item:hover {
+    color: var(--azul);
     text-decoration: underline;
 }
 
-/* Botones dentro del chip (editar/eliminar parcial) */
 .acciones-parcial {
     display: flex;
-    gap: 6px;
+    flex-direction: column;
+    gap: 3px;
 }
+
 .btn-editarParcial,
 .btn-eliminarParcial {
-    background: transparent;
-    border: none;
-    font-size: 0.8rem;
-    cursor: pointer;
-    width: 24px;
-    height: 24px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
-    display: inline-flex;
+    border: none;
+    background: #DEE7EB;
+    display: flex;
     align-items: center;
     justify-content: center;
-    color: #5a6e8a;
+    cursor: pointer;
+    transition: background var(--transicion), transform var(--transicion);
+    padding: 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.10);
 }
 .btn-editarParcial:hover,
 .btn-eliminarParcial:hover {
-    background-color: #cbd5e0;
-    color: #1e293b;
+    background: #a0cfee;
+    transform: scale(1.08);
+}
+.btn-editarParcial img,
+.btn-eliminarParcial img {
+    width: 14px;
+    height: 14px;
+    pointer-events: none;
 }
 
 /* Botón agregar parcial */
 .btn-agregarParcial {
-    background: #DAE9DB;
+    height: 50px;
+    background: var(--verde-light);
     border: 1px solid #2e7d32;
-    border-radius: 30px;
+    border-radius: 50px;
     padding: 6px 14px;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     font-weight: 600;
+    color: #1a4d1f;
     cursor: pointer;
-    transition: 0.2s;
     white-space: nowrap;
+    transition: background var(--transicion), color var(--transicion);
 }
 .btn-agregarParcial:hover {
-    background: #2B8837;
-    color: white;
+    background: var(--verde);
+    color: var(--blanco);
     border-color: transparent;
 }
 
-/* Botón para agregar materia cuando no hay materias */
-.btn-materia {
-    background: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-radius: 30px;
-    padding: 8px 20px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: 0.2s;
-}
-.btn-materia:hover {
-    background: #045FC8;
-    color: white;
-    border-color: #045FC8;
-}
-
-/* Progresiones */
-.progresiones-container {
-    margin-top: 12px;
-    padding-left: 24px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
-}
-.progresion-item {
-    background: #f1f5f9;
-    border-radius: 20px;
-    padding: 4px 12px;
-    font-size: 0.85rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    color: #2c3e50;
-}
-.progresion-item button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 0.7rem;
-    color: #e74c3c;
-}
-.progresion-item button:hover {
-    color: #c0392b;
-}
-
-/* =========================================
-   6. BOTÓN FLOTANTE (+ AGREGAR GRUPO)
-   ========================================= */
-.bnt-agregarGrupo {
+/* ════════════════════════════════════
+   MODALES — BASE
+════════════════════════════════════ */
+.modal {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background-color: #2B8837;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity var(--transicion), visibility var(--transicion);
+}
+.modal.activa {
+    visibility: visible;
+    opacity: 1;
+}
+.modal.activa .contenedor-modal {
+    transform: scale(1);
+    opacity: 1;
+}
+.modal.cerrando {
+    opacity: 0;
+    visibility: hidden;
+}
+.modal.cerrando .contenedor-modal {
+    transform: scale(0.95);
+    opacity: 0;
+}
+
+/* Overlay */
+.modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(2px);
+}
+
+/* Contenido del modal */
+.contenedor-modal {
+    position: relative;
+    z-index: 1001;
+    background: var(--blanco);
+    border-radius: 20px;
+    padding: 36px 40px;
+    width: 90%;
+    max-width: 460px;
+    box-shadow: var(--sombra-modal);
+    text-align: center;
+    opacity: 0;
+    transform: scale(0.95);
+    transition: opacity var(--transicion), transform var(--transicion);
+}
+
+.contenedor-modal h2 {
+    color: var(--azul);
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+}
+
+.modal-label {
+    display: block;
+    text-align: left;
+    font-weight: 600;
+    color: var(--azul);
+    font-size: 0.9rem;
+    margin: 12px 0 6px;
+}
+
+.contenedor-modal input[type="text"],
+.contenedor-modal input[type="number"],
+.contenedor-modal input[type="file"] {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid #ccd;
+    border-radius: var(--radio-btn);
+    font-size: 0.95rem;
+    box-sizing: border-box;
+    background: #fafbff;
+    transition: border-color var(--transicion);
+    font-family: inherit;
+}
+.contenedor-modal input:focus {
+    outline: none;
+    border-color: var(--azul);
+}
+.contenedor-modal input[type="file"]::file-selector-button {
+    background: var(--azul);
     color: white;
     border: none;
-    padding: 14px 24px;
+    padding: 7px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-right: 12px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: background var(--transicion);
+}
+.contenedor-modal input[type="file"]::file-selector-button:hover {
+    background: var(--azul-dark);
+}
+
+.texto-ayuda {
+    text-align: left;
+    font-size: 0.78rem;
+    color: #888;
+    font-style: italic;
+    margin: 4px 0 10px;
+}
+
+.modal-desc {
+    color: var(--gris-texto);
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+}
+
+/* Botones del modal */
+.botones-modal {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.btn-cancelar {
+    background: transparent;
+    border: 2px solid var(--azul);
+    color: var(--azul);
     border-radius: 50px;
+    padding: 10px 24px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transicion), color var(--transicion);
+    min-width: 120px;
+}
+.btn-cancelar:hover {
+    background: var(--azul-light);
+}
+
+.btn-guardar {
+    background: var(--azul);
+    border: 2px solid var(--azul);
+    color: var(--blanco);
+    border-radius: 50px;
+    padding: 10px 24px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transicion);
+    min-width: 120px;
+}
+.btn-guardar:hover {
+    background: var(--azul-dark);
+    border-color: var(--azul-dark);
+}
+.btn-guardar:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+/* Mensaje de éxito/error dentro del modal */
+.mensaje-modal {
+    display: none;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.88rem;
+    text-align: left;
+    margin-top: 10px;
+}
+.mensaje-modal.error {
+    display: block;
+    background: #ffebee;
+    color: #c62828;
+    border-left: 4px solid #c62828;
+}
+.mensaje-modal.exito {
+    display: block;
+    background: #e8f5e9;
+    color: #2e7d32;
+    border-left: 4px solid #2e7d32;
+}
+
+/* ─── Modal de Eliminar ─── */
+.contenedor-eliminar {
+    background: var(--rojo-light);
+    border: 1.5px solid #f5a0a0;
+}
+.contenedor-eliminar h2 {
+    color: var(--rojo);
+}
+.icono-advertencia {
+    font-size: 2.4rem;
+    margin-bottom: 8px;
+}
+.contenedor-eliminar p {
+    color: #5a0010;
+    font-size: 0.95rem;
+    margin: 4px 0;
+}
+.btn-eliminar-confirm {
+    background: var(--rojo);
+    border: 2px solid var(--rojo);
+    color: var(--blanco);
+    border-radius: 50px;
+    padding: 10px 24px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transicion);
+    min-width: 140px;
+}
+.btn-eliminar-confirm:hover {
+    background: #d10026;
+    border-color: #d10026;
+}
+
+/* Chips de contexto en modal eliminar */
+.info-eliminar-extra {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 12px auto;
+    align-items: center;
+}
+.chip-info {
+    background: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    padding: 5px 18px;
+    font-size: 0.88rem;
+    color: #444;
+}
+
+/* ─── Parcial preview ─── */
+.preview-parcial {
+    background: #DEE7EB;
+    border: 1px solid #b5b8da;
+    border-radius: 50px;
+    padding: 8px 28px;
+    display: inline-block;
+    margin: 12px auto;
     font-size: 1rem;
     font-weight: 700;
-    box-shadow: 0 4px 15px rgba(43, 136, 55, 0.4);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    z-index: 1000;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.bnt-agregarGrupo:hover {
-    background-color: var(--color-secondary-hover);
-    transform: scale(1.05) translateY(-3px);
-    box-shadow: 0 8px 25px rgba(43, 136, 55, 0.5);
+    color: var(--azul);
 }
 
-/* =========================================
-   7. RESPONSIVE
-   ========================================= */
+.alerta-limite {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 8px;
+    padding: 10px 16px;
+    margin: 10px auto;
+    font-size: 0.88rem;
+    color: #856404;
+}
+
+/* Input de parcial con prefijo */
+.input-parcial-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin: 10px auto;
+}
+.prefijo-parcial {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--azul);
+}
+#inputEditarParcial {
+    width: 72px;
+    padding: 10px;
+    border: 1.5px solid #ccd;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    text-align: center;
+    font-family: inherit;
+}
+#inputEditarParcial::-webkit-outer-spin-button,
+#inputEditarParcial::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+}
+
+/* ════════════════════════════════════
+    RESPONSIVE
+════════════════════════════════════ */
 @media (max-width: 768px) {
+    .grupos-container {
+        padding: 24px 12px 100px;
+    }
     .contenedor-materia-parcial {
         flex-direction: column;
         align-items: flex-start;
-        gap: 12px;
     }
-    .parciales-container {
-        width: 100%;
-        margin: 0;
-    }
-    .seccion.activa {
-        padding: 20px 10px;
-    }
-    .modal-contenido {
-        width: 95%;
-        padding: 20px;
+    .parcial-contenedor {
+        padding: 0;
     }
     .grupo-header {
-        flex-direction: column;
+        flex-wrap: wrap;
         gap: 8px;
-        align-items: stretch;
+    }
+    .contenedor-modal {
+        padding: 28px 20px;
     }
 }
+/* ===== BOTONES CON IMAGEN: EDITAR / ELIMINAR ===== */
 
-/* Tamaño consistente para imágenes dentro de botones circulares */
-.btn-editar-materia img,
-.btn-eliminar-materia img,
-.btn-editarParcial img,
-.btn-eliminarParcial img,
-.btn-eliminarProgresion img {
-    display: block;
-    max-width: 100%;
-    max-height: 100%;
-    pointer-events: none; /* evita que la imagen capture el clic */
-}
-
-/* =========================================
-   8. PARCIALES: botones al lado del título (sin salto)
-   ========================================= */
-.parcial-chip {
+.btn-editar-materia,
+.btn-eliminar-materia {
+    width: 38px;
+    height: 34px;
+    padding: 0;
+    border-radius: 12px;
+    border: 2px solid var(--gris-borde);
+    background: #DEE7EB;
     display: inline-flex;
-    flex-direction: row;          /* asegura horizontal */
-    flex-wrap: nowrap;            /* evita que los botones bajen */
     align-items: center;
-    gap: 8px;
-    white-space: nowrap;          /* evita que el texto interno se divida */
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.12);
+    transition: background 0.25s ease, transform 0.25s ease;
 }
 
-/* Los botones dentro del chip deben ser inline-flex y no ocupar todo el ancho */
-.acciones-parcial {
-    display: inline-flex;
-    flex-direction: row;
-    gap: 6px;
-    flex-shrink: 0;              /* evita que se encojan */
+.btn-editar-materia:hover,
+.btn-eliminar-materia:hover {
+    background: #a0cfee;
+    transform: scale(1.06);
 }
 
-/* Tamaño fijo para los botones de editar/eliminar */
+.btn-editar-materia img,
+.btn-eliminar-materia img {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    pointer-events: none;
+}
+
+/* Parciales: botones más pequeños */
 .btn-editarParcial,
 .btn-eliminarParcial {
-    width: 24px;
-    height: 24px;
-    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border-radius: 50%;
+    border: none;
+    background: #DEE7EB;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.25s ease, transform 0.25s ease;
+}
+
+.btn-editarParcial:hover,
+.btn-eliminarParcial:hover {
+    background: #a0cfee;
+    transform: scale(1.08);
+}
+
+.btn-editarParcial img,
+.btn-eliminarParcial img {
+    width: 14px;
+    height: 14px;
+    object-fit: contain;
+    pointer-events: none;
 }

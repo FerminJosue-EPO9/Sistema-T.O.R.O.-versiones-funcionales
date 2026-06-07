@@ -2,52 +2,146 @@
 
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='grupos.css') }}">
+
 <div class="grupos-container">
-    <!-- Sección por defecto (cuando no hay grupos) -->
+
+    <!-- ══════════════════════════════════
+        SECCIÓN DEFAULT (sin grupos)
+    ══════════════════════════════════ -->
     <section id="seccionDefault" class="seccion activa">
         <h2>GRUPOS</h2>
-        <p>Formato correcto para subir un txt de alumnos:</p>
-        <p>Matricula del alumno | Nombre/s | Apellidos</p>
+        <p class="subtitulo">Aún no hay ningún grupo registrado.</p>
+        <p class="instruccion">Formato correcto para el archivo <strong>.txt</strong> de alumnos:</p>
         <div class="ejemplo-txt">
             <p>2026001|Juan Carlos|García López</p>
             <p>2026002|Valentina|Morales Torres</p>
             <p>2026003|Luis Fernando|Hernández Ruiz</p>
             <p>2026004|María Fernanda|Cruz Sánchez</p>
             <p>2026005|José Ángel|Ramírez Pérez</p>
-            <p>2026006|Ana Sofía|Vargas Castillo</p>
-            <p>2026007|Carlos Eduardo|Mendoza Flores</p>
-            <p>2026008|Daniela|Ortiz Navarro</p>
-            <p>2026009|Miguel Ángel|Salinas Romero</p>
-            <p>2026010|Paola Andrea|Reyes Montoya</p>
         </div>
-        <button id="primer-grupo" class="btn-primario" onclick="abrirModal()">Crear mi primer grupo</button>
+        <button id="primer-grupo" onclick="abrirModal()">+ Crear mi primer grupo</button>
     </section>
 
-    <div id="modalNuevoGrupo" class="modal">
-        <div class="modal-contenido">
-            <h2>CREAR NUEVO GRUPO</h2>
-            <p>Nombre del grupo:</p>
-            <input type="text" id="nombreGrupo" placeholder="Ej: 204" required>
-            <p>Archivo de alumnos (.txt):</p>
-            <input type="file" id="archivoAlumnos" accept=".txt">
-            <p class="texto-ayuda">Al darle click en el botón cargar lista de alumnos se abrirá su explorador de
-                archivos para seleccionar el txt.</p>
-            <!-- CONTENEDOR DE MENSAJES -->
-            <div id="mensajeModal" class="mensaje-modal"></div>
-            <div class="botones-modal">
-                <button type="button" class="btn-modal btn-cancelar" onclick="cerrarModal()">Regresar</button>
-                <button type="button" class="btn-modal btn-guardar" onclick="guardarGrupo()">Guardar grupo</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Sección que muestra la lista de grupos (cuando ya existen) -->
+    <!-- ══════════════════════════════════
+        SECCIÓN LISTA DE GRUPOS
+    ══════════════════════════════════ -->
     <section id="mostrarGrupos" class="seccion">
         <h2>GRUPOS</h2>
         <div id="listaGrupos"></div>
         <button class="bnt-agregarGrupo" onclick="abrirModal()">+ Agregar grupo</button>
     </section>
-</div>
+
+    <!-- ══════════════════════════════════
+        MODAL: CREAR NUEVO GRUPO
+    ══════════════════════════════════ -->
+    <div id="modalNuevoGrupo" class="modal">
+        <div class="modal-overlay" onclick="cerrarModal()"></div>
+        <div class="contenedor-modal">
+            <h2>CREAR NUEVO GRUPO</h2>
+            <label class="modal-label">Nombre del grupo:</label>
+            <input type="text" id="nombreGrupo" placeholder="Ej: 506" required>
+            <label class="modal-label">Archivo de alumnos (.txt):</label>
+            <input type="file" id="archivoAlumnos" accept=".txt">
+            <p class="texto-ayuda">El archivo debe tener el formato: Matrícula|Nombre|Apellidos</p>
+            <div id="mensajeModal" class="mensaje-modal"></div>
+            <div class="botones-modal">
+                <button type="button" class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
+                <button type="button" class="btn-guardar" onclick="guardarGrupo()">Guardar grupo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════
+        MODAL: ELIMINAR (genérico)
+    ══════════════════════════════════ -->
+    <div id="modalEliminar" class="modal">
+        <div class="modal-overlay" onclick="cerrarModalEliminar()"></div>
+        <div class="contenedor-modal contenedor-eliminar">
+            <div class="icono-advertencia">⚠️</div>
+            <h2 id="tituloModalEliminar">ELIMINAR</h2>
+            <p id="textoEliminarLinea1">¿Estás seguro?</p>
+            <p id="textoEliminarLinea2">Esta acción es permanente.</p>
+            <div id="infoEliminarExtra" class="info-eliminar-extra" style="display:none;"></div>
+            <div class="botones-modal">
+                <button type="button" class="btn-cancelar" onclick="cerrarModalEliminar()">Cancelar</button>
+                <button type="button" class="btn-eliminar-confirm" onclick="ejecutarEliminar()">
+                    <span id="textoBotonEliminar">Eliminar</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════
+        MODAL: AGREGAR MATERIA
+    ══════════════════════════════════ -->
+    <div id="modalAgregarMateria" class="modal">
+        <div class="modal-overlay" onclick="cerrarModalMateria()"></div>
+        <div class="contenedor-modal">
+            <h2>AGREGAR MATERIA</h2>
+            <label class="modal-label">Nombre de la materia:</label>
+            <input type="text" id="inputNombreMateria" placeholder="Ej: Programación Estructurada">
+            <div class="botones-modal">
+                <button type="button" class="btn-cancelar" onclick="cerrarModalMateria()">Cancelar</button>
+                <button type="button" class="btn-guardar" onclick="confirmarAgregarMateria()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════
+        MODAL: EDITAR MATERIA
+    ══════════════════════════════════ -->
+    <div id="modalEditarMateria" class="modal">
+        <div class="modal-overlay" onclick="cerrarModalEditarMateria()"></div>
+        <div class="contenedor-modal">
+            <h2>EDITAR MATERIA</h2>
+            <label class="modal-label">Nuevo nombre:</label>
+            <input type="text" id="inputEditarMateria" placeholder="Nuevo nombre">
+            <div class="botones-modal">
+                <button type="button" class="btn-cancelar" onclick="cerrarModalEditarMateria()">Cancelar</button>
+                <button type="button" class="btn-guardar" onclick="confirmarEditarMateria()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════
+        MODAL: AGREGAR PARCIAL
+    ══════════════════════════════════ -->
+    <div id="modalAgregarParcial" class="modal">
+        <div class="modal-overlay" onclick="cerrarModalParcial()"></div>
+        <div class="contenedor-modal">
+            <h2>AGREGAR PARCIAL</h2>
+            <p class="modal-desc">Se agregará el siguiente parcial:</p>
+            <div id="nombreParcialPreview" class="preview-parcial">Parcial 1</div>
+            <div id="limiteParcialMsg" class="alerta-limite" style="display:none;">
+                ⚠️ Se ha alcanzado el límite de 3 parciales por materia.
+            </div>
+            <div class="botones-modal">
+                <button type="button" class="btn-cancelar" onclick="cerrarModalParcial()">Cancelar</button>
+                <button type="button" class="btn-guardar" id="btnConfirmarParcial" onclick="confirmarAgregarParcial()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════
+        MODAL: EDITAR PARCIAL
+    ══════════════════════════════════ -->
+    <div id="modalEditarParcial" class="modal">
+        <div class="modal-overlay" onclick="cerrarModalEditarParcial()"></div>
+        <div class="contenedor-modal">
+            <h2>EDITAR PARCIAL</h2>
+            <label class="modal-label">Número del parcial (1–3):</label>
+            <div class="input-parcial-wrapper">
+                <span class="prefijo-parcial">Parcial</span>
+                <input type="number" id="inputEditarParcial" min="1" max="3" placeholder="1">
+            </div>
+            <div class="botones-modal">
+                <button type="button" class="btn-cancelar" onclick="cerrarModalEditarParcial()">Cancelar</button>
+                <button type="button" class="btn-guardar" onclick="confirmarEditarParcial()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+</div><!-- /.grupos-container -->
 
 <script src="{{ url_for('static', filename='js/grupos.js') }}"></script>
 {% endblock %}

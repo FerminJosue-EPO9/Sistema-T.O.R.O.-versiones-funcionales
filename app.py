@@ -937,6 +937,22 @@ def api_crear_materia():
     except Exception as e:
         return jsonify({'exito': False, 'mensaje': str(e)})
 
+@app.route('/api/editar_materia', methods=['POST'])
+def api_editar_materia():
+    data = request.json
+    grupos = leer_grupos()
+    grupos[data['grupo']]['materias'][data['materia']]['nombre'] = data['nombre']
+    escribir_grupos(grupos)
+    return jsonify({'exito': True})
+
+@app.route('/api/editar_parcial', methods=['POST'])
+def api_editar_parcial():
+    data = request.json
+    grupos = leer_grupos()
+    grupos[data['grupo']]['materias'][data['materia']]['parciales'][data['parcial']]['nombre'] = data['nombre']
+    escribir_grupos(grupos)
+    return jsonify({'exito': True})
+
 @app.route('/api/crear_parcial', methods=['POST'])
 def api_crear_parcial():
     data = request.json
