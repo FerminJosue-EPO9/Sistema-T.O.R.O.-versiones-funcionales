@@ -1,4 +1,26 @@
-from flask import jsonify, Flask, current_app, render_template, request, redirect, url_for, session
+import subprocess
+import sys
+import os
+
+def install_requirements():
+    """Instala automáticamente las dependencias desde requirements.txt si no están."""
+    req_file = os.path.join(os.path.dirname(__file__), 'requirements.txt')
+    if not os.path.exists(req_file):
+        print("⚠️  No se encuentra requirements.txt. Por favor, créalo con 'pip freeze > requirements.txt'")
+        sys.exit(1)
+    print("📦 Instalando dependencias faltantes...")
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", req_file])
+    print("✅ Dependencias instaladas correctamente.")
+
+# Intentar importar Flask (la primera dependencia crítica)
+try:
+    from flask import Flask, jsonify, current_app, render_template, request, redirect, url_for, session
+except ImportError:
+    print("Flask no está instalado. Procediendo a instalar todas las dependencias...")
+    install_requirements()
+    # Después de instalar, reintentamos el import
+    from flask import Flask, jsonify, current_app, render_template, request, redirect, url_for, session
+
 from routes.actividades import actividades_bp
 import os
 import re
