@@ -59,7 +59,7 @@
                     </div>
                 </div>
                 <div id="sub-options-quiz" class="sub-options-container" style="display: none;">
-                    <h3 style="text-align:center; color:#161C5F; margin: 20px 0;">¿Qué tipo de cuestionario?</h3>
+                    <h3 class="subtitulo-cuestionario">¿Qué tipo de cuestionario?</h3>
                     <div class="cards-grid">
                         <div class="plantilla-card" onclick="seleccionarFV(this)">
                             <img src="{{ url_for('static', filename='img/imagenesActividades/FV.png') }}" alt="FV">
@@ -72,17 +72,16 @@
                         </div>
                     </div>
                 </div>
-                <p id="error-msg" style="color: red; display: none; text-align: center; margin-top:15px;">Por favor
-                    selecciona una actividad.</p>
+                <p id="error-msg" class="error-msg-step1">Por favor selecciona una actividad.</p>
             </div>
 
             <div class="step-pane" id="step-2">
                 <h4 class="step-title">Configurar Actividad</h4>
 
-                <!-- Contenedor para Completar Camino -->
                 <div id="camino-form-container" style="display: none;">
-                    <div class="encabezado-panel">
+                    <div class="encabezado-panel encabezado-con-boton">
                         Completar camino
+                        <button type="button" class="boton-info btn-info-header" id="botonInfoCamino">?</button>
                     </div>
                     <div class="contenido-panel">
                         <div class="tabla-palabra-pregunta">
@@ -95,46 +94,41 @@
                             <button type="button" class="btn-add-question" id="agregar-fila-camino"
                                 onclick="agregarFilaCamino()">+ Agregar pregunta (Máx. 15)</button>
                         </div>
-                        <button type="button" class="boton-info" id="botonInfoCamino">i</button>
                     </div>
                 </div>
 
-                <!-- Contenedor para Falso/Verdadero -->
                 <div id="fv-form-container" style="display: none;">
-                    <div class="encabezado-panel">
+                    <div class="encabezado-panel encabezado-con-boton">
                         Cuestionario de Falso/Verdadero
+                        <button type="button" class="boton-info btn-info-header" id="botonInfoFV">?</button>
                     </div>
                     <div class="contenido-panel">
                         <div id="fv-questions-container"></div>
                         <div class="estado-vacio" id="estado-vacio-fv">
-                            <p class="mensaje-vacio">Aún no has agregado ninguna pregunta. ¡Comienza creando la primera!
-                            </p>
+                            <p class="mensaje-vacio">Aún no has agregado ninguna pregunta. ¡Comienza creando la primera!</p>
                         </div>
-                        <button class="boton-agregar" id="botonAgregarPreguntaFV">+ Agregar pregunta</button>
-                        <button class="boton-info" id="botonInfoFV">i</button>
+                        <button type="button" class="boton-agregar" id="botonAgregarPreguntaFV">+ Agregar pregunta</button>
                     </div>
                 </div>
 
-                <!-- Contenedor para Opción Múltiple -->
                 <div id="opcion-multiple-container" style="display: none;">
-                    <div class="encabezado-panel">
+                    <div class="encabezado-panel encabezado-con-boton">
                         Cuestionario de Opción Múltiple
+                        <button type="button" class="boton-info btn-info-header" id="botonInfoMC">?</button>
                     </div>
                     <div class="contenido-panel">
                         <div id="mc-questions-container"></div>
                         <div class="estado-vacio" id="estado-vacio-mc">
-                            <p class="mensaje-vacio">Aún no has agregado ninguna pregunta. ¡Comienza creando la primera!
-                            </p>
+                            <p class="mensaje-vacio">Aún no has agregado ninguna pregunta. ¡Comienza creando la primera!</p>
                         </div>
-                        <button class="boton-agregar" id="botonAgregarPreguntaMC">+ Agregar pregunta</button>
-                        <button class="boton-info" id="botonInfoMC">i</button>
+                        <button type="button" class="boton-agregar" id="botonAgregarPreguntaMC">+ Agregar pregunta</button>
                     </div>
                 </div>
 
-                <!-- Contenedor para Sopa de Letras -->
                 <div id="sopa-form-container" style="display: none;">
-                    <div class="encabezado-panel">
+                    <div class="encabezado-panel encabezado-con-boton">
                         Sopa de Letras
+                        <button type="button" class="boton-info btn-info-header" id="botonInfoSopa">?</button>
                     </div>
                     <div class="contenido-panel">
                         <div class="tabla-palabra-pregunta">
@@ -147,7 +141,6 @@
                             <button type="button" class="btn-add-question" id="agregar-fila-sopa"
                                 onclick="agregarFilaSopa()">+ Agregar palabra (Máx. 15)</button>
                         </div>
-                        <button type="button" class="boton-info" id="botonInfoSopa">i</button>
                     </div>
                 </div>
             </div>
@@ -682,8 +675,8 @@
             <div class="fila-edicion" style="flex-direction: column; align-items: stretch;">
                 <input type="text" class="entrada-pregunta" placeholder="Escribe el enunciado" style="width:100%;">
                 <div class="opciones-container" data-opciones-count="2"></div>
-                <div class="acciones-pregunta" style="justify-content: space-between;">
-                    <button type="button" class="btn-add-option" style="background-color: #33743A; color:white; border:none; padding:5px 10px; border-radius:8px;">+ Agregar opción</button>
+                <div class="acciones-pregunta" style="justify-content: flex-end; gap: 15px;">
+                    <button type="button" class="btn-add-option">+ Agregar opción</button>
                     <button type="button" class="boton-guardar">Guardar pregunta</button>
                 </div>
             </div>
@@ -849,10 +842,10 @@
                 <div class="opciones-container" data-opciones-count="${opcionesAntiguas.length}">
                     ${opcionesHtml}
                 </div>
-                <div class="acciones-pregunta" style="justify-content: space-between;">
-                    <button type="button" class="btn-add-option" style="background-color: #33743A; color:white; border:none; padding:5px 10px; border-radius:8px;">+ Agregar opción</button>
-                    <button type="button" class="boton-guardar">Guardar pregunta</button>
-                </div>
+                    <div class="acciones-pregunta" style="justify-content: flex-end; gap: 15px;">
+                        <button type="button" class="btn-add-option">+ Agregar opción</button>
+                        <button type="button" class="boton-guardar">Guardar pregunta</button>
+                    </div>
             </div>
         `;
 
