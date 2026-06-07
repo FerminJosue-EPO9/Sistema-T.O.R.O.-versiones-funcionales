@@ -386,19 +386,24 @@ body {
 }
 
 .btn-add-question {
-    width: 100%;
-    padding: 15px;
-    background: #fff;
-    border: 2px dashed #161C5F;
-    color: #161C5F;
-    border-radius: 10px;
+    width: fit-content;
+    padding: 12px 24px;
+    background-color: #33743A;   /* ← color base */
+    border: none;
+    color: white;
     font-weight: bold;
     cursor: pointer;
-    transition: 0.3s;
+    border-radius: 8px;
+    margin-top: 15px;
+    display: block;
+    margin-left: auto;
+    margin-right: 0;
+    transition: all 0.3s ease;
 }
 
 .btn-add-question:hover {
-    background: #f0f2ff;
+    background-color: #295e2e;   /* ← más oscuro al hover */
+    transform: translateY(-1px);
 }
 
 .btn-delete-q {
@@ -579,22 +584,6 @@ body {
     transform: scale(1.1);
 }
 
-.btn-add-question {
-    width: 100%;
-    padding: 12px;
-    background: #eef2f7;
-    border: 2px dashed #052672;
-    color: #052672;
-    font-weight: bold;
-    cursor: pointer;
-    border-radius: 8px;
-    margin-top: 15px;
-}
-
-.btn-add-question:hover {
-    background: #e0e7ff;
-}
-
 .opt-row {
     display: flex;
     align-items: center;
@@ -662,17 +651,7 @@ body {
     background-color: #c82333;
 }
 
-#agregar-fila-camino {
-    background-color: #28a745 !important;
-    border: none !important;
-    color: white !important;
-    font-weight: bold;
-    transition: background 0.2s;
-}
 
-#agregar-fila-camino:hover {
-    background-color: #218838 !important;
-}
 
 #agregar-fila-camino:disabled {
     background-color: #6c757d !important;
@@ -843,22 +822,6 @@ input:checked+.fv-slider:before {
     transform: scale(1.1);
 }
 
-.btn-add-question {
-    width: 100%;
-    padding: 12px;
-    background: #eef2f7;
-    border: 2px dashed #052672;
-    color: #052672;
-    font-weight: bold;
-    cursor: pointer;
-    border-radius: 8px;
-    margin-top: 15px;
-}
-
-.btn-add-question:hover {
-    background: #e0e7ff;
-}
-
 .opt-row {
     display: flex;
     align-items: center;
@@ -924,22 +887,6 @@ input:checked+.fv-slider:before {
 
 .btn-eliminar-fila:hover {
     background-color: #c82333;
-}
-
-#agregar-fila-camino,
-#agregar-pregunta-fv,
-#agregar-fila-sopa {
-    background-color: #28a745 !important;
-    border: none !important;
-    color: white !important;
-    font-weight: bold;
-    transition: background 0.2s;
-}
-
-#agregar-fila-camino:hover,
-#agregar-pregunta-fv:hover,
-#agregar-fila-sopa:hover {
-    background-color: #218838 !important;
 }
 
 #agregar-fila-camino:disabled,
@@ -1097,19 +1044,12 @@ input:checked+.fv-slider:before {
 .encabezado-panel {
     background-color: #171C52;
     color: white;
-    padding: 15px 20px;
+    padding: 8px 20px;
     font-size: 1.8rem;
     font-weight: bold;
     border-radius: 8px 8px 0 0;
     margin-bottom: 20px;
-}
-
-.contenido-panel {
-    position: relative;
-    min-height: 400px;
-    background: #f9f9f9;
-    border-radius: 0 0 8px 8px;
-    padding: 20px;
+    line-height: 1.2; 
 }
 
 .estado-vacio {
@@ -1128,8 +1068,11 @@ input:checked+.fv-slider:before {
     font-size: 1rem;
     cursor: pointer;
     transition: 0.3s;
-    margin-top: 20px;
-    display: inline-block;
+    margin-top: auto;          /* empuja el botón hacia el fondo */
+    margin-left: auto;         /* lo alinea a la derecha */
+    margin-right: 0;
+    width: fit-content;
+    display: block;
 }
 
 .boton-agregar:hover {
@@ -1176,9 +1119,11 @@ input:checked+.fv-slider:before {
 
 .acciones-pregunta {
     display: flex;
+    justify-content: flex-end;  /* ← cambia de flex-start a flex-end */
     gap: 15px;
-    justify-content: flex-end;
     align-items: center;
+    flex-wrap: wrap;
+    margin-top: 10px;
 }
 
 .contenedor-toggle {
@@ -1394,12 +1339,19 @@ input:checked+.deslizador:before {
     }
 }
 
-/* Ajustes para contenedor fv-form-container */
+/* 1. Elimina el padding del contenedor principal de F/V */
 #fv-form-container {
     background: white;
     border-radius: 12px;
-    padding: 20px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    padding: 0;   /* ← antes era 20px, ahora 0 */
+}
+
+/* 2. Aplica el mismo padding interno que en Opción Múltiple */
+#fv-form-container .contenido-panel {
+    background-color: #ffffff;   /* opcional, para mantener coherencia */
+    padding: 20px;               /* ← igual que en #opcion-multiple-container .contenido-panel */
 }
 
 .boton-info {
@@ -1433,32 +1385,11 @@ input:checked+.deslizador:before {
     margin-bottom: 20px;
 }
 
-.contenido-panel {
-    position: relative;
-    min-height: 400px;
-    background: #f9f9f9;
-    border-radius: 0 0 8px 8px;
-    padding: 20px;
-}
-
 .estado-vacio {
     text-align: center;
     color: #8A8A8A;
     font-size: 1.2rem;
     margin: 40px auto;
-}
-
-.boton-agregar {
-    background-color: #33743A;
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: 0.3s;
-    margin-top: 20px;
-    display: inline-block;
 }
 
 .boton-agregar:hover {
@@ -1733,14 +1664,6 @@ input:checked+.deslizador:before {
     }
 }
 
-/* Ajustes para contenedor fv-form-container */
-#fv-form-container {
-    background: white;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
 .boton-info {
     background-color: #0C3A7D;
     color: white;
@@ -1813,13 +1736,86 @@ input:checked+.deslizador:before {
 /*Tarjetas blancas de fondo para los elementos de las actividades*/
 
 /* Estilos para paneles de configuración */
-#camino-form-container .contenido-panel,
-#opcion-multiple-container .contenido-panel,
-#fv-form-container .contenido-panel,
-#sopa-form-container .contenido-panel {
-    background-color: #ffffff;
+#camino-form-container,
+#opcion-multiple-container,
+#sopa-form-container {
+    background: white;
     border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    margin-top: 0;
+    padding: 0;               /* el padding ya lo tiene .contenido-panel */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;        /* para que el borde redondeado también se aplique al header */
+}
+
+.encabezado-con-boton {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;              /* espacio entre texto y botón */
+}
+
+.btn-info-header {
+    background: transparent;
+    border: 2px solid white;
+    border-radius: 50%;
+    color: white;
+    font-weight: bold;
+    font-size: 1rem;      /* letra más pequeña */
+    width: 32px;            /* círculo de 20px */
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    line-height: 1;
+    padding: 0;
+    margin: 0;              /* elimina margen extra */
+}
+
+.btn-info-header:hover {
+    transform: scale(1.05);
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.error-msg-step1 {
+    color: red;
+    display: none;
+    text-align: center;
+    margin-top: 15px;
+}
+
+.subtitulo-cuestionario {
+    text-align: center;
+    color: #161C5F;
+    margin: 20px 0;
+}
+
+/* Estilo para el botón "Agregar opción" (mismo tamaño que "Guardar pregunta") */
+.btn-add-option {
+    background-color: #33743A;
+    color: white;
+    border: none;
+    padding: 10px 20px;   /* mismo padding que .boton-guardar */
+    font-size: 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+    display: inline-block;
+    line-height: normal;
+}
+
+.btn-add-option:hover {
+    background-color: #295e2e;    /* mismo color al pasar el ratón */
+    transform: translateY(-1px);   /* ligero levantamiento (opcional, pero lo hace más dinámico) */
+}
+
+/* Si tu .boton-guardar ya tiene ese hover, lo igualamos */
+.boton-guardar:hover {
+    background-color: #0f1240;
+    transform: translateY(-1px);
+}
+
+/* Separación entre tarjetas de preguntas en F/V */
+#fv-questions-container .tarjeta-pregunta {
+    margin-bottom: 20px;
 }
