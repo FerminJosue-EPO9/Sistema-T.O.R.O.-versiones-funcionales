@@ -1106,43 +1106,118 @@ def vista_progresiones():
 # RUTAS DE CALIFICACIONES Y ESTADÍSTICAS (adaptadas parcialmente)
 # ==========================================
 
+# ----------------------------------------------------------
+# FUNCIONES DE PERSISTENCIA DE CALIFICACIONES
+# ----------------------------------------------------------
+
+def _ruta_calificaciones():
+    return os.path.join(app.root_path, 'data', 'calificaciones.json')
+
+def leer_calificaciones():
+    ruta = _ruta_calificaciones()
+    if not os.path.exists(ruta):
+        return {}
+    try:
+        with open(ruta, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+def escribir_calificaciones(data):
+    ruta = _ruta_calificaciones()
+    os.makedirs(os.path.dirname(ruta), exist_ok=True)
+    with open(ruta, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+# ----------------------------------------------------------
+# RUTAS DE CALIFICACIONES
+# ----------------------------------------------------------
+
 @app.route('/calificaciones')
 def vista_calificaciones():
+    # BUG CORREGIDO: se pasaban solo strings (nombres) en lugar de objetos completos.
+    # El template necesita grupo.materias y parcial.nombre para generar los links.
     grupos = leer_grupos()
-    lista_grupos = [g['nombre'] for g in grupos]
     return render_template('calificaciones/calificaciones_grupos.html',
-                           grupos=lista_grupos,
+                           grupos=grupos,
                            active_page='calificaciones')
 
-@app.route('/calificaciones/<string:nombre_grupo>')
-def vista_tabla_calificaciones(nombre_grupo):
+@app.route('/calificaciones/<string:nombre_grupo>/<string:nombre_materia>/<string:nombre_parcial>')
+def vista_tabla_calificaciones(nombre_grupo, nombre_materia, nombre_parcial):
+    # BUG CORREGIDO: la URL anterior solo tenía /<nombre_grupo>, sin materia ni parcial.
+    # El JS necesita context_key, nombre_grupo, nombre_materia, nombre_parcial y alumnos
+    # inyectados como JSON en el tag <script id="datos-servidor">.
+    # La versión anterior pasaba info_grupo/columnas/filas que el template actual no usa.
     grupos = leer_grupos()
-    grupo = next((g for g in grupos if g['nombre'] == nombre_grupo), None)
+    grupo  = next((g for g in grupos if g['nombre'] == nombre_grupo), None)
     if not grupo:
-        return render_template('calificaciones/calificaciones.html',
-                               info_grupo={'nombre': nombre_grupo, 'materia': 'Sin Materias', 'parcial': '-'},
-                               columnas=[], filas=[], estructura={},
-                               sel_materia='', sel_parcial='', active_page='calificaciones')
-    estructura = {}
-    for materia in grupo['materias']:
-        estructura[materia['nombre']] = [p['nombre'] for p in materia['parciales']]
-    materia_sel = request.args.get('materia')
-    parcial_sel = request.args.get('parcial')
-    if not materia_sel or materia_sel not in estructura:
-        materia_sel = list(estructura.keys())[0] if estructura else ''
-        parcial_sel = estructura[materia_sel][0] if estructura and estructura[materia_sel] else '-'
-    # Aquí deberías implementar la lectura de calificaciones desde algún archivo, pero por ahora dejamos vacío
-    columnas = []
-    filas = []
-    info = {'nombre': nombre_grupo, 'materia': materia_sel, 'parcial': parcial_sel}
-    return render_template('calificaciones/calificaciones.html',
-                           info_grupo=info,
-                           columnas=columnas,
-                           filas=filas,
-                           estructura=estructura,
-                           sel_materia=materia_sel,
-                           sel_parcial=parcial_sel,
-                           active_page='calificaciones')
+        return redirect(url_for('vista_calificaciones'))
+
+    idx_grupo   = next((i for i, g in enumerate(grupos)            if g['nombre']  == nombre_grupo),  0)
+    idx_materia = next((i for i, m in enumerate(grupo['materias']) if m['nombre']  == nombre_materia), 0)
+    materia_obj = grupo['materias'][idx_materia] if grupo['materias'] else None
+    idx_parcial = next(
+        (i for i, p in enumerate(materia_obj['parciales']) if p['nombre'] == nombre_parcial), 0
+    ) if materia_obj else 0
+
+    context_key    = f"{idx_grupo}|{idx_materia}|{idx_parcial}"
+    todas          = leer_calificaciones()
+    calificaciones = todas.get(context_key, [])
+
+    return render_template(
+        'calificaciones/calificaciones.html',
+        nombre_grupo=nombre_grupo,
+        nombre_materia=nombre_materia,
+        nombre_parcial=nombre_parcial,
+        alumnos=grupo.get('alumnos', []),
+        calificaciones_json=json.dumps(calificaciones, ensure_ascii=False),
+        context_key=context_key,
+        active_page='calificaciones'
+    )
+
+@app.route('/api/calificaciones/guardar', methods=['POST'])
+def api_guardar_calificaciones():
+    """Recibe calificaciones desde el JS y las persiste fusionando intentos."""
+    try:
+        data        = request.get_json()
+        context_key = data.get('context_key', '')
+        nuevas      = data.get('calificaciones', [])
+        if not context_key:
+            return jsonify({'success': False, 'error': 'context_key requerido'}), 400
+        todas      = leer_calificaciones()
+        existentes = todas.get(context_key, [])
+        for nueva in nuevas:
+            mat = nueva.get('matricula')
+            lec = nueva.get('idLeccion')
+            idx = next((i for i, e in enumerate(existentes)
+                        if e.get('matricula') == mat and e.get('idLeccion') == lec), -1)
+            if idx != -1:
+                for ni in nueva.get('intentos', []):
+                    if not any(i['numero'] == ni['numero'] for i in existentes[idx].get('intentos', [])):
+                        existentes[idx].setdefault('intentos', []).append(ni)
+                existentes[idx]['intentos'].sort(key=lambda i: i['numero'])
+            else:
+                existentes.append(nueva)
+        todas[context_key] = existentes
+        escribir_calificaciones(todas)
+        return jsonify({'success': True, 'guardados': len(nuevas)})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/calificaciones/limpiar', methods=['POST'])
+def api_limpiar_calificaciones():
+    """Borra todas las calificaciones de un context_key."""
+    try:
+        data        = request.get_json()
+        context_key = data.get('context_key', '')
+        if not context_key:
+            return jsonify({'success': False, 'error': 'context_key requerido'}), 400
+        todas = leer_calificaciones()
+        todas.pop(context_key, None)
+        escribir_calificaciones(todas)
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/estadisticas')
 def vista_estadisticas():
