@@ -24,6 +24,33 @@
     --transicion:   0.25s ease;
 }
 
+#breadcrumbTexto {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 20px 0 20px 30px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #052672;
+}
+
+#breadcrumbTexto .breadcrumb-link,
+#breadcrumbTexto .breadcrumb-separator,
+#breadcrumbTexto .breadcrumb-active {
+    color: #052672;
+}
+
+#breadcrumbTexto .breadcrumb-link {
+    cursor: pointer;
+    text-decoration: none;
+}
+
+#breadcrumbTexto .breadcrumb-link:hover {
+    text-decoration: underline;
+}
+
+#breadcrumbTexto .breadcrumb-active {
+    font-weight: 600;
+}
+
 /* ─── Contenedor principal ─── */
 .grupos-container {
     width: 100%;
@@ -53,7 +80,7 @@
     letter-spacing: 1.5px;
     margin-bottom: 20px;
     text-transform: uppercase;
-    align-self: flex-start;
+    text-align: center;
 }
 
 /* ─── Sección default ─── */
@@ -79,7 +106,7 @@
     margin-bottom: 28px;
 }
 .ejemplo-txt p {
-    font-family: 'Courier New', monospace;
+
     font-size: 0.88rem;
     color: #444;
     margin: 4px 0;

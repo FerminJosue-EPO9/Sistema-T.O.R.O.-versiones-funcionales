@@ -24,6 +24,33 @@
     --transicion:   0.25s ease;
 }
 
+#breadcrumbTexto {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 20px 0 20px 30px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #052672;
+}
+
+#breadcrumbTexto .breadcrumb-link,
+#breadcrumbTexto .breadcrumb-separator,
+#breadcrumbTexto .breadcrumb-active {
+    color: #052672;
+}
+
+#breadcrumbTexto .breadcrumb-link {
+    cursor: pointer;
+    text-decoration: none;
+}
+
+#breadcrumbTexto .breadcrumb-link:hover {
+    text-decoration: underline;
+}
+
+#breadcrumbTexto .breadcrumb-active {
+    font-weight: 600;
+}
+
 /* ── CONTENEDOR PRINCIPAL ────────────────────────── */
 .progresiones-container {
     display: flex;
@@ -45,7 +72,7 @@
     letter-spacing: 1.5px;
     text-transform: uppercase;
     margin-bottom: 28px;
-    align-self: flex-start;
+    text-align: center;
 }
 
 /* ── SECCIONES ───────────────────────────────────── */
@@ -135,7 +162,7 @@
     height: 34px;
     border-radius: 45%;
     border: 3px solid rgba(255,255,255,0.35);
-    background-color: rgba(255,255,255,0.12);
+    background-color: #DEE7EB;
     font-size: 16px;
     display: inline-flex;
     align-items: center;
