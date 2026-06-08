@@ -3,24 +3,36 @@
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='grupos.css') }}">
 
+<div id="breadcrumbTexto"></div>
+
 <div class="grupos-container">
 
     <!-- ══════════════════════════════════
         SECCIÓN DEFAULT (sin grupos)
     ══════════════════════════════════ -->
     <section id="seccionDefault" class="seccion activa">
-        <h2>GRUPOS</h2>
-        <p class="subtitulo">Aún no hay ningún grupo registrado.</p>
-        <p class="instruccion">Formato correcto para el archivo <strong>.txt</strong> de alumnos:</p>
-        <div class="ejemplo-txt">
-            <p>2026001|Juan Carlos|García López</p>
-            <p>2026002|Valentina|Morales Torres</p>
-            <p>2026003|Luis Fernando|Hernández Ruiz</p>
-            <p>2026004|María Fernanda|Cruz Sánchez</p>
-            <p>2026005|José Ángel|Ramírez Pérez</p>
-        </div>
-        <button id="primer-grupo" onclick="abrirModal()">+ Crear mi primer grupo</button>
-    </section>
+    <h2>GRUPOS</h2>
+
+    <p class="subtitulo">Aún no hay ningún grupo registrado.</p>
+    <p class="instruccion">Para crear un grupo necesitará crear un archivo txt y cargarlo después.</p>
+    <p class="instruccion">Formato correcto para subir un txt de alumnos:</p>
+    <p class="instruccion"><strong>Matrícula del alumno | Nombre/s | Apellidos</strong></p>
+
+    <div class="ejemplo-txt">
+        <p>2026001|Juan Carlos|García López</p>
+        <p>2026002|Valentina|Morales Torres</p>
+        <p>2026003|Luis Fernando|Hernández Ruiz</p>
+        <p>2026004|María Fernanda|Cruz Sánchez</p>
+        <p>2026005|José Ángel|Ramírez Pérez</p>
+        <p>2026006|Ana Sofía|Vargas Castillo</p>
+        <p>2026007|Carlos Eduardo|Mendoza Flores</p>
+        <p>2026008|Daniela|Ortiz Navarro</p>
+        <p>2026009|Miguel Ángel|Salinas Romero</p>
+        <p>2026010|Paola Andrea|Reyes Montoya</p>
+    </div>
+
+    <button id="primer-grupo" onclick="abrirModal()">+ Crear mi primer grupo</button>
+</section>
 
     <!-- ══════════════════════════════════
         SECCIÓN LISTA DE GRUPOS

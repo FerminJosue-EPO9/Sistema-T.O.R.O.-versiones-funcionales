@@ -15,8 +15,38 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
     contexto = JSON.parse(raw);
+    actualizarBreadcrumb();
     cargarProgresiones();
 });
+
+function actualizarBreadcrumb() {
+    const breadcrumb = document.getElementById("breadcrumbTexto");
+    if (!breadcrumb || !contexto) return;
+
+    const { grupo, materia, parcial } = contexto;
+
+    fetch(`/api/obtener_progresiones?grupo=${grupo}&materia=${materia}&parcial=${parcial}`)
+        .then(() => fetch("/api/grupos"))
+        .then(r => r.json())
+        .then(grupos => {
+
+            const nombreGrupo =
+                grupos[grupo]?.nombre || `Grupo ${grupo + 1}`;
+
+            const nombreMateria =
+                grupos[grupo]?.materias?.[materia]?.nombre || "Materia";
+
+            const nombreParcial =
+                grupos[grupo]?.materias?.[materia]?.parciales?.[parcial]?.nombre || "Parcial";
+
+            breadcrumb.innerHTML = `
+                Grupos > ${nombreGrupo} > ${nombreMateria} > ${nombreParcial}
+            `;
+        })
+        .catch(() => {
+            breadcrumb.textContent = "Grupos > Progresiones";
+        });
+}
 
 // ==========================================
 // CARGAR PROGRESIONES DESDE EL BACKEND
@@ -57,10 +87,10 @@ function mostrarSeccionConProgresiones(progresiones) {
                 </div>
                 <div class="acciones-progresion">
                     <button class="btn-editar-prog" onclick="editarProgresion(${idx})" title="Editar">
-                        <img src="/static/img/editar_boton.png" alt="Editar">
+                        <img src="/static/img/editar2.png" alt="Editar">
                     </button>
                     <button class="btn-eliminar-prog" onclick="eliminarProgresion(${idx})" title="Eliminar">
-                        <img src="/static/img/cerrar_boton.png" alt="Eliminar">
+                        <img src="/static/img/eliminar2.png" alt="Eliminar">
                     </button>
                 </div>
             </div>

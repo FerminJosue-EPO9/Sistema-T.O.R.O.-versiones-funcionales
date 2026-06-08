@@ -22,6 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const inputArchivo = document.getElementById("archivoAlumnos");
     if (inputArchivo) inputArchivo.addEventListener("change", validarArchivo);
 
+    actualizarBreadcrumb(["Grupos"]);
     cargarYElegirSeccion();
 });
 
@@ -49,15 +50,24 @@ function mostrarSeccion(id) {
     if (sec) sec.classList.add("activa");
 }
 
+function actualizarBreadcrumb(ruta) {
+    const bc = document.getElementById("breadcrumbTexto");
+    if (!bc) return;
+
+    bc.innerHTML = ruta.join(" > ");
+}
+
 // ══════════════════════════════════════════════════════════
 //  MODAL NUEVO GRUPO
 // ══════════════════════════════════════════════════════════
 function abrirModal() {
     limpiarModalGrupo();
+    actualizarBreadcrumb(["Grupos", "Crear grupo"]);   
     _abrirModal("modalNuevoGrupo");
 }
 
 function cerrarModal() {
+    actualizarBreadcrumb(["Grupos"]);
     _cerrarModal("modalNuevoGrupo");
     limpiarModalGrupo();
 }
@@ -294,12 +304,14 @@ function ejecutarEliminar() {
 }
 
 function cerrarModalEliminar() {
+    actualizarBreadcrumb(["Grupos"]);
     _cerrarModal("modalEliminar");
     accionEliminar = null;
 }
 
 // ── Eliminar grupo ──
 function abrirModalEliminarGrupo(idxGrupo) {
+    actualizarBreadcrumb(["Grupos", "Eliminar grupo"]);
     _abrirModalEliminar(
         "ELIMINAR GRUPO",
         "¿Estás seguro de que deseas eliminar este grupo?",
@@ -326,6 +338,7 @@ function ejecutarEliminarGrupo(idxGrupo) {
 
 // ── Eliminar materia ──
 function abrirModalEliminarMateria(idxGrupo, idxMateria) {
+    actualizarBreadcrumb(["Grupos", "Eliminar materia"]);
     _abrirModalEliminar(
         "ELIMINAR MATERIA",
         "¿Estás seguro de que deseas eliminar esta materia?",
@@ -366,6 +379,7 @@ function abrirModalEliminarParcial(idxGrupo, idxMateria, idxParcial) {
         <div class="chip-info">${materia}</div>
         <div class="chip-info">${nombreParcial}</div>
     `;
+    actualizarBreadcrumb(["Grupos", "Eliminar parcial"]);
     _abrirModalEliminar(
         "ELIMINAR PARCIAL",
         "¿Estás seguro que quieres eliminar este parcial?",
@@ -396,11 +410,13 @@ function ejecutarEliminarParcial(idxGrupo, idxMateria, idxParcial) {
 function agregarMateria(idxGrupo) {
     grupoMateriaTarget = { idxGrupo };
     document.getElementById("inputNombreMateria").value = "";
+    actualizarBreadcrumb(["Grupos", "Agregar materia"]);
     _abrirModal("modalAgregarMateria");
     setTimeout(() => document.getElementById("inputNombreMateria").focus(), 120);
 }
 
 function cerrarModalMateria() {
+    actualizarBreadcrumb(["Grupos"]);
     _cerrarModal("modalAgregarMateria");
     grupoMateriaTarget = null;
 }
@@ -430,11 +446,13 @@ function editarMateria(idxGrupo, idxMateria) {
     const nombreActual = span ? span.textContent.trim() : "";
     editarMateriaTarget = { idxGrupo, idxMateria };
     document.getElementById("inputEditarMateria").value = nombreActual;
+    actualizarBreadcrumb(["Grupos", "Editar materia"]);
     _abrirModal("modalEditarMateria");
     setTimeout(() => document.getElementById("inputEditarMateria").focus(), 120);
 }
 
 function cerrarModalEditarMateria() {
+    actualizarBreadcrumb(["Grupos"]);
     _cerrarModal("modalEditarMateria");
     editarMateriaTarget = null;
 }
@@ -489,11 +507,12 @@ function agregarParcial(idxGrupo, idxMateria) {
         limite.style.display    = "none";
         btnConf.disabled        = false;
     }
-
+    actualizarBreadcrumb(["Grupos", "Agregar parcial"]);
     _abrirModal("modalAgregarParcial");
 }
 
 function cerrarModalParcial() {
+    actualizarBreadcrumb(["Grupos"]);
     _cerrarModal("modalAgregarParcial");
     parcialTarget = null;
 }
@@ -527,11 +546,13 @@ function editarParcial(idxGrupo, idxMateria, idxParcial) {
     const input  = document.getElementById("inputEditarParcial");
     input.value  = numero;
     input.style.border = "";
+    actualizarBreadcrumb(["Grupos", "Editar parcial"]);
     _abrirModal("modalEditarParcial");
     setTimeout(() => input.focus(), 120);
 }
 
 function cerrarModalEditarParcial() {
+    actualizarBreadcrumb(["Grupos"]);
     _cerrarModal("modalEditarParcial");
     editarParcialTarget = null;
 }
