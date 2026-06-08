@@ -1,0 +1,23 @@
+{
+  "1|0|1": [
+    {
+      "nombreArchivo": "REP_L-005_273627 (2).toro",
+      "idLeccion": "L-005",
+      "grupo": "A",
+      "materia": "Ingeniería de software",
+      "parcial": "2",
+      "progresion": "Lenguajes de programación",
+      "actividad": "Sopa de letras de Lenguajes de Programación",
+      "estudiante": "fer",
+      "matricula": "273627",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "7/6/2026, 17:19:34"
+        }
+      ],
+      "promedioFinal": "10.00"
+    }
+  ]
+}

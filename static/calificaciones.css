@@ -179,3 +179,21 @@
     .nota-media { color: #f57c00; font-weight: 700; background: #fff3e0; padding: 4px 8px; border-radius: 4px; }
     .nota-baja { color: #c62828; font-weight: 700; background: #ffebee; padding: 4px 8px; border-radius: 4px; }
     .promedio-cell { font-weight: 800; color: #052672; }
+
+/* ===================================== */
+/* VISTA TABLA CALIFICACIONES           */
+/* ===================================== */
+
+.contenido-principal-cal {
+    padding: 30px 40px;
+    overflow-y: auto;
+    height: 100%;
+}
+
+.status-message {
+    padding: 10px 16px;
+    border-radius: 8px;
+    margin-bottom: 14px;
+    font-size: 14px;
+    font-weight: 500;
+}

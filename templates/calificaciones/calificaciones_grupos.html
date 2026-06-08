@@ -1,34 +1,64 @@
 {% extends "layout.html" %}
 
 {% block content %}
-
 <link rel="stylesheet" href="{{ url_for('static', filename='calificaciones_grupos.css') }}">
 
-<div class="selector-shell">
-    
-    <div class="header-selector">
-        <div class="breadcrumbs">Grupos > Calificaciones</div>
-        <div class="page-title">Calificaciones</div>
+<div class="cal-grupos-shell">
+
+    <div class="cal-page-header">
+        <div class="cal-breadcrumb">Calificaciones</div>
+        <h1 class="cal-titulo">Calificaciones</h1>
     </div>
 
-    <div class="main-card">
-        <div class="card-header-bar">
-            Grupos Existentes
-        </div>
-
-        <div class="group-list-container">
-            {% if grupos %}
-                {% for grupo in grupos %}
-                <a href="{{ url_for('vista_tabla_calificaciones', nombre_grupo=grupo) }}" class="group-item">
-                    <span>{{ grupo }}</span> <span class="arrow-icon">➔</span>
-                </a>
-                {% endfor %}
-            {% else %}
-                <div style="padding: 20px; text-align: center; color: #888;">
-                    No hay grupos creados en la carpeta data/GRUPOS
+    {% if grupos %}
+        <div class="cal-banner">Grupos Existentes</div>
+        <div id="contenedor-dinamico">
+            {% for grupo in grupos %}
+            <div class="grupo-tarjeta">
+                <div class="grupo-encabezado">
+                    <h2 class="grupo-nombre">Grupo {{ grupo.nombre }}</h2>
                 </div>
-            {% endif %}
+                <div class="grupo-cuerpo-multiple">
+                    {% if not grupo.materias %}
+                        <div class="materia-item">
+                            <p class="grupo-materia sin-dato">Este grupo no posee materias asignadas.</p>
+                        </div>
+                    {% else %}
+                        {% for materia in grupo.materias %}
+                        <div class="materia-item">
+                            <div class="materia-info">
+                                <p class="grupo-materia"><strong>{{ materia.nombre }}</strong></p>
+                            </div>
+                            <div class="grupo-parciales">
+                                {% if not materia.parciales %}
+                                    <span class="sin-dato">Sin parciales creados</span>
+                                {% else %}
+                                    {% for parcial in materia.parciales %}
+                                    <a href="{{ url_for('vista_tabla_calificaciones',
+                                                nombre_grupo=grupo.nombre,
+                                                nombre_materia=materia.nombre,
+                                                nombre_parcial=parcial.nombre) }}"
+                                       class="parcial-texto">
+                                        {{ parcial.nombre }}
+                                    </a>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
         </div>
-    </div>
+
+    {% else %}
+        <div class="cal-empty-state">
+            <p>No hay grupos registrados.</p>
+            <p>Registra uno para subir las calificaciones.</p>
+            <a href="{{ url_for('vista_grupos') }}" class="btn-redirect">Ir a Grupos</a>
+        </div>
+    {% endif %}
+
 </div>
 {% endblock %}
