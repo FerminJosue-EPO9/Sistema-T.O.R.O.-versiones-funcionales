@@ -80,6 +80,11 @@ let materiaSeleccionada = '';
 let parcialSeleccionado = '';
 
 let ultimoTipoGrafico = '';
+
+let leccionSeleccionada = '';
+
+let alumnoSeleccionado = '';
+let matriculaSeleccionada = '';
 // ==========================================
 // 3. LÓGICA DE CÁLCULO DE GRAFICOS
 // ==========================================
@@ -328,8 +333,9 @@ function cargarListaAlumnos(grupoId) {
 
         btn.onclick = () =>
             verGraficoAlumno(
-                `${alumno.nombres} ${alumno.apellidos}`
-            );
+            alumno.matricula,
+            `${alumno.nombres} ${alumno.apellidos}`
+        );
 
         contenedor.appendChild(btn);
     });
@@ -462,7 +468,7 @@ function seleccionarGrupo(id, descripcion) {
 }
 
 // Elección de tarjetas
-function cargarGrafico(tipo) {
+async function cargarGrafico(tipo) {
     ocultarTodasLasVistas();
     
     if (tipo === 'alumno') {
@@ -475,29 +481,43 @@ function cargarGrafico(tipo) {
         
     } else if (tipo === 'grupo') {
         // El promedio general va directo a la gráfica y nadamás
-        mostrarCanvasFinal('grupo', 'Promedio General', 'Promedio del Grupo');
+        await mostrarCanvasFinal('grupo', 'Promedio General', 'Promedio del Grupo');
         actualizarMigas(4, 'Grupos'); 
     }
 }
 
 // Funciones intermedias para ir a la gráfica final
-function verGraficoAlumno(nombreAlumno) {
+async function verGraficoAlumno(matricula, nombreAlumno) {
+    alumnoSeleccionado = matricula;
+    matriculaSeleccionada = matricula;
+
     vistaListaAlumnos.style.display = 'none';
-    actualizarMigas(5, 'Alumnos', nombreAlumno);
-    mostrarCanvasFinal('alumno', nombreAlumno, 'Materia: Programación Estructurada');
+    actualizarMigas(5, 'Alumnos', nombreAlumno); 
+    await mostrarCanvasFinal( 'alumno', nombreAlumno,'' );
 }
 
-function verGraficoActividad(nombreActividad, tema) {
+async function verGraficoActividad(idLeccion, progresion) {
+    leccionSeleccionada = idLeccion;
     vistaTablaActividades.style.display = 'none';
-    actualizarMigas(5, 'Lecciones', nombreActividad);
-    mostrarCanvasFinal('actividad', nombreActividad, `Tema: ${tema}`);
+
+    actualizarMigas(
+        5,
+        'Lecciones',
+        idLeccion
+    );
+
+    await mostrarCanvasFinal(
+        'actividad',
+        idLeccion,
+        progresion
+    );
 }
 
 // ==========================================
 // 6. GRÁFICAS CON LA LIBRERÍA DE CHART.JS
 // ==========================================
 
-function mostrarCanvasFinal(tipo, nombreDato, detalleExtra) {
+async function mostrarCanvasFinal(tipo, nombreDato, detalleExtra) {
     ultimoTipoGrafico = tipo;
     vistaGraficos.style.display = 'flex'; // Muestra el contenedor del gráfico
     
@@ -505,24 +525,44 @@ function mostrarCanvasFinal(tipo, nombreDato, detalleExtra) {
     const elGrupo = document.getElementById('grafico-grupo');
     if(elGrupo) elGrupo.innerText = `Grupo ${grupoSeleccionado}`;
     
-    const labelTipo = document.getElementById('label-tipo-dato');
     const spanDato = document.getElementById('grafico-dato-especifico');
     const spanMateria = document.getElementById('grafico-materia');
     if (spanMateria) {
-        spanMateria.innerText =
-            materiaSeleccionada;
+        spanMateria.innerText = materiaSeleccionada;
     }
 
     // Cambia las etiquetas según lo que se está viendo
     if (tipo === 'alumno') {
-        labelTipo.innerText = "Alumno:";
-        spanDato.innerText = nombreDato;
+        spanDato.innerHTML = `
+            <p>
+                <span class="etiqueta-negrita">Alumno:</span>
+                ${nombreDato}
+            </p>
+
+            <p>
+                <span class="etiqueta-negrita">Matrícula:</span>
+                ${matriculaSeleccionada}
+            </p>
+        `;
     } else if (tipo === 'actividad') {
-        labelTipo.innerText = "Actividad:";
-        spanDato.innerText = `${nombreDato} - ${detalleExtra}`;
-    } else {
-        labelTipo.innerText = "Vista:";
-        spanDato.innerText = "General del Grupo";
+        spanDato.innerHTML = `
+            <p>
+                <span class="etiqueta-negrita">Actividad:</span>
+                ${nombreDato}
+            </p>
+
+            <p>
+                <span class="etiqueta-negrita">Progresión:</span>
+                ${detalleExtra}
+            </p>
+        `;
+    }else {
+        spanDato.innerHTML = `
+            <p>
+                <span class="etiqueta-negrita">Vista:</span>
+                General del Grupo
+            </p>
+        `;
     }
 
     // Prepara el lienzo o canvas
@@ -537,44 +577,129 @@ function mostrarCanvasFinal(tipo, nombreDato, detalleExtra) {
     
     // OPCIÓN A: GRÁFICO DE ALUMNO
     if (tipo === 'alumno') {
-        // Busca las notas del alumno y si no existen usa las definidas
-        const notasRaw = dbSimulada.datosBrutos.notasAlumnos[nombreDato] || dbSimulada.datosBrutos.notasAlumnos['default'];
-        
-        datosGrafico = notasRaw; // Los datos son las calificaciones tal cual
-        // Las etiquetas de abajo son Lec 1, Lec 2, Lec 3...
-        etiquetas = notasRaw.map((_, i) => `Lec ${i + 1}`);
-        
-        colorBarra = '#3E8E41'; // Verde Orión
+        const registros =
+            await obtenerCalificacionesReales();
+
+        const registrosAlumno =
+            registros.filter(
+                r => r.matricula === alumnoSeleccionado
+            );
+
+        registrosAlumno.sort((a, b) =>
+            a.idLeccion.localeCompare(b.idLeccion)
+        );
+
+        etiquetas =
+            registrosAlumno.map(
+                r => r.idLeccion
+            );
+
+        datosGrafico =
+            registrosAlumno.map(
+                r => parseFloat(r.promedioFinal || 0)
+            );
+
+        colorBarra = '#3E8E41';
+
         labelDataset = 'Calificación';
-        textoEjeX = 'Número de Lección';
+
+        textoEjeX = 'Lección';
+
         textoEjeY = 'Calificación';
-
-    // OPCIÓN B: GRÁFICO DE ACTIVIDAD 
     } else if (tipo === 'actividad') {
-        // Obtiene todas las notas revueltas del grupo
-        const notasDesordenadas = dbSimulada.datosBrutos.notasActividad;
-        
-        // Usa la función para contar cuántos alumnos sacaron cada nota
-        datosGrafico = calcularFrecuenciaNotas(notasDesordenadas);
-        
-        etiquetas = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
-        colorBarra = '#77ab83'; 
-        labelDataset = 'Cantidad de alumnos';
-        textoEjeX = 'Calificación';
-        textoEjeY = 'Cantidad de alumnos';
+        const registros =
+            await obtenerCalificacionesReales();
 
-    // OPCIÓN C: PROMEDIO DEL GRUPO
-    } else { 
-        // Obtiene la matriz de todas las notas
-        const matriz = dbSimulada.datosBrutos.notasPorLeccionGrupo;
-        
-        // Calcula el promedio por lección
-        datosGrafico = procesarPromediosGrupo(matriz);
-        
-        etiquetas = matriz.map((_, i) => `Lec ${i + 1}`);
+        const registrosLeccion =
+            registros.filter(
+                r => r.idLeccion === leccionSeleccionada
+            );
+
+        const frecuencias =
+            Array(11).fill(0);
+
+        registrosLeccion.forEach(registro => {
+
+            const promedio =
+                Math.round(
+                    parseFloat(
+                        registro.promedioFinal || 0
+                    )
+                );
+
+            if (promedio >= 0 && promedio <= 10) {
+                frecuencias[promedio]++;
+            }
+        });
+
+        datosGrafico = frecuencias;
+
+        etiquetas = [
+            '0','1','2','3','4',
+            '5','6','7','8','9','10'
+        ];
+
+        colorBarra = '#77ab83';
+
+        labelDataset ='Cantidad de alumnos';
+
+        textoEjeX = 'Calificación';
+
+        textoEjeY = 'Cantidad de alumnos';
+    } else {
+
+        const registros =
+            await obtenerCalificacionesReales();
+
+        const promediosPorLeccion = {};
+
+        registros.forEach(registro => {
+
+            const idLeccion =
+                registro.idLeccion;
+
+            const promedio =
+                parseFloat(
+                    registro.promedioFinal || 0
+                );
+
+            if (!promediosPorLeccion[idLeccion]) {
+
+                promediosPorLeccion[idLeccion] = [];
+            }
+
+            promediosPorLeccion[idLeccion].push(
+                promedio
+            );
+        });
+
+        etiquetas =
+            Object.keys(promediosPorLeccion);
+
+        datosGrafico =
+            etiquetas.map(leccion => {
+
+                const notas =
+                    promediosPorLeccion[leccion];
+
+                const suma =
+                    notas.reduce(
+                        (a, b) => a + b,
+                        0
+                    );
+
+                return (
+                    suma /
+                    notas.length
+                ).toFixed(2);
+            });
+
         colorBarra = '#5a6eec';
+
         labelDataset = 'Promedio';
-        textoEjeX = 'Número de Lección';
+
+        textoEjeX = 'Lección';
+
         textoEjeY = 'Promedio';
     }
 
