@@ -1,0 +1,47 @@
+=== [ENTIDAD: PROFESOR] ===
+NOMBRE_COMPLETO: mm mm
+
+=== [ENTIDAD: LECCIÓN] ===
+ID_LECCION: L-024
+TITULO: Prueba
+TEMA: Introducción
+PARCIAL: Parcial 2
+MATERIA: Ingenieria de Software
+GRUPO: A
+
+--- [RELACIÓN: INCORPORA -> CONTENIDO MULTIMEDIA] ---
+CONTENIDO_1: Plantilla_Opcion_multiple_y_vista_de_actividad_VoF.mp4 | Tipo: Video | Ruta: Plantilla_Opcion_multiple_y_vista_de_actividad_VoF.mp4
+
+=== [ENTIDAD: ACTIVIDAD] ===
+ID_ACTIVIDAD: ACT-027
+NOMBRE_ACTIVIDAD: OPCION MULTIPLE ACTIVIDAD
+INTENTOS_MAX: 3
+TIEMPO_ESTIMADO: 67 minutos
+FECHA_VENCIMIENTO: 2026-05-25
+
+--- [RELACIÓN: GENERA <- PLANTILLA: OPCIÓN MÚLTIPLE] ---
+
+PREGUNTA_1:
+ENUNCIADO: Dispositivos que almacenan energía a largo plazo
+OPCIONES: Bateria | Transistores | Botones | Leds
+RESPUESTA_CORRECTA: A
+
+PREGUNTA_2:
+ENUNCIADO: Dispositivos que permiten el paso de corriente
+OPCIONES: Chips | Botones | Transistores | Bateria
+RESPUESTA_CORRECTA: B
+
+PREGUNTA_3:
+ENUNCIADO: Dispositivos que se cargan y descargan miles de veces por segundo
+OPCIONES: Chips | Botones | Transistores | Bateria
+RESPUESTA_CORRECTA: C
+
+PREGUNTA_4:
+ENUNCIADO: Dispositivos que brillan al energizarse
+OPCIONES: Chips | Botones | Transistores | Leds
+RESPUESTA_CORRECTA: D
+
+PREGUNTA_5:
+ENUNCIADO: Dispositivo que distribuyen la lógica de un sistema
+OPCIONES: Transistores | Botones | Chips | Leds
+RESPUESTA_CORRECTA: C

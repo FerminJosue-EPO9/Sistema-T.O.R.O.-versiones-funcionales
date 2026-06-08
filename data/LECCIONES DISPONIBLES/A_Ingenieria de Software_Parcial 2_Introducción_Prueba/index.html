@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>SISTEMA TORO - Opción Múltiple</title>
+    <style>
+        :root { --primary: #008080; --bg: #f4f4f9; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 20px; margin: 0; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .tabs { display: flex; margin-bottom: 20px; border-bottom: 2px solid #ddd; }
+        .tab { padding: 10px 20px; cursor: pointer; background: #eee; border-radius: 8px 8px 0 0; margin-right: 5px; font-weight: bold; }
+        .tab.active { background: var(--primary); color: white; }
+        .section { display: none; }
+        .section.active { display: block; }
+        .book-pages { display: flex; flex-direction: column; gap: 30px; background: #f8f8f8; padding: 20px; border-radius: 8px; overflow-y: auto; }
+        .book-pages img, .book-pages video, .book-pages iframe, .book-pages audio {
+            width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .book-pages iframe { height: 70vh; min-height: 400px; border: 1px solid #ccc; }
+        .book-pages audio { display: block; margin: 0.5rem 0; background: #f0f0f0; border-radius: 30px; height: 54px; }
+        .question-card { border: 1px solid #ddd; padding: 20px; margin: 15px 0; border-radius: 8px; background: #fff; }
+        .question-card h3 { margin-top: 0; }
+        .opcion { margin: 8px 0; display: block; }
+        .btn { background: var(--primary); color: white; border: none; padding: 15px; width: 100%; cursor: pointer; border-radius: 5px; font-size: 1.1em; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>Prueba</h1>
+        <p><strong>Tema:</strong> Introducción</p>
+    </header>
+    <div class="tabs">
+        <div class="tab active" onclick="showTab('lectura')">CONTENIDO</div>
+        <div class="tab" onclick="showTab('quiz')">ACTIVIDAD</div>
+    </div>
+    <div id="lectura" class="section active">
+        <h3>Lee y revisa el siguiente material antes de responder:</h3>
+        <div class="book-pages">
+            <video controls><source src="Plantilla_Opcion_multiple_y_vista_de_actividad_VoF.mp4" type="video/mp4">Tu navegador no soporta video.</video>
+        </div>
+    </div>
+    <div id="quiz" class="section">
+        <form id="quizForm">
+            
+        <div class="question-card">
+            <h3>1. Dispositivos que almacenan energía a largo plazo</h3>
+            <label class="opcion"><input type="radio" name="p1" value="A"> Bateria</label><br><label class="opcion"><input type="radio" name="p1" value="B"> Transistores</label><br><label class="opcion"><input type="radio" name="p1" value="C"> Botones</label><br><label class="opcion"><input type="radio" name="p1" value="D"> Leds</label><br>
+        </div>
+        
+        <div class="question-card">
+            <h3>2. Dispositivos que permiten el paso de corriente</h3>
+            <label class="opcion"><input type="radio" name="p2" value="A"> Chips</label><br><label class="opcion"><input type="radio" name="p2" value="B"> Botones</label><br><label class="opcion"><input type="radio" name="p2" value="C"> Transistores</label><br><label class="opcion"><input type="radio" name="p2" value="D"> Bateria</label><br>
+        </div>
+        
+        <div class="question-card">
+            <h3>3. Dispositivos que se cargan y descargan miles de veces por segundo</h3>
+            <label class="opcion"><input type="radio" name="p3" value="A"> Chips</label><br><label class="opcion"><input type="radio" name="p3" value="B"> Botones</label><br><label class="opcion"><input type="radio" name="p3" value="C"> Transistores</label><br><label class="opcion"><input type="radio" name="p3" value="D"> Bateria</label><br>
+        </div>
+        
+        <div class="question-card">
+            <h3>4. Dispositivos que brillan al energizarse</h3>
+            <label class="opcion"><input type="radio" name="p4" value="A"> Chips</label><br><label class="opcion"><input type="radio" name="p4" value="B"> Botones</label><br><label class="opcion"><input type="radio" name="p4" value="C"> Transistores</label><br><label class="opcion"><input type="radio" name="p4" value="D"> Leds</label><br>
+        </div>
+        
+        <div class="question-card">
+            <h3>5. Dispositivo que distribuyen la lógica de un sistema</h3>
+            <label class="opcion"><input type="radio" name="p5" value="A"> Transistores</label><br><label class="opcion"><input type="radio" name="p5" value="B"> Botones</label><br><label class="opcion"><input type="radio" name="p5" value="C"> Chips</label><br><label class="opcion"><input type="radio" name="p5" value="D"> Leds</label><br>
+        </div>
+        
+            <button type="button" class="btn" onclick="alert('Calificación guardada en el sistema.')">Finalizar Actividad</button>
+        </form>
+    </div>
+</div>
+<script>
+    function showTab(id) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        event.currentTarget.classList.add('active');
+    }
+</script>
+</body>
+</html>

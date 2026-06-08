@@ -1,38 +1,32 @@
 ID_ACTIVIDAD: ACT-027
+ID_PLANTILLA: P003
 FECHA: 31/05/2026
 NOMBRE: OPCION MULTIPLE ACTIVIDAD
-LECCION: General
-INTENTOS: 3
-TIEMPO: 67 minutos
-PONDERACION: 12
-FECHA_VENCIMIENTO: 2026-05-25
-ID_PLANTILLA: P003
 ---
-
-Pregunta 1: Dispositivos que almacenan energía a largo plazo
-Opciones: Bateria | Transistores | Botones | Leds
-Respuesta correcta: A
-
-Pregunta 2: Dispositivos que permiten el paso de corriente
-Opciones: Chips | Botones | Transistores | Bateria
-Respuesta correcta: B
-
-Pregunta 3: Dispositivos que se cargan y descargan miles de veces por segundo
-Opciones: Chips | Botones | Transistores | Bateria
-Respuesta correcta: C
-
-Pregunta 4: Dispositivos que brillan al energizarse
-Opciones: Chips | Botones | Transistores | Leds
-Respuesta correcta: D
-
-Pregunta 5: Dispositivo que distribuyen la lógica de un sistema
-Opciones: Transistores | Botones | Chips | Leds
-Respuesta correcta: C
-
-@@@ Métricas: 
-tipo:opcion-multiple
-nombre:OPCION MULTIPLE ACTIVIDAD
-intentos:3
-tiempo:67
-fecha-vencimiento:2026-05-25
+Pregunta 1: Dispositivos que almacenan energía a largo plazo
+Opciones: Bateria | Transistores | Botones | Leds
+Respuesta correcta: A
+
+Pregunta 2: Dispositivos que permiten el paso de corriente
+Opciones: Chips | Botones | Transistores | Bateria
+Respuesta correcta: B
+
+Pregunta 3: Dispositivos que se cargan y descargan miles de veces por segundo
+Opciones: Chips | Botones | Transistores | Bateria
+Respuesta correcta: C
+
+Pregunta 4: Dispositivos que brillan al energizarse
+Opciones: Chips | Botones | Transistores | Leds
+Respuesta correcta: D
+
+Pregunta 5: Dispositivo que distribuyen la lógica de un sistema
+Opciones: Transistores | Botones | Chips | Leds
+Respuesta correcta: C
+
+@@@ Métricas: 
+tipo:opcion-multiple
+nombre:OPCION MULTIPLE ACTIVIDAD
+intentos:3
+tiempo:67
+fecha-vencimiento:2026-05-25
 ponderacion:12

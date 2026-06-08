@@ -1226,6 +1226,45 @@ def vista_estadisticas():
 @app.route('/api/estadisticas/grupos')
 def api_estadisticas_grupos():
     return jsonify(leer_grupos())
+
+@app.route('/api/estadisticas/calificaciones')
+def api_estadisticas_calificaciones():
+
+    grupo = request.args.get('grupo')
+    materia = request.args.get('materia')
+    parcial = request.args.get('parcial')
+
+    datos = leer_calificaciones()
+
+    resultados = []
+
+    numero_parcial = parcial.replace('Parcial ', '')
+
+    def normalizar(texto):
+        return (
+            str(texto)
+            .lower()
+            .replace('á', 'a')
+            .replace('é', 'e')
+            .replace('í', 'i')
+            .replace('ó', 'o')
+            .replace('ú', 'u')
+            .strip()
+        )
+
+    for contexto, registros in datos.items():
+
+        for registro in registros:
+
+            if (
+                normalizar(registro.get('grupo')) == normalizar(grupo)
+                and normalizar(registro.get('materia')) == normalizar(materia)
+                and str(registro.get('parcial')) == numero_parcial
+            ):
+                resultados.append(registro)
+
+    return jsonify(resultados)
+
 # NOTA: Las rutas de progresiones, api/lecciones_disponibles, api/asignar_leccion no se incluyen aquí.
 # Si las necesitas, deberás adaptarlas al nuevo sistema.
 

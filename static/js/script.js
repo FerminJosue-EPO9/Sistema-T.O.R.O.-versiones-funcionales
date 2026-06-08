@@ -163,6 +163,16 @@ async function cargarListaGrupos() {
     window.gruposReales = grupos;
 }
 
+async function obtenerCalificacionesReales() {
+
+    const respuesta =
+        await fetch(
+            `/api/estadisticas/calificaciones?grupo=${encodeURIComponent(grupoSeleccionado)}&materia=${encodeURIComponent(materiaSeleccionada)}&parcial=${encodeURIComponent(parcialSeleccionado)}`
+        );
+
+    return await respuesta.json();
+}
+
 function cargarListaMaterias(grupoId) {
 
     const contenedor =
@@ -262,7 +272,7 @@ function cargarListaParciales() {
     });
 }
 
-function seleccionarParcial(nombreParcial) {
+async function seleccionarParcial(nombreParcial) {
     parcialSeleccionado = nombreParcial;
 
     ocultarTodasLasVistas();
@@ -270,7 +280,7 @@ function seleccionarParcial(nombreParcial) {
     vistaSeleccion.style.display = 'flex';
 
     cargarListaAlumnos(grupoSeleccionado);
-    cargarListaActividades(grupoSeleccionado);
+    await cargarListaActividades();
 console.log("Parcial seleccionado:", parcialSeleccionado);
     actualizarMigas(3);
 }
@@ -326,23 +336,55 @@ function cargarListaAlumnos(grupoId) {
 }
 
 // Carga la tabla de actividades
-function cargarListaActividades(grupoId) {
-    const tbody = document.querySelector('.tabla-actividades tbody');
-    tbody.innerHTML = ''; // Limpia la tabla
-    const actividades = dbSimulada.actividades[grupoId] || [];
+async function cargarListaActividades() {
 
-    // Creo una fila tr por cada tarea
-    actividades.forEach(act => {
+    const tbody =
+        document.querySelector('.tabla-actividades tbody');
+
+    tbody.innerHTML = '';
+
+    const registros =
+        await obtenerCalificacionesReales();
+
+    console.log("Grupo:", grupoSeleccionado);
+console.log("Materia:", materiaSeleccionada);
+console.log("Parcial:", parcialSeleccionado);
+console.log("Registros:", registros);
+
+    const actividadesUnicas = {};
+
+    registros.forEach(registro => {
+
+        if (!actividadesUnicas[registro.idLeccion]) {
+
+            actividadesUnicas[registro.idLeccion] = {
+
+                idLeccion: registro.idLeccion,
+                actividad: registro.actividad,
+                progresion: registro.progresion
+
+            };
+        }
+    });
+
+    Object.values(actividadesUnicas).forEach(act => {
+
         const fila = document.createElement('tr');
-        // Al dar clic vemos la estadística de esa tarea específica
-        fila.onclick = () => verGraficoActividad(act.tipo, act.tema);
-        
-        // Relleno las celdas td
-        fila.innerHTML = `<td>${act.tipo}</td><td>${act.tema}</td><td>${act.fecha}</td><td>${act.valor} pts</td>`;
+
+        fila.onclick = () =>
+            verGraficoActividad(
+                act.idLeccion,
+                act.progresion
+            );
+
+        fila.innerHTML = `
+            <td>${act.idLeccion}</td>
+            <td>${act.progresion}</td>
+        `;
+
         tbody.appendChild(fila);
     });
 }
-
 // ==========================================
 // 5. NAVEGACIÓN 
 // ==========================================
