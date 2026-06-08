@@ -67,6 +67,8 @@ const vistaSeleccion = document.getElementById('vista-seleccion');     // Las 3 
 const vistaGraficos = document.getElementById('vista-graficos');       // Donde sale la gráfica
 const vistaListaAlumnos = document.getElementById('vista-lista-alumnos'); // Lista de nombres
 const vistaTablaActividades = document.getElementById('vista-tabla-actividades'); // Tabla de tareas
+const vistaMaterias = document.getElementById('vista-materias');
+const vistaParciales = document.getElementById('vista-parciales');
 const migasPan = document.getElementById('migas-pan');                 // El texto de arriba (Estadísticas > Grupo...), breadcrumbs
 
 // Variables de memoria para saber qué está pasando
@@ -74,6 +76,10 @@ let graficoActual = null;     // Aquí se guarda la gráfica para poder borrarla
 let grupoSeleccionado = '';   // Para recordar en qué grupo di clic (ej: "401-A")
 let descripcionGrupo = '';    // Para recordar el nombre (ej: "4to Semestre")
 
+let materiaSeleccionada = '';
+let parcialSeleccionado = '';
+
+let ultimoTipoGrafico = '';
 // ==========================================
 // 3. LÓGICA DE CÁLCULO DE GRAFICOS
 // ==========================================
@@ -141,9 +147,108 @@ function cargarListaGrupos() {
     });
 }
 
-// Carga los botones con los nombres de los alumnos
+function cargarListaMaterias(grupoId) {
+
+    const contenedor =
+        document.getElementById('lista-materias');
+
+    contenedor.innerHTML = '';
+
+    const materias = [
+        'Ingeniería de Software',
+        'Programación Estructurada',
+        'Base de Datos'
+    ];
+
+    materias.forEach(materia => {
+
+        const btn = document.createElement('button');
+
+        btn.className = 'btn-alumno';
+        btn.innerText = materia;
+
+        btn.onclick = () => seleccionarMateria(materia);
+
+        contenedor.appendChild(btn);
+    });
+}
+
+function ocultarTodasLasVistas() {
+
+    vistaGrupos.style.display = 'none';
+    vistaMaterias.style.display = 'none';
+    vistaParciales.style.display = 'none';
+    vistaSeleccion.style.display = 'none';
+    vistaListaAlumnos.style.display = 'none';
+    vistaTablaActividades.style.display = 'none';
+    vistaGraficos.style.display = 'none';
+
+}
+
+function seleccionarMateria(nombreMateria) {
+    materiaSeleccionada = nombreMateria;
+    ocultarTodasLasVistas();
+
+    vistaParciales.style.display = 'flex';
+    cargarListaParciales();
+    actualizarMigas(2);
+}
+
+function cargarListaParciales() {
+
+    const contenedor =
+        document.getElementById('lista-parciales');
+
+    contenedor.innerHTML = '';
+
+    const parciales = [
+        'Parcial 1',
+        'Parcial 2',
+        'Parcial 3'
+    ];
+
+    parciales.forEach(parcial => {
+
+        const btn = document.createElement('button');
+
+        btn.className = 'btn-alumno';
+        btn.innerText = parcial;
+
+        btn.onclick = () => seleccionarParcial(parcial);
+
+        contenedor.appendChild(btn);
+    });
+}
+
+function seleccionarParcial(nombreParcial) {
+    parcialSeleccionado = nombreParcial;
+
+    ocultarTodasLasVistas();
+
+    vistaSeleccion.style.display = 'flex';
+
+    cargarListaAlumnos(grupoSeleccionado);
+    cargarListaActividades(grupoSeleccionado);
+console.log("Parcial seleccionado:", parcialSeleccionado);
+    actualizarMigas(3);
+}
+function regresarAMaterias() {
+    ocultarTodasLasVistas();
+    vistaMaterias.style.display = 'flex';
+    parcialSeleccionado = '';
+    actualizarMigas(1);
+}
+
+function regresarAParciales() {
+    ocultarTodasLasVistas();
+    vistaParciales.style.display = 'flex';
+    actualizarMigas(2);
+}
+
+// Carga los botones con 
+// los nombres de los alumnos
 function cargarListaAlumnos(grupoId) {
-    const contenedor = document.querySelector('.grid-alumnos');
+    const contenedor = document.getElementById('lista-alumnos')
     contenedor.innerHTML = ''; // Limpia lo anterior
     
     // Busca los alumnos de ESE grupo específico
@@ -195,75 +300,100 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Controla el texto de arriba Estadísticas > 401-A > Alumnos
 function actualizarMigas(nivel, seccion = '', detalle = '') {
-    // Nivel 0 empieza con "Estadísticas"
     let ruta = `<span class="enlace-miga" onclick="irInicio()">Estadísticas</span>`;
-    
-    // Nivel 1 el Grupo seleccionado
-    if (nivel >= 1) ruta += ` > <span class="enlace-miga" onclick="regresarASeleccion()">${grupoSeleccionado}</span>`;
-    
-    // Nivel 2 la sección
+
+    // NIVEL 1 -> Grupo
+    if (nivel >= 1) {
+        ruta += ` > <span class="enlace-miga"
+                    onclick="regresarAGrupos()">
+                    ${grupoSeleccionado}
+                  </span>`;
+    }
+
+    // NIVEL 2 -> Materia
     if (nivel >= 2) {
-        if (nivel === 3) {
-            // Si estamos viendo la gráfica, la palabra "Alumnos" se vuelve un enlace para volver atrás
-            const funcionVolver = seccion === 'Alumnos' ? "volverALista('alumno')" : "volverALista('actividad')";
-            ruta += ` > <span class="enlace-miga" onclick="${funcionVolver}">${seccion}</span>`;
+        ruta += ` > <span class="enlace-miga"
+                    onclick="regresarAMaterias()">
+                    ${materiaSeleccionada}
+                  </span>`;
+    }
+
+    // NIVEL 3 -> Parcial
+    if (nivel >= 3) {
+        ruta += ` > <span class="enlace-miga"
+                    onclick="regresarAParciales()">
+                    ${parcialSeleccionado}
+                </span>`;
+    }
+
+    // NIVEL 4 -> Lecciones / Alumnos / Grupos
+    if (nivel >= 4) {
+        if (nivel === 5) {
+            const funcionVolver =
+                seccion === 'Alumnos'
+                    ? "volverALista('alumno')"
+                    : "volverALista('actividad')";
+
+            ruta += ` > <span class="enlace-miga"
+                        onclick="${funcionVolver}">
+                        ${seccion}
+                      </span>`;
+
         } else {
-            // Si solo estamos en la lista, es texto normal
-            ruta += ` > <span class="enlace-miga">${seccion}</span>`;
+            ruta += ` > <span class="enlace-miga">
+                        ${seccion}
+                      </span>`;
         }
     }
-    
-    // Nivel 3 el nombre final del alumno o tarea
-    if (nivel === 3) ruta += ` > <span>${detalle}</span>`;
-    
-    migasPan.innerHTML = ruta; // Pinta el texto en el HTML
+
+    // NIVEL 5 -> Nombre del alumno o actividad
+    if (nivel === 5) {
+        ruta += ` > <span>${detalle}</span>`;
+    }
+
+    migasPan.innerHTML = ruta;
 }
 
 // Eleccíón de grupo
 function seleccionarGrupo(id, descripcion) {
     grupoSeleccionado = id;
     descripcionGrupo = descripcion;
-    
-    // Oculta lista de grupos --> Muestra tarjetas de colores
-    vistaGrupos.style.display = 'none';
-    vistaSeleccion.style.display = 'flex';
-    
-    // Aprovecha para cargar las listas de alumnos y tareas de este grupo
-    cargarListaAlumnos(id);
-    cargarListaActividades(id);
-    
-    actualizarMigas(1); 
+
+    ocultarTodasLasVistas();
+    vistaMaterias.style.display = 'flex';
+    cargarListaMaterias(id);
+    actualizarMigas(1);
 }
 
 // Elección de tarjetas
 function cargarGrafico(tipo) {
-    vistaSeleccion.style.display = 'none'; // Oculta selección
+    ocultarTodasLasVistas();
     
     if (tipo === 'alumno') {
         vistaListaAlumnos.style.display = 'flex'; // Muestra lista alumnos
-        actualizarMigas(2, 'Alumnos');
+        actualizarMigas(4, 'Alumnos');
         
     } else if (tipo === 'actividad') {
         vistaTablaActividades.style.display = 'flex'; // Muestra tabla tareas
-        actualizarMigas(2, 'Lecciones');
+        actualizarMigas(4, 'Lecciones');
         
     } else if (tipo === 'grupo') {
         // El promedio general va directo a la gráfica y nadamás
         mostrarCanvasFinal('grupo', 'Promedio General', 'Promedio del Grupo');
-        actualizarMigas(2, 'Grupos'); 
+        actualizarMigas(4, 'Grupos'); 
     }
 }
 
 // Funciones intermedias para ir a la gráfica final
 function verGraficoAlumno(nombreAlumno) {
     vistaListaAlumnos.style.display = 'none';
-    actualizarMigas(3, 'Alumnos', nombreAlumno);
+    actualizarMigas(5, 'Alumnos', nombreAlumno);
     mostrarCanvasFinal('alumno', nombreAlumno, 'Materia: Programación Estructurada');
 }
 
 function verGraficoActividad(nombreActividad, tema) {
     vistaTablaActividades.style.display = 'none';
-    actualizarMigas(3, 'Lecciones', nombreActividad);
+    actualizarMigas(5, 'Lecciones', nombreActividad);
     mostrarCanvasFinal('actividad', nombreActividad, `Tema: ${tema}`);
 }
 
@@ -272,6 +402,7 @@ function verGraficoActividad(nombreActividad, tema) {
 // ==========================================
 
 function mostrarCanvasFinal(tipo, nombreDato, detalleExtra) {
+    ultimoTipoGrafico = tipo;
     vistaGraficos.style.display = 'flex'; // Muestra el contenedor del gráfico
     
     //Llena los textos informativos arriba del gráfico
@@ -391,39 +522,76 @@ function mostrarCanvasFinal(tipo, nombreDato, detalleExtra) {
 
 // Funcionalidad de los todos los botones de atrás y regresar
 function regresarASeleccion() {
-    vistaListaAlumnos.style.display = 'none';
-    vistaTablaActividades.style.display = 'none';
-    vistaGraficos.style.display = 'none'; 
+    ocultarTodasLasVistas();
     vistaSeleccion.style.display = 'flex';
-    actualizarMigas(1);
+    actualizarMigas(3);
 }
 
 // Botón "Atrás" en la lista de gupos
 function regresarAGrupos() {
-    vistaSeleccion.style.display = 'none'; // Oculta colores
-    vistaGrupos.style.display = 'flex';    // Muestra grupos iniciales
+    vistaSeleccion.style.display = 'none';
+    vistaMaterias.style.display = 'none';
+    vistaParciales.style.display = 'none';
+    vistaListaAlumnos.style.display = 'none';
+    vistaTablaActividades.style.display = 'none';
+    vistaGraficos.style.display = 'none';
 
-    // Limpia selección
+    vistaGrupos.style.display = 'flex';
+
     grupoSeleccionado = '';
     descripcionGrupo = '';
+    materiaSeleccionada = '';
+    parcialSeleccionado = '';
 
-    actualizarMigas(0); 
+    actualizarMigas(0);
 }
 
+function regresarDesdeMaterias() {
+    ocultarTodasLasVistas();
+    vistaGrupos.style.display = 'flex';
+    materiaSeleccionada = '';
+    parcialSeleccionado = '';
+    actualizarMigas(0);
+}
 // Botón en las migas para volver del gráfico a la lista anterior
 function volverALista(tipo) {
-    vistaGraficos.style.display = 'none';
-    if(graficoActual) graficoActual.destroy(); // Limpia memoria del gráfico
-    
+
+    ocultarTodasLasVistas();
+
+    if(graficoActual) {
+        graficoActual.destroy();
+    }
+
     if (tipo === 'alumno') {
+
         vistaListaAlumnos.style.display = 'flex';
-        actualizarMigas(2, 'Alumnos');
+        actualizarMigas(4, 'Alumnos');
+
     } else {
+
         vistaTablaActividades.style.display = 'flex';
-        actualizarMigas(2, 'Lecciones');
+        actualizarMigas(4, 'Lecciones');
     }
 }
 
 // Atajos para los botones HTML
-function regresar() { regresarASeleccion(); }
+function regresar() {
+
+    if (graficoActual) {
+        graficoActual.destroy();
+    }
+
+    if (ultimoTipoGrafico === 'alumno') {
+
+        volverALista('alumno');
+
+    } else if (ultimoTipoGrafico === 'actividad') {
+
+        volverALista('actividad');
+
+    } else if (ultimoTipoGrafico === 'grupo') {
+
+        regresarASeleccion();
+    }
+}
 function irInicio() { location.reload(); } // Recarga la página completa
