@@ -1223,6 +1223,9 @@ def api_limpiar_calificaciones():
 def vista_estadisticas():
     return render_template('estadisticas/estadisticas.html', active_page='estadisticas')
 
+@app.route('/api/estadisticas/grupos')
+def api_estadisticas_grupos():
+    return jsonify(leer_grupos())
 # NOTA: Las rutas de progresiones, api/lecciones_disponibles, api/asignar_leccion no se incluyen aquí.
 # Si las necesitas, deberás adaptarlas al nuevo sistema.
 

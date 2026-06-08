@@ -122,52 +122,77 @@ function procesarPromediosGrupo(matrizLecciones) {
 // Estas funciones toman los datos de arriba y crean el HTML necesario como botones, tablas, etcétera
 
 //Carga inicial de grupos
-function cargarListaGrupos() {
-    // Busca el contenedor donde van los grupos
-    const contenedor = document.querySelector('.lista-scroll');
-    contenedor.innerHTML = ''; // Lo limpia por si tenía basura
+async function cargarListaGrupos() {
 
-    // -Después aquí se pedirán los datos reales con fetch()
-    const grupos = dbSimulada.grupos; 
-    
-    // Por cada grupo en los datos, crea un cuadrito en la pantalla
+    const contenedor =
+        document.querySelector('.lista-scroll');
+
+    contenedor.innerHTML = '';
+
+    const respuesta =
+        await fetch('/api/estadisticas/grupos');
+
+    const grupos =
+        await respuesta.json();
+
     grupos.forEach(grupo => {
-        const item = document.createElement('div'); // Crea el div
-        item.className = 'item-grupo';              // Pone su clase CSS
-        
-        // Le dice qué hacer cuando le den clic: "Ejecuta seleccionarGrupo enviando mi ID"
-        item.onclick = () => seleccionarGrupo(grupo.id, grupo.nombre);
-        
-        // Rellea el cuadrito con el texto
+
+        const item =
+            document.createElement('div');
+
+        item.className = 'item-grupo';
+
+        item.onclick = () =>
+            seleccionarGrupo(
+                grupo.nombre,
+                grupo.nombre
+            );
+
         item.innerHTML = `
-            <span class="id-grupo">${grupo.id}</span>
-            <span class="desc-grupo">${grupo.nombre}</span>
+            <span class="id-grupo">
+                ${grupo.nombre}
+            </span>
+            <span class="desc-grupo">
+                ${grupo.alumnos.length} alumnos
+            </span>
         `;
-        contenedor.appendChild(item); // Lo pega en la pantalla
+
+        contenedor.appendChild(item);
     });
+
+    window.gruposReales = grupos;
 }
 
 function cargarListaMaterias(grupoId) {
 
     const contenedor =
-        document.getElementById('lista-materias');
+        document.getElementById(
+            'lista-materias'
+        );
 
     contenedor.innerHTML = '';
 
-    const materias = [
-        'Ingeniería de Software',
-        'Programación Estructurada',
-        'Base de Datos'
-    ];
+    const grupo =
+        window.gruposReales.find(
+            g => g.nombre === grupoId
+        );
 
-    materias.forEach(materia => {
+    if (!grupo) return;
 
-        const btn = document.createElement('button');
+    grupo.materias.forEach(materia => {
+
+        const btn =
+            document.createElement('button');
 
         btn.className = 'btn-alumno';
-        btn.innerText = materia;
 
-        btn.onclick = () => seleccionarMateria(materia);
+        btn.innerText =
+            materia.nombre;
+
+        btn.onclick = () =>
+            seleccionarMateria(
+                materia.nombre
+            );
 
         contenedor.appendChild(btn);
     });
@@ -197,24 +222,41 @@ function seleccionarMateria(nombreMateria) {
 function cargarListaParciales() {
 
     const contenedor =
-        document.getElementById('lista-parciales');
+        document.getElementById(
+            'lista-parciales'
+        );
 
     contenedor.innerHTML = '';
 
-    const parciales = [
-        'Parcial 1',
-        'Parcial 2',
-        'Parcial 3'
-    ];
+    const grupo =
+        window.gruposReales.find(
+            g => g.nombre === grupoSeleccionado
+        );
 
-    parciales.forEach(parcial => {
+    if (!grupo) return;
 
-        const btn = document.createElement('button');
+    const materia =
+        grupo.materias.find(
+            m => m.nombre === materiaSeleccionada
+        );
 
-        btn.className = 'btn-alumno';
-        btn.innerText = parcial;
+    if (!materia) return;
 
-        btn.onclick = () => seleccionarParcial(parcial);
+    materia.parciales.forEach(parcial => {
+
+        const btn =
+            document.createElement('button');
+
+        btn.className =
+            'btn-alumno';
+
+        btn.innerText =
+            parcial.nombre;
+
+        btn.onclick = () =>
+            seleccionarParcial(
+                parcial.nombre
+            );
 
         contenedor.appendChild(btn);
     });
@@ -248,25 +290,37 @@ function regresarAParciales() {
 // Carga los botones con 
 // los nombres de los alumnos
 function cargarListaAlumnos(grupoId) {
-    const contenedor = document.getElementById('lista-alumnos')
-    contenedor.innerHTML = ''; // Limpia lo anterior
-    
-    // Busca los alumnos de ESE grupo específico
-    const alumnos = dbSimulada.alumnos[grupoId] || [];
 
-    // Si no encuentra alumnos avisa
-    if(alumnos.length === 0) {
-        contenedor.innerHTML = '<p>No hay alumnos registrados (Simulación).</p>';
-        return;
-    }
+    const contenedor =
+        document.getElementById(
+            'lista-alumnos'
+        );
 
-    // Crea un botón por cada alumno
-    alumnos.forEach(alumno => {
-        const btn = document.createElement('button');
-        btn.className = 'btn-alumno';
-        btn.innerText = alumno.nombre;
-        // Al dar clic, vamos a ver la gráfica personal de este alumno
-        btn.onclick = () => verGraficoAlumno(alumno.nombre); 
+    contenedor.innerHTML = '';
+
+    const grupo =
+        window.gruposReales.find(
+            g => g.nombre === grupoId
+        );
+
+    if (!grupo) return;
+
+    grupo.alumnos.forEach(alumno => {
+
+        const btn =
+            document.createElement('button');
+
+        btn.className =
+            'btn-alumno';
+
+        btn.innerText =
+            `${alumno.nombres} ${alumno.apellidos}`;
+
+        btn.onclick = () =>
+            verGraficoAlumno(
+                `${alumno.nombres} ${alumno.apellidos}`
+            );
+
         contenedor.appendChild(btn);
     });
 }
@@ -411,7 +465,12 @@ function mostrarCanvasFinal(tipo, nombreDato, detalleExtra) {
     
     const labelTipo = document.getElementById('label-tipo-dato');
     const spanDato = document.getElementById('grafico-dato-especifico');
-    
+    const spanMateria = document.getElementById('grafico-materia');
+    if (spanMateria) {
+        spanMateria.innerText =
+            materiaSeleccionada;
+    }
+
     // Cambia las etiquetas según lo que se está viendo
     if (tipo === 'alumno') {
         labelTipo.innerText = "Alumno:";
