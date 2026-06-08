@@ -1,65 +1,6 @@
-// ==========================================
-// 1. ZONA DE DATOS DE PRUEBA
-// ==========================================
-/*  La variable 'dbSimulada' es como una base de datos de prueba. 
-   Se crea para que el sistema funcione ahorita que no tiene conexión 
-   con los datos reales. 
-   Cuando se conecte se borrará se usará la información que llegue desde el servidor
-*/
-const dbSimulada = {
-    // Lista de grupos disponibles (como si vinieran del almacén)
-    grupos: [
-        { id: '401-A', nombre: '4to Semestre' },
-        { id: '604-B', nombre: '6to Semestre' },
-        { id: '202-C', nombre: '2do Semestre' }
-    ],
-    // Lista de alumnos organizados por el ID de su grupo
-    alumnos: {
-        '401-A': [
-            { id: 1, nombre: 'Selina del Mar Cruz Jacinto' },
-            { id: 2, nombre: 'Angel Jharamy Cruz Licea' },
-            { id: 3, nombre: 'Eduardo Garcia Medina' },
-            { id: 4, nombre: 'Genesis Daniela Hernandez' }
-        ],
-        '604-B': [
-            { id: 5, nombre: 'Josue Jimenez Fermin' },
-            { id: 6, nombre: 'Denilson Alexis Rosado' }
-        ]
-    },
-    // Tareas o actividades en cada grupo
-    actividades: {
-        '401-A': [
-            { tipo: 'Crucigrama', tema: 'Condicionales', fecha: '23/03/2026', valor: 10 },
-            { tipo: 'Sopa de letras', tema: 'Archivos', fecha: '24/01/2026', valor: 15 }
-        ]
-    },
-    
-    // PARA LAS GRÁFICAS 
-    // Datos que usarán los cálculos
-    datosBrutos: {
-        
-        // 1. Calificaciones individuales: Una lista de notas por cada lección 
-        notasAlumnos: {
-            'Selina del Mar Cruz Jacinto': [10, 9, 10, 8, 10, 9, 10, 10, 9, 10],
-            'Angel Jharamy Cruz Licea': [8, 7, 9, 6, 8, 8, 7, 9, 8, 9],
-            'default': [7, 6, 7, 8, 6, 7, 8, 6, 7, 8] // Notas genéricas por si el alumno no está en la lista
-        },
-        
-        //Todas las calif
-        notasActividad: [10, 8, 9, 10, 5, 8, 9, 10, 10, 6, 7, 8, 9, 10, 5, 4, 8, 9, 10, 8],
-
-        notasPorLeccionGrupo: [
-            [8, 9, 10, 7, 8],   // Notas de todos los alumnos en la Lección 1
-            [9, 8, 9, 8, 9],    // Lección 2
-            [7, 6, 8, 7, 6],    // Lección 3
-            [10, 10, 9, 10, 9], // Lección 4
-            [8, 8, 7, 8, 8]     // Lección 5
-        ]
-    }
-};
 
 // ==========================================
-// 2. VARIABLES GLOBALES 
+// VARIABLES GLOBALES 
 // ==========================================
 // Aquí guardo las referencias a las cajas (divs) del HTML para no buscarlas a cada rato
 const vistaGrupos = document.getElementById('vista-grupos');           // La pantalla inicial
@@ -139,6 +80,22 @@ async function cargarListaGrupos() {
 
     const grupos =
         await respuesta.json();
+
+    if (grupos.length === 0) {
+
+        contenedor.innerHTML = `
+            <div class="cal-empty-state">
+                <p>No hay grupos registrados.</p>
+                <p>Registra uno para visualizar estadísticas.</p>
+
+                <a href="/grupos" class="btn-redirect">
+                    Ir a Grupos
+                </a>
+            </div>
+        `;
+
+        return;
+    }
 
     grupos.forEach(grupo => {
 

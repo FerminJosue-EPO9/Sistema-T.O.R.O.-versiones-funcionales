@@ -19,5 +19,31 @@
       ],
       "promedioFinal": "10.00"
     }
+  ],
+  "1|1|0": [
+    {
+      "nombreArchivo": "REP_L-002_2983.toro",
+      "idLeccion": "L-002",
+      "grupo": "A",
+      "materia": "Matemáticas",
+      "parcial": "1",
+      "progresion": "Introducción",
+      "actividad": "Ejemplo funcional 4",
+      "estudiante": "fer",
+      "matricula": "2983",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 9,
+          "fecha": "8/6/2026, 2:04:42"
+        },
+        {
+          "numero": 2,
+          "calificacion": 9,
+          "fecha": "8/6/2026, 2:04:42"
+        }
+      ],
+      "promedioFinal": "9.00"
+    }
   ]
 }
