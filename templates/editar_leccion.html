@@ -1,0 +1,463 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='contenido_crear_leccion.css') }}">
+
+<div class="card">
+    <h1>Editar lección</h1>
+
+    <form id="formLeccion">
+        <!-- Datos ocultos necesarios para la edición -->
+        <input type="hidden" name="carpeta" value="{{ carpeta }}">
+
+        <div class="content-wrapper">
+
+            <div class="data-zone" style="margin-bottom: 20px; padding: 15px; background: #f9f9f9; border-radius: 8px;">
+                <h3>1. Configuración de la lección</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                        <label>Grupo:</label>
+                        <select name="grupo_idx" id="selectGrupo" required class="input-toro">
+                            <option value="" disabled selected>Cargando grupos...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Materia:</label>
+                        <select name="materia_idx" id="selectMateria" required class="input-toro" disabled>
+                            <option value="" disabled selected>...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Parcial:</label>
+                        <select name="parcial_idx" id="selectParcial" required class="input-toro" disabled>
+                            <option value="" disabled selected>...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Tema (Progresión):</label>
+                        <select name="tema_idx" id="selectTema" required class="input-toro" disabled>
+                            <option value="" disabled selected>...</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="margin-top: 10px;">
+                    <label>Nombre de la lección:</label>
+                    <input type="text" name="actividad" required class="input-toro" style="width: 100%;"
+                        value="{{ leccion.titulo }}" placeholder="Ej: Ecuaciones de primer grado">
+                </div>
+            </div>
+
+            <!-- Zona de subida de archivos -->
+            <div class="upload-zone" id="drop-zone">
+                <div class="cloud-icon">☁️</div>
+                <h3>
+                    Por favor, seleccione sus archivos (PDF, video, audio e imágenes)<br>
+                    Puede agregar archivos de diferentes carpetas en varias ocasiones.
+                </h3>
+                <button type="button" id="btnSeleccionar" class="btn-primary">Buscar archivos</button>
+                <input type="file" id="inputArchivoTemp" style="display: none;" multiple
+                    accept="image/*,application/pdf,video/*,audio/*">
+                <small style="display: block; margin-top: 8px;">Haz clic en "Buscar archivos" cuantas veces quieras. Los
+                    archivos se irán acumulando.</small>
+            </div>
+
+            <div class="status-zone">
+                <h2>Archivos seleccionados</h2>
+                <ul id="listaArchivos" style="list-style: none; padding: 0; margin-top: 10px; color: #555;">
+                    <li class="empty-state-text">No hay archivos seleccionados todavía</li>
+                </ul>
+                <div style="margin-top: 20px; padding-top: 10px;">
+                    <strong>Total archivos:</strong> <span id="contador">0</span>
+                </div>
+            </div>
+
+            <!-- Selector de actividades -->
+            <div class="actividad-selector" style="margin-top: 20px; text-align: left; width: 100%;">
+                <label for="actividad_seleccionada"
+                    style="display: block; margin-bottom: 5px; font-weight: bold;">Seleccione la actividad de la
+                    lección:</label>
+                <select name="actividad_seleccionada" id="actividad_seleccionada" class="input-toro" required
+                    style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc;">
+                    <option value="" disabled selected>Selecciona una actividad</option>
+                    {% for act in actividades %}
+                    <option value="{{ act['ARCHIVO'] }}">{{ act['NOMBRE'] }} ({{ act['TIPO_LEGIBLE'] }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+        </div>
+
+        <!-- Campos ocultos para el backend -->
+        <input type="hidden" name="orden_archivos" id="ordenArchivos">
+        <input type="hidden" name="archivos_conservar" id="archivosConservar">
+
+        <!-- Campos ocultos para enviar los nombres reales (los que el usuario selecciona en los selects) -->
+        <input type="hidden" name="grupo" id="hiddenGrupo">
+        <input type="hidden" name="materia" id="hiddenMateria">
+        <input type="hidden" name="parcial" id="hiddenParcial">
+        <input type="hidden" name="tema" id="hiddenTema">
+        <input type="hidden" name="id_leccion_original" value="{{ leccion.id_leccion }}">
+        
+        <div class="footer-actions">
+            <a href="{{ url_for('vista_contenido') }}" class="btn-secondary"
+                style="text-decoration: none; display:inline-block; text-align:center; padding: 10px 20px;">Regresar</a>
+            <button type="button" id="btnContinuar" disabled class="btn-primary">Guardar cambios</button>
+        </div>
+
+        <p class="footer-note">Asegúrate de llenar todos los campos antes de guardar.</p>
+    </form>
+</div>
+
+<script>
+    // ========== DATOS PRECARGADOS ==========
+    const leccionArchivos = {{ leccion.archivos | tojson | safe }};   // [{"nombre": "archivo.pdf", "tamano": 12345}, ...]
+    const carpetaNombre = "{{ carpeta }}";
+
+    // ========== ACUMULACIÓN DE ARCHIVOS ==========
+    let archivosSeleccionados = [];  // Cada elemento puede ser {name, size, isExisting: true} o un File (con .name, .size)
+
+    // Convertir los archivos existentes al formato interno (simulan objetos File pero sin el contenido)
+    leccionArchivos.forEach(arch => {
+        archivosSeleccionados.push({
+            name: arch.nombre,
+            size: arch.tamano,
+            isExisting: true      // Marcar como existente para no re-subirlo
+        });
+    });
+
+    const inputArchivoTemp = document.getElementById('inputArchivoTemp');
+    const btnSeleccionar = document.getElementById('btnSeleccionar');
+    const listaArchivosUl = document.getElementById('listaArchivos');
+    const contadorSpan = document.getElementById('contador');
+    const btnContinuar = document.getElementById('btnContinuar');
+    const ordenArchivosHidden = document.getElementById('ordenArchivos');
+    const archivosConservarInput = document.getElementById('archivosConservar');
+
+    // Función para actualizar la lista visual y campos ocultos
+    function actualizarListaArchivos() {
+        listaArchivosUl.innerHTML = '';
+        if (archivosSeleccionados.length === 0) {
+            listaArchivosUl.innerHTML = '<li class="empty-state-text">No hay archivos seleccionados todavía</li>';
+            contadorSpan.innerText = '0';
+            ordenArchivosHidden.value = '';
+            archivosConservarInput.value = '';
+            return;
+        }
+
+        archivosSeleccionados.forEach((item, index) => {
+            const li = document.createElement('li');
+            li.style.padding = "8px 0";
+            li.style.borderBottom = "1px solid #eee";
+            li.style.display = "flex";
+            li.style.justifyContent = "space-between";
+            li.style.alignItems = "flex-start";
+            li.style.gap = "10px";
+
+            // Contenedor del nombre (con wrap)
+            const nombreSpan = document.createElement('span');
+            nombreSpan.style.flex = "1";
+            nombreSpan.style.wordBreak = "break-word";
+            nombreSpan.style.whiteSpace = "normal";
+            const tamañoMB = (item.size / 1024 / 1024).toFixed(2);
+            nombreSpan.innerHTML = `📄 <strong>${escapeHtml(item.name)}</strong> <small>(${tamañoMB} MB)</small>`;
+
+            const btnEliminar = document.createElement('button');
+            btnEliminar.type = 'button';
+            btnEliminar.className = 'btn-eliminar-archivo';
+            btnEliminar.dataset.index = index;
+            btnEliminar.style.background = 'none';
+            btnEliminar.style.border = 'none';
+            btnEliminar.style.color = '#c00';
+            btnEliminar.style.cursor = 'pointer';
+            btnEliminar.style.fontSize = '1.2rem';
+            btnEliminar.style.padding = '0 5px';
+            btnEliminar.style.flexShrink = '0';
+            btnEliminar.innerHTML = '🗑️';
+
+            li.appendChild(nombreSpan);
+            li.appendChild(btnEliminar);
+            listaArchivosUl.appendChild(li);
+        });
+
+        contadorSpan.innerText = archivosSeleccionados.length;
+
+        // Orden de los archivos (solo nombres)
+        const ordenNombres = archivosSeleccionados.map(f => f.name).join(',');
+        ordenArchivosHidden.value = ordenNombres;
+
+        // Archivos existentes que se conservan (aquellos con isExisting === true)
+        const conservarNombres = archivosSeleccionados
+            .filter(item => item.isExisting === true)
+            .map(item => item.name)
+            .join(',');
+        archivosConservarInput.value = conservarNombres;
+
+        // Asignar eventos de eliminar
+        document.querySelectorAll('.btn-eliminar-archivo').forEach(btn => {
+            btn.removeEventListener('click', handleEliminar);
+            btn.addEventListener('click', handleEliminar);
+        });
+    }
+
+    function handleEliminar(e) {
+        const btn = e.currentTarget;
+        const idx = parseInt(btn.dataset.index);
+        if (!isNaN(idx)) {
+            archivosSeleccionados.splice(idx, 1);
+            actualizarListaArchivos();
+            actualizarEstadoBoton();
+        }
+    }
+
+    // Agregar archivos nuevos desde el input temporal
+    function agregarArchivosDesdeInput() {
+        const nuevos = Array.from(inputArchivoTemp.files);
+        if (nuevos.length === 0) return;
+        nuevos.forEach(file => {
+            archivosSeleccionados.push(file);  // los File son objetos nativos, no tienen isExisting
+        });
+        inputArchivoTemp.value = '';
+        actualizarListaArchivos();
+        actualizarEstadoBoton();
+    }
+
+    btnSeleccionar.addEventListener('click', () => {
+        inputArchivoTemp.click();
+    });
+    inputArchivoTemp.addEventListener('change', agregarArchivosDesdeInput);
+
+    // ========== LÓGICA DE GRUPOS, MATERIAS, PARCIALES, TEMAS (sin cambios) ==========
+    let gruposData = [];
+    let grupoIdxActual = null, materiaIdxActual = null, parcialIdxActual = null;
+
+    const selectGrupo = document.getElementById('selectGrupo');
+    const selectMateria = document.getElementById('selectMateria');
+    const selectParcial = document.getElementById('selectParcial');
+    const selectTema = document.getElementById('selectTema');
+    const hiddenGrupo = document.getElementById('hiddenGrupo');
+    const hiddenMateria = document.getElementById('hiddenMateria');
+    const hiddenParcial = document.getElementById('hiddenParcial');
+    const hiddenTema = document.getElementById('hiddenTema');
+
+    function actualizarCampoOculto(hiddenField, valor) {
+        if (hiddenField) hiddenField.value = valor || '';
+    }
+
+    function cargarGrupos() {
+        fetch('/api/grupos')
+            .then(response => response.json())
+            .then(data => {
+                gruposData = data;
+                if (gruposData.length === 0) {
+                    selectGrupo.innerHTML = '<option value="" disabled>No hay grupos creados</option>';
+                } else {
+                    let options = '<option value="" disabled selected>Selecciona un grupo</option>';
+                    gruposData.forEach((grupo, idx) => {
+                        options += `<option value="${idx}">${grupo.nombre}</option>`;
+                    });
+                    selectGrupo.innerHTML = options;
+                    selectGrupo.disabled = false;
+                }
+                resetearSelects(selectMateria, selectParcial, selectTema);
+                actualizarCampoOculto(hiddenGrupo, '');
+                actualizarCampoOculto(hiddenMateria, '');
+                actualizarCampoOculto(hiddenParcial, '');
+                actualizarCampoOculto(hiddenTema, '');
+            })
+            .catch(error => {
+                console.error('Error cargando grupos:', error);
+                selectGrupo.innerHTML = '<option value="" disabled>Error al cargar grupos</option>';
+            });
+    }
+
+    function resetearSelects(...selects) {
+        selects.forEach(select => {
+            if (select) {
+                select.innerHTML = '<option value="" disabled selected>...</option>';
+                select.disabled = true;
+            }
+        });
+    }
+
+    selectGrupo.addEventListener('change', function () {
+        grupoIdxActual = this.value;
+        if (grupoIdxActual === "") {
+            resetearSelects(selectMateria, selectParcial, selectTema);
+            actualizarCampoOculto(hiddenGrupo, '');
+            return;
+        }
+        const grupo = gruposData[grupoIdxActual];
+        actualizarCampoOculto(hiddenGrupo, grupo.nombre);
+        if (!grupo || !grupo.materias || grupo.materias.length === 0) {
+            selectMateria.innerHTML = '<option value="" disabled selected>No hay materias creadas</option>';
+            resetearSelects(selectParcial, selectTema);
+            return;
+        }
+        let options = '<option value="" disabled selected>Selecciona una materia</option>';
+        grupo.materias.forEach((materia, idx) => {
+            options += `<option value="${idx}">${materia.nombre}</option>`;
+        });
+        selectMateria.innerHTML = options;
+        selectMateria.disabled = false;
+        resetearSelects(selectParcial, selectTema);
+        actualizarCampoOculto(hiddenMateria, '');
+        actualizarCampoOculto(hiddenParcial, '');
+        actualizarCampoOculto(hiddenTema, '');
+    });
+
+    selectMateria.addEventListener('change', function () {
+        materiaIdxActual = this.value;
+        if (grupoIdxActual === "" || materiaIdxActual === "") {
+            resetearSelects(selectParcial, selectTema);
+            actualizarCampoOculto(hiddenMateria, '');
+            return;
+        }
+        const grupo = gruposData[grupoIdxActual];
+        const materia = grupo.materias[materiaIdxActual];
+        actualizarCampoOculto(hiddenMateria, materia.nombre);
+        if (!materia || !materia.parciales || materia.parciales.length === 0) {
+            selectParcial.innerHTML = '<option value="" disabled selected>No hay parciales creados</option>';
+            resetearSelects(selectTema);
+            return;
+        }
+        let options = '<option value="" disabled selected>Selecciona un parcial</option>';
+        materia.parciales.forEach((parcial, idx) => {
+            options += `<option value="${idx}">${parcial.nombre}</option>`;
+        });
+        selectParcial.innerHTML = options;
+        selectParcial.disabled = false;
+        resetearSelects(selectTema);
+        actualizarCampoOculto(hiddenParcial, '');
+        actualizarCampoOculto(hiddenTema, '');
+    });
+
+    selectParcial.addEventListener('change', function () {
+        parcialIdxActual = this.value;
+        if (grupoIdxActual === "" || materiaIdxActual === "" || parcialIdxActual === "") {
+            resetearSelects(selectTema);
+            actualizarCampoOculto(hiddenParcial, '');
+            return;
+        }
+        const grupo = gruposData[grupoIdxActual];
+        const materia = grupo.materias[materiaIdxActual];
+        const parcial = materia.parciales[parcialIdxActual];
+        actualizarCampoOculto(hiddenParcial, parcial.nombre);
+        if (!parcial || !parcial.progresiones || parcial.progresiones.length === 0) {
+            selectTema.innerHTML = '<option value="" disabled selected>No hay progresiones creadas</option>';
+            selectTema.disabled = false;
+            actualizarCampoOculto(hiddenTema, '');
+            return;
+        }
+        let options = '<option value="" disabled selected>Selecciona un tema</option>';
+        parcial.progresiones.forEach((prog, idx) => {
+            options += `<option value="${idx}">${prog}</option>`;
+        });
+        selectTema.innerHTML = options;
+        selectTema.disabled = false;
+        actualizarCampoOculto(hiddenTema, '');
+    });
+
+    selectTema.addEventListener('change', function () {
+        const temaIdx = this.value;
+        if (grupoIdxActual === "" || materiaIdxActual === "" || parcialIdxActual === "" || temaIdx === "") {
+            actualizarCampoOculto(hiddenTema, '');
+            return;
+        }
+        const grupo = gruposData[grupoIdxActual];
+        const materia = grupo.materias[materiaIdxActual];
+        const parcial = materia.parciales[parcialIdxActual];
+        const temaNombre = parcial.progresiones[temaIdx];
+        actualizarCampoOculto(hiddenTema, temaNombre);
+    });
+
+    // ========== FUNCIÓN PARA HABILITAR BOTÓN GUARDAR ==========
+    function actualizarEstadoBoton() {
+        const grupoValido = selectGrupo.value && selectGrupo.value !== "";
+        const materiaValido = selectMateria.value && selectMateria.value !== "";
+        const parcialValido = selectParcial.value && selectParcial.value !== "";
+        const temaValido = selectTema.value && selectTema.value !== "";
+        const actividadSelect = document.getElementById('actividad_seleccionada');
+        const actividadValida = actividadSelect && actividadSelect.value !== "";
+        const nombreActividad = document.querySelector('input[name="actividad"]').value.trim();
+        const hayArchivos = archivosSeleccionados.length > 0;
+
+        if (hayArchivos && grupoValido && materiaValido && parcialValido && temaValido && actividadValida && nombreActividad) {
+            btnContinuar.disabled = false;
+            btnContinuar.style.opacity = "1";
+            btnContinuar.style.cursor = "pointer";
+        } else {
+            btnContinuar.disabled = true;
+            btnContinuar.style.opacity = "0.6";
+            btnContinuar.style.cursor = "not-allowed";
+        }
+    }
+
+    selectGrupo.addEventListener('change', actualizarEstadoBoton);
+    selectMateria.addEventListener('change', actualizarEstadoBoton);
+    selectParcial.addEventListener('change', actualizarEstadoBoton);
+    selectTema.addEventListener('change', actualizarEstadoBoton);
+    document.querySelector('input[name="actividad"]').addEventListener('input', actualizarEstadoBoton);
+    document.getElementById('actividad_seleccionada').addEventListener('change', actualizarEstadoBoton);
+
+    // ========== ENVÍO DEL FORMULARIO CON FETCH ==========
+    const form = document.getElementById('formLeccion');
+
+    btnContinuar.addEventListener('click', async function (e) {
+        if (btnContinuar.disabled) return;
+
+        const formData = new FormData();
+
+        // Agregar todos los campos del formulario (input, select, textarea)
+        const inputs = form.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            if (input.name && input.name !== '') {
+                // Los archivos existentes (objetos que no son File) no los enviamos como archivos; solo los nombres en archivos_conservar
+                if (input.type === 'file' || input.id === 'inputArchivoTemp') return;
+                formData.append(input.name, input.value);
+            }
+        });
+
+        // Agregar archivos NUEVOS (objetos File reales)
+        archivosSeleccionados.forEach(item => {
+            if (item instanceof File) {
+                formData.append('archivos', item);
+            }
+        });
+
+        // Enviar a la URL de edición
+        try {
+            const response = await fetch("{{ url_for('editar_leccion', carpeta=carpeta) }}", {
+                method: 'POST',
+                body: formData
+            });
+            if (response.redirected) {
+                window.location.href = response.url;
+            } else {
+                const text = await response.text();
+                document.open();
+                document.write(text);
+                document.close();
+            }
+        } catch (error) {
+            console.error('Error al enviar:', error);
+            alert('Hubo un problema al guardar los cambios.');
+        }
+    });
+
+    function escapeHtml(str) {
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    // Inicialización
+    document.addEventListener('DOMContentLoaded', function () {
+        cargarGrupos();
+        actualizarListaArchivos();
+        actualizarEstadoBoton();
+    });
+</script>
+{% endblock %}

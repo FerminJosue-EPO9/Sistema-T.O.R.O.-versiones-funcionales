@@ -163,3 +163,32 @@ h1 {
     border: none;
     font-weight: bold;
 }
+
+.lista-archivos {
+    margin-top: 10px;
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 6px;
+    background: #f9f9f9;
+    max-height: 200px;
+    overflow-y: auto;
+}
+.archivo-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px;
+    border-bottom: 1px solid #eee;
+}
+.btn-eliminar-archivo {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #c00;
+    font-size: 1.2rem;
+}
+
+.status-zone ul li {
+    word-break: break-word;
+    white-space: normal;
+}

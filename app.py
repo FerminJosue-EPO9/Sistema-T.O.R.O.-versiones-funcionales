@@ -29,10 +29,14 @@ import json
 from werkzeug.utils import secure_filename
 import base64
 import zipfile
+from flask import abort
+import tempfile
 
 app = Flask(__name__)
 app.secret_key = 'toro_secret_key_2026'
 app.register_blueprint(actividades_bp)
+
+LECCIONES_DIR = os.path.join(app.root_path, 'data', 'LECCIONES DISPONIBLES')
 
 CATALOGO_PLANTILLAS = {
     'P001': {'tipo': 'Crucigrama', 'img': 'img/imagenesActividades/CRUCIGRAMA.png'},
@@ -79,16 +83,37 @@ def obtener_siguiente_id_leccion():
 # ==========================================
 def extraer_datos_actividad(ruta_archivo_actividad):
     with open(ruta_archivo_actividad, 'r', encoding='utf-8') as f:
-        contenido = f.read()
+        contenido = f.read().strip()
+    
+    # Intentar como JSON primero
+    if contenido.startswith('{'):
+        try:
+            data = json.loads(contenido)
+            # Para completar camino, necesitamos izquierda, derecha, respuestas
+            if 'izquierda' in data and 'derecha' in data and 'respuestas' in data:
+                return {
+                    'izquierda': f"const izquierda = {json.dumps(data['izquierda'])};",
+                    'derecha': f"const derecha = {json.dumps(data['derecha'])};",
+                    'respuestas': f"const respuestas = {json.dumps(data['respuestas'])};"
+                }
+            else:
+                raise ValueError("El JSON no contiene los campos esperados para Completar Camino")
+        except Exception as e:
+            raise ValueError(f"Error parseando JSON: {e}")
+    
+    # Formato antiguo: buscar constantes en el cuerpo (después de '---')
     if '---' in contenido:
         _, cuerpo = contenido.split('---', 1)
     else:
         cuerpo = contenido
+    
     izq_match = re.search(r'const izquierda\s*=\s*(\[.*?\]);', cuerpo, re.DOTALL)
     der_match = re.search(r'const derecha\s*=\s*(\[.*?\]);', cuerpo, re.DOTALL)
     res_match = re.search(r'const respuestas\s*=\s*(\{.*?\});', cuerpo, re.DOTALL)
+    
     if not izq_match or not der_match or not res_match:
         raise ValueError("El archivo de actividad no tiene el formato esperado")
+    
     return {
         'izquierda': f"const izquierda = {izq_match.group(1)};",
         'derecha': f"const derecha = {der_match.group(1)};",
@@ -97,113 +122,177 @@ def extraer_datos_actividad(ruta_archivo_actividad):
 
 def parsear_actividad_general(ruta_archivo_actividad):
     with open(ruta_archivo_actividad, 'r', encoding='utf-8') as f:
-        contenido = f.read()
-    
-    # Separar cabecera (antes del ---) y cuerpo
-    if '---' in contenido:
-        cabecera, cuerpo = contenido.split('---', 1)
-    else:
-        cabecera = contenido
-        cuerpo = ""
-    
-    metadatos = {}
-    for linea in cabecera.strip().split('\n'):
-        if ':' in linea:
-            clave, valor = linea.split(':', 1)
-            metadatos[clave.strip()] = valor.strip()
-    
-    id_plantilla = metadatos.get('ID_PLANTILLA', '')
-    nombre_actividad = metadatos.get('NOMBRE', '')
-    intentos_max = metadatos.get('INTENTOS', '')
-    tiempo_estimado = metadatos.get('TIEMPO', '')
-    fecha_vencimiento = metadatos.get('FECHA_VENCIMIENTO', '')
-    
-    preguntas = []
-    
-    # Dependiendo del tipo, parsear el cuerpo
-    if id_plantilla == 'C001':  # Completar camino
-        # Extraer constantes izquierda, derecha, respuestas
-        izq_match = re.search(r'const izquierda\s*=\s*(\[.*?\]);', cuerpo, re.DOTALL)
-        der_match = re.search(r'const derecha\s*=\s*(\[.*?\]);', cuerpo, re.DOTALL)
-        res_match = re.search(r'const respuestas\s*=\s*(\{.*?\});', cuerpo, re.DOTALL)
-        if izq_match and der_match and res_match:
-            import ast
-            izquierda_list = ast.literal_eval(izq_match.group(1))
-            respuestas_dict = ast.literal_eval(res_match.group(1))
-            for pregunta in izquierda_list:
-                respuesta = respuestas_dict.get(pregunta, '')
-                preguntas.append({'texto': pregunta, 'respuesta_correcta': respuesta})
-    
-    elif id_plantilla == 'P002':  # Falso/Verdadero
-        # Formato: "Pregunta 1: enunciado\nRespuesta: Verdadero" (en el cuerpo del TXT de actividad)
-        # O también podría ser el formato que genera actividades.py (con constantes). Debemos revisar qué formato se guarda.
-        # Por ahora, asumiremos el formato simple (que es el que se crea en actividades.py para FV)
-        # El cuerpo tiene líneas como "Pregunta 1: ..." y "Respuesta: ..."
-        lineas = cuerpo.strip().split('\n')
-        pregunta_actual = None
-        for linea in lineas:
-            linea = linea.strip()
-            if linea.startswith('Pregunta'):
-                # Extraer texto después del número
-                partes = linea.split(':', 1)
-                if len(partes) == 2:
-                    pregunta_actual = partes[1].strip()
-            elif linea.startswith('Respuesta:') and pregunta_actual:
-                respuesta = linea.split(':', 1)[1].strip()
-                preguntas.append({'texto': pregunta_actual, 'respuesta_correcta': respuesta})
-                pregunta_actual = None
-    
-    elif id_plantilla == 'P003':  # Opción Múltiple (formato: opciones separadas por |, respuesta letra mayúscula)
-        lineas = cuerpo.strip().split('\n')
-        pregunta_actual = None
-        opciones_actual = None
-        for linea in lineas:
-            linea = linea.strip()
-            if not linea:
-                continue
-                # Detener al llegar a la sección de métricas
-            if linea.startswith('@@@ Métricas'):
-                break
-            if linea.startswith('Pregunta'):
-                partes = linea.split(':', 1)
-                if len(partes) == 2:
-                    pregunta_actual = partes[1].strip()
-            elif linea.startswith('Opciones:'):
-                opciones_str = linea.split(':', 1)[1].strip()
-                # Separar por '|' y limpiar espacios
-                opciones_actual = [opt.strip() for opt in opciones_str.split('|') if opt.strip()]
-            elif linea.startswith('Respuesta correcta:') and pregunta_actual and opciones_actual:
-                respuesta_letra = linea.split(':', 1)[1].strip().upper()
-                preguntas.append({
-                    'texto': pregunta_actual,
-                    'opciones': opciones_actual,
-                    'respuesta_correcta': respuesta_letra  # 'A', 'B', 'C', 'D'
-                })
-                pregunta_actual = None
-                opciones_actual = None
-    
-    elif id_plantilla == 'P004':  # Sopa de Letras
-        # El cuerpo tiene constantes: const descripciones = [...], const palabras = [...], const respuestas = {...}
-        # Extraemos descripciones y palabras
-        desc_match = re.search(r'const descripciones\s*=\s*(\[.*?\]);', cuerpo, re.DOTALL)
-        pal_match = re.search(r'const palabras\s*=\s*(\[.*?\]);', cuerpo, re.DOTALL)
-        if desc_match and pal_match:
-            import ast
-            descripciones = ast.literal_eval(desc_match.group(1))
-            palabras = ast.literal_eval(pal_match.group(1))
-            # Asumimos que están en el mismo orden
-            for desc, pal in zip(descripciones, palabras):
-                preguntas.append({'texto': desc, 'palabra': pal})
-    
-    return {
-        'id_actividad': metadatos.get('ID_ACTIVIDAD', ''),
-        'nombre_actividad': nombre_actividad,
-        'intentos_max': intentos_max,
-        'tiempo_estimado': tiempo_estimado,
-        'fecha_vencimiento': fecha_vencimiento,
-        'tipo_plantilla': id_plantilla,
-        'preguntas': preguntas
-    }
+        contenido = f.read().strip()
+
+    # --- Intento 1: Parsear como JSON (nuevo formato) ---
+    if contenido.startswith('{'):
+        try:
+            import json
+            data = json.loads(contenido)
+            tipo = data.get('tipo')
+            # Mapeo de tipo a ID_PLANTILLA
+            tipo_a_id = {
+                'falso-verdadero': 'P002',      # ← antes 'FV01'
+                'opcion-multiple': 'P003',
+                'completar-camino': 'C001',
+                'sopa-letras': 'P004'
+            }
+            id_plantilla = tipo_a_id.get(tipo, 'P000')
+            nombre_actividad = data.get('nombre', '')
+            intentos_max = str(data.get('intentos', '3'))
+            tiempo_estimado = data.get('tiempo', '')
+            fecha_vencimiento = data.get('fecha_vencimiento', '')
+            id_actividad = data.get('id_actividad', '')  # ← se guarda si existe
+
+            preguntas = []
+
+            if tipo == 'falso-verdadero':
+                for p in data.get('preguntas', []):
+                    preguntas.append({
+                        'texto': p['afirmacion'],
+                        'respuesta_correcta': p['respuesta']
+                    })
+            elif tipo == 'opcion-multiple':
+                for p in data.get('preguntas', []):
+                    preguntas.append({
+                        'texto': p['afirmacion'],
+                        'opciones': p['opciones'],
+                        'respuesta_correcta': p['respuesta']
+                    })
+            elif tipo == 'completar-camino':
+                izquierda = data.get('izquierda', [])
+                derecha = data.get('derecha', [])
+                for i in range(min(len(izquierda), len(derecha))):
+                    preguntas.append({
+                        'texto': izquierda[i],
+                        'respuesta_correcta': derecha[i]
+                    })
+            elif tipo == 'sopa-letras':
+                descripciones = data.get('descripciones', [])
+                palabras = data.get('palabras', [])
+                for i in range(min(len(descripciones), len(palabras))):
+                    preguntas.append({
+                        'texto': descripciones[i],
+                        'palabra': palabras[i]
+                    })
+
+            return {
+                'id_actividad': id_actividad,
+                'nombre_actividad': nombre_actividad,
+                'intentos_max': intentos_max,
+                'tiempo_estimado': tiempo_estimado,
+                'fecha_vencimiento': fecha_vencimiento,
+                'tipo_plantilla': id_plantilla,
+                'preguntas': preguntas
+            }
+        except Exception as e:
+            print(f"Error parseando JSON: {e}")
+
+    # --- Intento 2: Formato antiguo (texto plano con cabeceras y ---) ---
+    try:
+        # Separar cabecera y cuerpo
+        if '---' in contenido:
+            cabecera, cuerpo = contenido.split('---', 1)
+        else:
+            cabecera = contenido
+            cuerpo = ""
+
+        metadatos = {}
+        for linea in cabecera.strip().split('\n'):
+            if ':' in linea:
+                clave, valor = linea.split(':', 1)
+                metadatos[clave.strip()] = valor.strip()
+
+        id_actividad = metadatos.get('ID_ACTIVIDAD', '')
+        nombre_actividad = metadatos.get('NOMBRE', '')
+        intentos_max = metadatos.get('INTENTOS', '')
+        tiempo_estimado = metadatos.get('TIEMPO', '')
+        fecha_vencimiento = metadatos.get('FECHA_VENCIMIENTO', '')
+        id_plantilla = metadatos.get('ID_PLANTILLA', '')
+
+        preguntas = []
+
+        if id_plantilla == 'C001':  # Completar camino
+            import re, ast
+            izq_match = re.search(r'const izquierda\s*=\s*(\[.*?\]);', cuerpo, re.DOTALL)
+            der_match = re.search(r'const derecha\s*=\s*(\[.*?\]);', cuerpo, re.DOTALL)
+            res_match = re.search(r'const respuestas\s*=\s*(\{.*?\});', cuerpo, re.DOTALL)
+            if izq_match and der_match and res_match:
+                izquierda_list = ast.literal_eval(izq_match.group(1))
+                respuestas_dict = ast.literal_eval(res_match.group(1))
+                for pregunta in izquierda_list:
+                    respuesta = respuestas_dict.get(pregunta, '')
+                    preguntas.append({'texto': pregunta, 'respuesta_correcta': respuesta})
+
+        elif id_plantilla in ('P002', 'FV01'):  # Falso/Verdadero
+            lineas = cuerpo.strip().split('\n')
+            pregunta_actual = None
+            for linea in lineas:
+                linea = linea.strip()
+                if linea.startswith('Pregunta'):
+                    partes = linea.split(':', 1)
+                    if len(partes) == 2:
+                        pregunta_actual = partes[1].strip()
+                elif linea.startswith('Respuesta:') and pregunta_actual:
+                    respuesta = linea.split(':', 1)[1].strip()
+                    preguntas.append({'texto': pregunta_actual, 'respuesta_correcta': respuesta})
+                    pregunta_actual = None
+
+        elif id_plantilla == 'P003':  # Opción Múltiple
+            lineas = cuerpo.strip().split('\n')
+            pregunta_actual = None
+            opciones_actual = None
+            for linea in lineas:
+                linea = linea.strip()
+                if not linea:
+                    continue
+                if linea.startswith('Pregunta'):
+                    partes = linea.split(':', 1)
+                    if len(partes) == 2:
+                        pregunta_actual = partes[1].strip()
+                elif linea.startswith('Opciones:'):
+                    opciones_str = linea.split(':', 1)[1].strip()
+                    opciones_actual = [opt.strip() for opt in opciones_str.split('|') if opt.strip()]
+                elif linea.startswith('Respuesta correcta:') and pregunta_actual and opciones_actual:
+                    respuesta_letra = linea.split(':', 1)[1].strip().upper()
+                    preguntas.append({
+                        'texto': pregunta_actual,
+                        'opciones': opciones_actual,
+                        'respuesta_correcta': respuesta_letra
+                    })
+                    pregunta_actual = None
+                    opciones_actual = None
+
+        elif id_plantilla == 'P004':  # Sopa de Letras
+            import re, ast
+            desc_match = re.search(r'const descripciones\s*=\s*(\[.*?\]);', cuerpo, re.DOTALL)
+            pal_match = re.search(r'const palabras\s*=\s*(\[.*?\]);', cuerpo, re.DOTALL)
+            if desc_match and pal_match:
+                descripciones = ast.literal_eval(desc_match.group(1))
+                palabras = ast.literal_eval(pal_match.group(1))
+                for desc, pal in zip(descripciones, palabras):
+                    preguntas.append({'texto': desc, 'palabra': pal})
+
+        return {
+            'id_actividad': id_actividad,
+            'nombre_actividad': nombre_actividad,
+            'intentos_max': intentos_max,
+            'tiempo_estimado': tiempo_estimado,
+            'fecha_vencimiento': fecha_vencimiento,
+            'tipo_plantilla': id_plantilla,
+            'preguntas': preguntas
+        }
+    except Exception as e:
+        print(f"Error parseando formato texto: {e}")
+        return {
+            'id_actividad': '',
+            'nombre_actividad': '',
+            'intentos_max': '',
+            'tiempo_estimado': '',
+            'fecha_vencimiento': '',
+            'tipo_plantilla': '',
+            'preguntas': []
+        }
 
 def generar_html_multimedia(archivos):
     etiquetas = []
@@ -236,7 +325,24 @@ def cargar_actividades():
             datos = {}
             try:
                 with open(ruta_completa, 'r', encoding='utf-8') as f:
-                    for linea in f:
+                    contenido = f.read().strip()
+                # Intentar parsear como JSON primero (nuevo formato)
+                if contenido.startswith('{'):
+                    import json
+                    data_json = json.loads(contenido)
+                    # Dentro de cargar_actividades, en el bloque JSON:
+                    datos['ID_PLANTILLA'] = {
+                        'falso-verdadero': 'P002',      # ← antes 'FV01'
+                        'opcion-multiple': 'P003',
+                        'completar-camino': 'C001',
+                        'sopa-letras': 'P004'
+                    }.get(data_json.get('tipo'), 'P000')
+                    datos['NOMBRE'] = data_json.get('nombre', 'Sin título')
+                    datos['FECHA'] = ''  # No se guarda fecha en JSON, poner vacío o extraer si existe
+                    # Si quieres mantener la fecha, podrías agregarla al JSON al guardar.
+                else:
+                    # Formato antiguo (texto plano)
+                    for linea in contenido.split('\n'):
                         linea = linea.strip()
                         if linea == '---':
                             break
@@ -248,12 +354,52 @@ def cargar_actividades():
                 datos['TIPO_LEGIBLE'] = info_visual['tipo']
                 datos['IMAGEN'] = info_visual['img']
                 datos['ARCHIVO'] = archivo
-                if 'FECHA' not in datos:
+                if 'FECHA' not in datos or not datos['FECHA']:
                     datos['FECHA'] = '01/02/2026'
                 lista_actividades.append(datos)
             except Exception as e:
                 print(f"Error leyendo {archivo}: {e}")
     return lista_actividades
+
+def obtener_info_leccion(carpeta):
+    """Lee info_leccion.txt y extrae el título, ID_LECCION y la lista de archivos multimedia (excepto los del juego)."""
+    ruta_info = os.path.join(LECCIONES_DIR, carpeta, 'info_leccion.txt')
+    if not os.path.exists(ruta_info):
+        return None
+    
+    with open(ruta_info, 'r', encoding='utf-8') as f:
+        contenido = f.read()
+    
+    titulo = ""
+    id_leccion = ""
+    for linea in contenido.split('\n'):
+        linea = linea.strip()
+        if linea.startswith('TITULO:'):
+            titulo = linea.split(':', 1)[1].strip()
+        elif linea.startswith('ID_LECCION:'):
+            id_leccion = linea.split(':', 1)[1].strip()
+    
+    # Si por alguna razón no se encontró el ID, usamos el nombre de carpeta como fallback
+    if not id_leccion:
+        id_leccion = carpeta
+    
+    # Listar archivos multimedia (excluir info_leccion.txt, index.html y las imágenes del juego)
+    ruta_carpeta = os.path.join(LECCIONES_DIR, carpeta)
+    excluir = {'info_leccion.txt', 'index.html', 'oak2.jpg', 'rana_quieto.png', 'rana_salto.gif'}
+    archivos = []
+    
+    for f in os.listdir(ruta_carpeta):
+        ruta_completa = os.path.join(ruta_carpeta, f)
+        if f not in excluir and os.path.isfile(ruta_completa):
+            tamaño = os.path.getsize(ruta_completa)
+            archivos.append({'nombre': f, 'tamano': tamaño})
+    
+    return {
+        'titulo': titulo,
+        'archivos': archivos,
+        'carpeta': carpeta,
+        'id_leccion': id_leccion
+    }
 
 def leer_datos(archivo):
     ruta = os.path.join('data', archivo)
@@ -568,36 +714,36 @@ def subir_leccion():
                     encoded_bytes = texto_modificado.encode("utf-8")
                     return base64.b64encode(encoded_bytes).decode("ascii")
                 
-                # Leer el info_leccion.txt recién creado
                 with open(ruta_metadatos, 'r', encoding='utf-8') as f:
                     texto_original = f.read()
                 texto_ofuscado = ofuscar_reporte(texto_original)
                 
-                # Carpeta destino: data/Actividades-Formateadas
                 ruta_actividades_formateadas = os.path.join(app.root_path, 'data', 'LECCIONES-LISTAS-PARA-ENVIAR')
                 os.makedirs(ruta_actividades_formateadas, exist_ok=True)
                 
-                # Nombre del zip = nombre de la carpeta de la lección
                 nombre_carpeta_leccion = os.path.basename(ruta_destino)
                 nombre_zip = nombre_carpeta_leccion + ".zip"
                 ruta_zip = os.path.join(ruta_actividades_formateadas, nombre_zip)
                 
+                # Borrar zip antiguo si existe
+                if os.path.exists(ruta_zip):
+                    os.remove(ruta_zip)
+                
                 with zipfile.ZipFile(ruta_zip, "w", zipfile.ZIP_DEFLATED) as zf:
-                    # 1. Agregar info_leccion.txt ofuscado
                     zf.writestr("info_leccion.txt", texto_ofuscado)
-                    
-                    # 2. Agregar index.html
                     zf.write(ruta_html, "index.html")
                     
-                    # 3. Agregar TODOS los archivos de la carpeta de la lección
+                    # Agregar archivos multimedia solo si existen físicamente
                     for archivo in os.listdir(ruta_destino):
                         ruta_completa_archivo = os.path.join(ruta_destino, archivo)
-                        if os.path.isfile(ruta_completa_archivo):
-                            # Evitar volver a agregar el info_leccion.txt original (ya lo tenemos ofuscado) y index.html (ya agregado)
-                            if archivo not in ["info_leccion.txt", "index.html"]:
+                        if archivo not in ["info_leccion.txt", "index.html"] and os.path.isfile(ruta_completa_archivo):
+                            # Verificar existencia real (por si el archivo fue borrado después de listar)
+                            if os.path.exists(ruta_completa_archivo):
                                 zf.write(ruta_completa_archivo, archivo)
-                    
-                print(f" ZIP ofuscado generado con todos los archivos en {ruta_zip}")
+                            else:
+                                print(f"⚠️ Advertencia: El archivo '{archivo}' no existe físicamente. Se omite del ZIP.")
+                
+                print(f"✅ ZIP ofuscado generado en {ruta_zip}")
             except Exception as e:
                 print(f"Error al crear el ZIP: {e}")
                 # No interrumpimos la creación de la lección si falla el zip
@@ -1265,6 +1411,464 @@ def api_estadisticas_calificaciones():
 
     return jsonify(resultados)
 
+ACTIVIDADES_DIR = os.path.join(app.root_path, 'data', 'actividades')
+
+def leer_actividad(nombre_archivo):
+    """Lee un archivo de actividad (JSON o texto plano) y devuelve un diccionario
+       con la estructura esperada por editar-actividad.html (wizard de edición)."""
+    ruta = os.path.join(ACTIVIDADES_DIR, nombre_archivo)
+    if not os.path.exists(ruta):
+        return None
+    with open(ruta, 'r', encoding='utf-8') as f:
+        contenido = f.read().strip()
+
+    # ========== 1. INTENTAR COMO JSON ==========
+    if contenido.startswith('{'):
+        try:
+            data = json.loads(contenido)
+            tipo = data.get('tipo')
+            resultado = {
+                'id_actividad': data.get('id_actividad', ''),
+                'nombre': data.get('nombre', 'Sin título'),
+                'intentos': str(data.get('intentos', '3')),
+                'tiempo': str(data.get('tiempo', '')),
+                'fecha_vencimiento': data.get('fecha_vencimiento', ''),
+                'ponderacion': str(data.get('ponderacion', '0')),
+                'tipo': tipo,
+                'preguntas': []
+            }
+            if tipo == 'falso-verdadero':
+                resultado['preguntas'] = data.get('preguntas', [])   # [{afirmacion, respuesta}]
+            elif tipo == 'opcion-multiple':
+                resultado['preguntas'] = data.get('preguntas', [])   # [{afirmacion, opciones, respuesta}]
+            elif tipo == 'completar-camino':
+                resultado['izquierda'] = data.get('izquierda', [])
+                resultado['derecha'] = data.get('derecha', [])
+                resultado['respuestas'] = data.get('respuestas', {})
+            elif tipo == 'sopa-letras':
+                resultado['descripciones'] = data.get('descripciones', [])
+                resultado['palabras'] = data.get('palabras', [])
+            else:
+                resultado['tipo'] = None
+            return resultado
+        except Exception as e:
+            print(f"Error parseando JSON en {nombre_archivo}: {e}")
+
+    # ========== 2. FORMATO ANTIGUO (TEXTO PLANO) ==========
+    try:
+        # Separar cabecera y cuerpo (si existe '---')
+        if '---' in contenido:
+            cabecera_str, cuerpo_str = contenido.split('---', 1)
+        else:
+            cabecera_str = contenido
+            cuerpo_str = ""
+
+        # Parsear cabeceras
+        metadatos = {}
+        for linea in cabecera_str.strip().split('\n'):
+            if ':' in linea:
+                clave, valor = linea.split(':', 1)
+                metadatos[clave.strip()] = valor.strip()
+
+        id_actividad = metadatos.get('ID_ACTIVIDAD', '')
+        resultado = {
+            'id_actividad': id_actividad,
+            'nombre': metadatos.get('NOMBRE', 'Sin título'),
+            'intentos': metadatos.get('INTENTOS', '3'),
+            'tiempo': metadatos.get('TIEMPO', '').replace(' minutos', '').replace('min', '').strip(),
+            'fecha_vencimiento': metadatos.get('FECHA_VENCIMIENTO', ''),
+            'ponderacion': '0',
+            'tipo': None,
+            'preguntas': []
+        }
+
+        id_plantilla = metadatos.get('ID_PLANTILLA', '')
+
+        # ---- Completar Camino ----
+        if id_plantilla == 'C001':
+            resultado['tipo'] = 'completar-camino'
+            import re, ast
+            izq_match = re.search(r'const izquierda\s*=\s*(\[.*?\]);', cuerpo_str, re.DOTALL)
+            der_match = re.search(r'const derecha\s*=\s*(\[.*?\]);', cuerpo_str, re.DOTALL)
+            res_match = re.search(r'const respuestas\s*=\s*(\{.*?\});', cuerpo_str, re.DOTALL)
+            if izq_match and der_match and res_match:
+                resultado['izquierda'] = ast.literal_eval(izq_match.group(1))
+                resultado['derecha'] = ast.literal_eval(der_match.group(1))
+                resultado['respuestas'] = ast.literal_eval(res_match.group(1))
+
+        # ---- Falso / Verdadero (P002 o FV01) ----
+        elif id_plantilla in ('P002', 'FV01'):
+            resultado['tipo'] = 'falso-verdadero'
+            lineas = cuerpo_str.strip().split('\n')
+            pregunta_actual = None
+            preguntas = []
+            for linea in lineas:
+                linea = linea.strip()
+                if linea.startswith('Pregunta'):
+                    partes = linea.split(':', 1)
+                    if len(partes) == 2:
+                        pregunta_actual = partes[1].strip()
+                elif linea.startswith('Respuesta:') and pregunta_actual:
+                    respuesta = linea.split(':', 1)[1].strip()
+                    preguntas.append({'afirmacion': pregunta_actual, 'respuesta': respuesta})
+                    pregunta_actual = None
+            resultado['preguntas'] = preguntas
+
+        # ---- Opción Múltiple ----
+        elif id_plantilla == 'P003':
+            resultado['tipo'] = 'opcion-multiple'
+            lineas = cuerpo_str.strip().split('\n')
+            pregunta_actual = None
+            opciones_actual = None
+            preguntas = []
+            for linea in lineas:
+                linea = linea.strip()
+                if not linea:
+                    continue
+                if linea.startswith('Pregunta'):
+                    partes = linea.split(':', 1)
+                    if len(partes) == 2:
+                        pregunta_actual = partes[1].strip()
+                elif linea.startswith('Opciones:'):
+                    opciones_str = linea.split(':', 1)[1].strip()
+                    opciones_actual = [opt.strip() for opt in opciones_str.split('|') if opt.strip()]
+                elif linea.startswith('Respuesta correcta:') and pregunta_actual and opciones_actual:
+                    respuesta_letra = linea.split(':', 1)[1].strip().upper()
+                    preguntas.append({
+                        'afirmacion': pregunta_actual,
+                        'opciones': opciones_actual,
+                        'respuesta': respuesta_letra
+                    })
+                    pregunta_actual = None
+                    opciones_actual = None
+            resultado['preguntas'] = preguntas
+
+        # ---- Sopa de Letras ----
+        elif id_plantilla == 'P004':
+            resultado['tipo'] = 'sopa-letras'
+            import re, ast
+            desc_match = re.search(r'const descripciones\s*=\s*(\[.*?\]);', cuerpo_str, re.DOTALL)
+            pal_match = re.search(r'const palabras\s*=\s*(\[.*?\]);', cuerpo_str, re.DOTALL)
+            if desc_match and pal_match:
+                resultado['descripciones'] = ast.literal_eval(desc_match.group(1))
+                resultado['palabras'] = ast.literal_eval(pal_match.group(1))
+
+        # ---- Cualquier otro tipo no soportado ----
+        else:
+            resultado['tipo'] = None
+
+        return resultado
+    except Exception as e:
+        print(f"Error leyendo formato texto en {nombre_archivo}: {e}")
+        return None
+
+@app.route('/editar_actividad/<path:nombre_archivo>', methods=['GET', 'POST'])
+def editar_actividad_json(nombre_archivo):
+    if request.method == 'POST':
+        data = request.get_json()
+        ruta = os.path.join(ACTIVIDADES_DIR, nombre_archivo)
+        with open(ruta, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+        return jsonify({'success': True, 'ruta': ruta})
+    else:
+        data = leer_actividad(nombre_archivo)
+        if not data:
+            abort(404, "Actividad no encontrada")
+        return render_template('editar-actividad.html', actividad=data, nombre_archivo=nombre_archivo)
+
+@app.route('/editar_leccion/<carpeta>', methods=['GET', 'POST'])
+def editar_leccion(carpeta):
+    original_carpeta = carpeta   # antes de cualquier modificación
+    if request.method == 'POST':
+        # Recibir datos del formulario
+        grupo = request.form.get('grupo')
+        materia = request.form.get('materia')
+        parcial = request.form.get('parcial')
+        tema = request.form.get('tema')
+        nombre_leccion = request.form.get('actividad')
+        actividad_seleccionada = request.form.get('actividad_seleccionada')
+        archivos_conservar_str = request.form.get('archivos_conservar', '')
+        archivos_conservar = [a.strip() for a in archivos_conservar_str.split(',') if a.strip()]
+        nuevos_archivos = request.files.getlist('archivos')
+
+        # Validaciones básicas
+        if not nombre_leccion or not actividad_seleccionada:
+            return "Faltan datos obligatorios (nombre o actividad)", 400
+        if not grupo or not materia or not parcial or not tema:
+            return "Faltan datos de grupo/materia/parcial/tema", 400
+
+        ruta_antigua = os.path.join(LECCIONES_DIR, carpeta)
+        if not os.path.exists(ruta_antigua):
+            return f"Error: La lección original '{carpeta}' no existe", 400
+
+        # Ruta de la actividad seleccionada
+        ruta_actividad = os.path.join(app.root_path, 'data', 'actividades', actividad_seleccionada)
+        if not os.path.exists(ruta_actividad):
+            return f"El archivo de actividad {actividad_seleccionada} no existe", 400
+
+        # Parsear la actividad
+        actividad_data = parsear_actividad_general(ruta_actividad)
+        tipo_plantilla = actividad_data['tipo_plantilla']
+
+        # Obtener el ID original de la lección (enviado desde el formulario)
+        id_leccion_original = request.form.get('id_leccion_original', carpeta)
+        id_leccion = id_leccion_original
+        nombre_profesor = session.get('profesor', 'Profesor no especificado')
+
+        # 1. Crear un directorio temporal para guardar los archivos que se conservan
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Copiar los archivos conservados (los que el usuario no eliminó) al temporal
+            for nombre in archivos_conservar:
+                origen = os.path.join(ruta_antigua, nombre)
+                if os.path.exists(origen):
+                    shutil.copy2(origen, os.path.join(tmpdir, nombre))
+
+            # 2. Borrar la carpeta antigua por completo
+            shutil.rmtree(ruta_antigua)
+
+            # 3. Crear la nueva carpeta con el mismo nombre (por ahora)
+            os.makedirs(ruta_antigua)
+
+            # 4. Copiar las imágenes del juego (siempre las mismas)
+            imagenes_juego = ['oak2.jpg', 'rana_quieto.png', 'rana_salto.gif']
+            ruta_origen_imagenes = os.path.join(app.root_path, 'static', 'img', 'imagenesActividades')
+            for img in imagenes_juego:
+                origen = os.path.join(ruta_origen_imagenes, img)
+                if os.path.exists(origen):
+                    shutil.copy2(origen, os.path.join(ruta_antigua, img))
+
+            # 5. Copiar de vuelta los archivos conservados desde el temporal
+            for nombre in archivos_conservar:
+                shutil.copy2(os.path.join(tmpdir, nombre), os.path.join(ruta_antigua, nombre))
+
+            # 6. Guardar los nuevos archivos subidos
+            for archivo in nuevos_archivos:
+                if archivo and archivo.filename:
+                    nombre_seguro = secure_filename(archivo.filename)
+                    ruta_archivo = os.path.join(ruta_antigua, nombre_seguro)
+                    archivo.save(ruta_archivo)
+
+        # 7. Generar info_leccion.txt (similar a subir_leccion)
+        metadatos = []
+        metadatos.append("=== [ENTIDAD: PROFESOR] ===")
+        metadatos.append(f"NOMBRE_COMPLETO: {nombre_profesor}\n")
+        metadatos.append("=== [ENTIDAD: LECCIÓN] ===")
+        metadatos.append(f"ID_LECCION: {id_leccion}")
+        metadatos.append(f"TITULO: {nombre_leccion}")
+        metadatos.append(f"TEMA: {tema}")
+        metadatos.append(f"PARCIAL: {parcial}")
+        metadatos.append(f"MATERIA: {materia}")
+        metadatos.append(f"GRUPO: {grupo}\n")
+        metadatos.append("--- [RELACIÓN: INCORPORA -> CONTENIDO MULTIMEDIA] ---")
+
+        # Listar todos los archivos multimedia en la carpeta (excluyendo las imágenes del juego y los archivos del sistema)
+        archivos_finales = []
+        for f in os.listdir(ruta_antigua):
+            ruta_completa = os.path.join(ruta_antigua, f)
+            if (f not in imagenes_juego and 
+                f not in ('info_leccion.txt', 'index.html') and 
+                os.path.isfile(ruta_completa) and 
+                os.path.exists(ruta_completa)):
+                archivos_finales.append(f)
+        for idx, arch in enumerate(archivos_finales, start=1):
+            ext = os.path.splitext(arch)[1].lower()
+            tipo = "Imagen"
+            if ext in ['.mp4', '.webm', '.ogg']:
+                tipo = "Video"
+            elif ext == '.pdf':
+                tipo = "PDF"
+            elif ext in ['.mp3', '.wav', '.ogg']:
+                tipo = "Audio"
+            metadatos.append(f"CONTENIDO_{idx}: {arch} | Tipo: {tipo} | Ruta: {arch}")
+        metadatos.append("")
+        metadatos.append("=== [ENTIDAD: ACTIVIDAD] ===")
+        metadatos.append(f"ID_ACTIVIDAD: {actividad_data['id_actividad']}")
+        metadatos.append(f"NOMBRE_ACTIVIDAD: {actividad_data['nombre_actividad']}")
+        metadatos.append(f"INTENTOS_MAX: {actividad_data['intentos_max']}")
+        metadatos.append(f"TIEMPO_ESTIMADO: {actividad_data['tiempo_estimado']}")
+        metadatos.append(f"FECHA_VENCIMIENTO: {actividad_data['fecha_vencimiento']}\n")
+
+        # Escribir las preguntas según el tipo de plantilla
+        if tipo_plantilla == 'C001':
+            metadatos.append("--- [RELACIÓN: GENERA <- PLANTILLA: Completar Camino] ---\n")
+            for i, p in enumerate(actividad_data['preguntas'], start=1):
+                metadatos.append(f"PREGUNTA_{i}: {p['texto']}")
+                metadatos.append(f"RESPUESTA: {p['respuesta_correcta']}\n")
+        elif tipo_plantilla in ('P002', 'FV01'):
+            metadatos.append("--- [RELACIÓN: GENERA <- PLANTILLA: VERDADERO O FALSO] ---\n")
+            for i, p in enumerate(actividad_data['preguntas'], start=1):
+                metadatos.append(f"PREGUNTA_{i}:")
+                metadatos.append(f"ENUNCIADO: {p['texto']}")
+                metadatos.append("TIPO: VERDADERO_FALSO")
+                metadatos.append(f"RESPUESTA_CORRECTA: {p['respuesta_correcta']}\n")
+        elif tipo_plantilla == 'P003':
+            metadatos.append("--- [RELACIÓN: GENERA <- PLANTILLA: OPCIÓN MÚLTIPLE] ---\n")
+            for i, p in enumerate(actividad_data['preguntas'], start=1):
+                metadatos.append(f"PREGUNTA_{i}:")
+                metadatos.append(f"ENUNCIADO: {p['texto']}")
+                metadatos.append(f"OPCIONES: {' | '.join(p['opciones'])}")
+                metadatos.append(f"RESPUESTA_CORRECTA: {p['respuesta_correcta']}\n")
+        elif tipo_plantilla == 'P004':
+            metadatos.append("--- [RELACIÓN: GENERA <- PLANTILLA: SOPA DE LETRAS] ---\n")
+            for i, p in enumerate(actividad_data['preguntas'], start=1):
+                metadatos.append(f"PALABRA_{i}: {p['palabra']}")
+                metadatos.append(f"DESCRIPCIÓN_{i}: {p['texto']}\n")
+        else:
+            metadatos.append("--- [RELACIÓN: GENERA <- PLANTILLA: DESCONOCIDA] ---\n")
+
+        ruta_metadatos = os.path.join(ruta_antigua, 'info_leccion.txt')
+        with open(ruta_metadatos, 'w', encoding='utf-8') as f:
+            f.write('\n'.join(metadatos))
+
+        # 8. Generar index.html
+        if tipo_plantilla == 'C001':
+            plantilla_path = os.path.join(app.root_path, 'templates', 'plantilla_leccion.html')
+            datos_act = extraer_datos_actividad(ruta_actividad)
+        elif tipo_plantilla == 'P002':
+            plantilla_path = os.path.join(app.root_path, 'templates', 'plantilla_leccion_fv.html')
+            datos_act = None
+        elif tipo_plantilla == 'P003':
+            plantilla_path = os.path.join(app.root_path, 'templates', 'plantilla_leccion_opcion_multiple.html')
+            datos_act = None
+        elif tipo_plantilla == 'P004':
+            plantilla_path = os.path.join(app.root_path, 'templates', 'plantilla_leccion_sopa.html')
+            datos_act = None
+        else:
+            return f"Tipo de actividad no soportado: {tipo_plantilla}", 400
+
+        html_multimedia = generar_html_multimedia(archivos_finales)
+
+        with open(plantilla_path, 'r', encoding='utf-8') as f:
+            plantilla_html = f.read()
+
+        html_final = plantilla_html.replace('{{ ARCHIVOS_MULTIMEDIA }}', html_multimedia)
+        html_final = html_final.replace('{{ titulo_leccion }}', nombre_leccion)
+        html_final = html_final.replace('{{ tema }}', tema)
+
+        if tipo_plantilla == 'C001' and datos_act:
+            html_final = html_final.replace('{{ IZQUIERDA_ARRAY }}', datos_act['izquierda'])
+            html_final = html_final.replace('{{ DERECHA_ARRAY }}', datos_act['derecha'])
+            html_final = html_final.replace('{{ RESPUESTAS_OBJ }}', datos_act['respuestas'])
+        elif tipo_plantilla == 'P002':
+            preguntas_html = ""
+            for idx, p in enumerate(actividad_data['preguntas'], 1):
+                preguntas_html += f'''
+        <div class="question-card">
+            <h3>{idx}. {p['texto']}</h3>
+            <label><input type="radio" name="p{idx}" value="v"> Verdadero</label><br><br>
+            <label><input type="radio" name="p{idx}" value="f"> Falso</label>
+        </div>
+        '''
+            html_final = html_final.replace('{{ PREGUNTAS_HTML }}', preguntas_html)
+        elif tipo_plantilla == 'P003':
+            preguntas_html = ""
+            for idx, p in enumerate(actividad_data['preguntas'], 1):
+                opciones_html = ""
+                letras = ['A', 'B', 'C', 'D']
+                for opt_idx, opt_texto in enumerate(p['opciones']):
+                    letra = letras[opt_idx] if opt_idx < len(letras) else str(opt_idx+1)
+                    opciones_html += f'<label class="opcion"><input type="radio" name="p{idx}" value="{letra}"> {opt_texto}</label><br>'
+                preguntas_html += f'''
+        <div class="question-card">
+            <h3>{idx}. {p['texto']}</h3>
+            {opciones_html}
+        </div>
+        '''
+            html_final = html_final.replace('{{ PREGUNTAS_HTML }}', preguntas_html)
+        elif tipo_plantilla == 'P004':
+            preguntas_json = []
+            for p in actividad_data['preguntas']:
+                preguntas_json.append({'palabra': p['palabra'], 'texto': p['texto']})
+            preguntas_json_str = json.dumps(preguntas_json, ensure_ascii=False)
+            html_final = html_final.replace('{{ PREGUNTAS_JSON }}', preguntas_json_str)
+
+        ruta_html = os.path.join(ruta_antigua, 'index.html')
+        with open(ruta_html, 'w', encoding='utf-8') as f:
+            f.write(html_final)
+
+        nuevo_nombre_carpeta = f"{grupo}_{materia}_{parcial}_{tema}_{nombre_leccion}"
+        nuevo_nombre_carpeta = nuevo_nombre_carpeta.replace(' ', '_')
+        if nuevo_nombre_carpeta != carpeta:
+            ruta_nueva = os.path.join(LECCIONES_DIR, nuevo_nombre_carpeta)
+            if os.path.exists(ruta_nueva):
+                # Si ya existe, no renombramos (podría sobrescribir datos)
+                print(f"⚠️ No se renombró la carpeta porque '{nuevo_nombre_carpeta}' ya existe.")
+                ruta_nueva = ruta_antigua  # nos quedamos con la antigua
+            else:
+                os.rename(ruta_antigua, ruta_nueva)
+                ruta_antigua = ruta_nueva
+                carpeta = nuevo_nombre_carpeta
+                print(f"✅ Carpeta renombrada a: {carpeta}")
+        else:
+            ruta_nueva = ruta_antigua
+
+        # Ahora escribimos los archivos en la carpeta definitiva (ruta_antigua)
+        ruta_metadatos = os.path.join(ruta_antigua, 'info_leccion.txt')
+        with open(ruta_metadatos, 'w', encoding='utf-8') as f:
+            f.write('\n'.join(metadatos))
+
+        ruta_html = os.path.join(ruta_antigua, 'index.html')
+        with open(ruta_html, 'w', encoding='utf-8') as f:
+            f.write(html_final)
+
+        # 9. Eliminar el ZIP antiguo (si existe) y generar uno nuevo
+        def ofuscar_reporte(texto: str) -> str:
+            firma = str(len(texto) * 77)
+            texto_con_firma = texto + "||" + firma
+            texto_modificado = "".join(chr(ord(c) + 3) for c in texto_con_firma)
+            encoded_bytes = texto_modificado.encode("utf-8")
+            return base64.b64encode(encoded_bytes).decode("ascii")
+
+        ruta_zip_destino = os.path.join(app.root_path, 'data', 'LECCIONES-LISTAS-PARA-ENVIAR')
+        os.makedirs(ruta_zip_destino, exist_ok=True)
+        old_zip = os.path.join(ruta_zip_destino, original_carpeta + ".zip")
+        if os.path.exists(old_zip):
+            os.remove(old_zip)
+            print(f"🗑️ ZIP antiguo eliminado: {old_zip}")
+
+        nombre_zip = carpeta + ".zip"   # 'carpeta' ya se actualizó si hubo renombrado
+        ruta_zip = os.path.join(ruta_zip_destino, nombre_zip)
+
+        with zipfile.ZipFile(ruta_zip, "w", zipfile.ZIP_DEFLATED) as zf:
+            with open(ruta_metadatos, 'r', encoding='utf-8') as f:
+                texto_original = f.read()
+            texto_ofuscado = ofuscar_reporte(texto_original)
+            zf.writestr("info_leccion.txt", texto_ofuscado)
+            zf.write(ruta_html, "index.html")
+            for archivo in archivos_finales:
+                ruta_archivo_fisico = os.path.join(ruta_antigua, archivo)
+                if os.path.isfile(ruta_archivo_fisico):
+                    zf.write(ruta_archivo_fisico, archivo)
+
+        return redirect(url_for('vista_contenido'))
+
+    else:   # GET
+        info = obtener_info_leccion(carpeta)
+        if not info:
+            abort(404, "Lección no encontrada")
+        actividades = cargar_actividades()
+        return render_template('editar_leccion.html', leccion=info, actividades=actividades, carpeta=carpeta, active_page='contenido')
+
+@app.route('/eliminar_leccion/<carpeta>')
+def eliminar_leccion(carpeta):
+    # 1. Eliminar la carpeta de la lección en LECCIONES DISPONIBLES
+    ruta_carpeta = os.path.join(LECCIONES_DIR, carpeta)
+    if os.path.exists(ruta_carpeta):
+        shutil.rmtree(ruta_carpeta)
+        print(f"🗑️ Carpeta de lección eliminada: {ruta_carpeta}")
+    else:
+        print(f"⚠️ La carpeta {ruta_carpeta} no existe")
+
+    # 2. Eliminar el ZIP correspondiente en LECCIONES-LISTAS-PARA-ENVIAR
+    ruta_zip = os.path.join(app.root_path, 'data', 'LECCIONES-LISTAS-PARA-ENVIAR', carpeta + '.zip')
+    if os.path.exists(ruta_zip):
+        os.remove(ruta_zip)
+        print(f"🗑️ ZIP eliminado: {ruta_zip}")
+    else:
+        print(f"⚠️ El ZIP {ruta_zip} no existe")
+
+    return redirect(url_for('vista_contenido'))
 # NOTA: Las rutas de progresiones, api/lecciones_disponibles, api/asignar_leccion no se incluyen aquí.
 # Si las necesitas, deberás adaptarlas al nuevo sistema.
 

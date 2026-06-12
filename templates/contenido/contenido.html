@@ -16,34 +16,36 @@
     <div id="actividades" class="tab-content active">
         <div class="actividades-list">
             {% if actividades %}
-                {% for act in actividades %}
-                <div class="activity-card-horizontal">
-                    <div class="act-img-container">
-                        <img src="{{ url_for('static', filename=act['IMAGEN']) }}" alt="Icono">
-                    </div>
-                    <div class="act-info">
-                        <h3>{{ act['NOMBRE'] }}</h3>
-                        <p class="tipo">Tipo: {{ act['TIPO_LEGIBLE'] }}</p>
-                        <p class="fecha">Creado: {{ act['FECHA'] }}</p>
-                    </div>
-                    <div class="act-actions">
-                        <a href="{{ url_for('editar_actividad', nombre_archivo=act['ARCHIVO']) }}" class="action-icon-btn" title="Editar">
-                            <img src="{{ url_for('static', filename='img/editar_boton.png') }}" class="icon-small">
-                        </a>
-                        <a href="{{ url_for('eliminar_actividad', nombre_archivo=act['ARCHIVO']) }}" class="action-icon-btn" title="Borrar"
-                           onclick="return confirm('¿Estás seguro de que quieres eliminar esta actividad permanentemente?');">
-                            <img src="{{ url_for('static', filename='img/cerrar_boton.png') }}" class="icon-small delete-tint">
-                        </a>
-                    </div>
+            {% for act in actividades %}
+            <div class="activity-card-horizontal">
+                <div class="act-img-container">
+                    <img src="{{ url_for('static', filename=act['IMAGEN']) }}" alt="Icono">
                 </div>
-                {% endfor %}
-            {% else %}
-                <div class="empty-state">
-                    <p>No hay actividades creadas aún.</p>
-                    <a href="{{ url_for('crear_actividad') }}" class="btn-toro-outline">
-                        + Crear actividad
+                <div class="act-info">
+                    <h3>{{ act['NOMBRE'] }}</h3>
+                    <p class="tipo">Tipo: {{ act['TIPO_LEGIBLE'] }}</p>
+                    <p class="fecha">Creado: {{ act['FECHA'] }}</p>
+                </div>
+                <div class="act-actions">
+                    <a href="/editar_actividad/{{ act['ARCHIVO'] }}" class="action-icon-btn" title="Editar">
+                        <img src="{{ url_for('static', filename='img/editar_boton.png') }}" class="icon-small">
+                    </a>
+                    <a href="{{ url_for('eliminar_actividad', nombre_archivo=act['ARCHIVO']) }}" class="action-icon-btn"
+                        title="Borrar"
+                        onclick="return confirm('¿Estás seguro de que quieres eliminar esta actividad permanentemente?');">
+                        <img src="{{ url_for('static', filename='img/cerrar_boton.png') }}"
+                            class="icon-small delete-tint">
                     </a>
                 </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="empty-state">
+                <p>No hay actividades creadas aún.</p>
+                <a href="{{ url_for('crear_actividad') }}" class="btn-toro-outline">
+                    + Crear actividad
+                </a>
+            </div>
             {% endif %}
         </div>
 
@@ -57,33 +59,33 @@
     <div id="lecciones" class="tab-content">
         <div class="lecciones-list">
             {% if lecciones %}
-                {% for leccion in lecciones %}
-                <div class="leccion-card-horizontal">
-                    <div class="leccion-icon-bg">
-                        <img src="{{ url_for('static', filename='img/contenido.png') }}" class="card-icon">
-                    </div>
-                    <div class="leccion-info">
-                        <h3>{{ leccion.replace('_', ' ') }}</h3>
-                        <p>Recurso didáctico disponible</p>
-                    </div>
-                    <div class="leccion-actions">
-                        <a href="#" class="action-icon-btn" title="Editar">
-                            <img src="{{ url_for('static', filename='img/editar_boton.png') }}" class="icon-small">
-                        </a>
-                        <a href="#" class="action-icon-btn" title="Borrar">
-                            <img src="{{ url_for('static', filename='img/cerrar_boton.png') }}" class="icon-small delete-tint">
-                        </a>
-                        <button class="btn-toro">Ver Detalles</button>
-                    </div>
+            {% for leccion in lecciones %}
+            <div class="leccion-card-horizontal">
+                <div class="leccion-icon-bg">
+                    <img src="{{ url_for('static', filename='img/contenido.png') }}" class="card-icon">
                 </div>
-                {% endfor %}
+                <div class="leccion-info">
+                    <h3>{{ leccion.replace('_', ' ') }}</h3>
+                    <p>Recurso didáctico disponible</p>
+                </div>
+                <div class="leccion-actions">
+                    <a href="{{ url_for('editar_leccion', carpeta=leccion) }}" class="action-icon-btn" title="Editar">
+                        <img src="{{ url_for('static', filename='img/editar_boton.png') }}" class="icon-small">
+                    </a>
+                    <a href="{{ url_for('eliminar_leccion', carpeta=leccion) }}" class="action-icon-btn" title="Borrar"
+                        onclick="return confirm('¿Estás seguro de que quieres eliminar esta lección permanentemente? Se borrará la carpeta y el ZIP asociado.');">
+                        <img src="{{ url_for('static', filename='img/cerrar_boton.png') }}"
+                            class="icon-small delete-tint">
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
             {% else %}
-                <div class="empty-state">
-                    <p>No hay lecciones registradas aún.</p>
-                </div>
+            <div class="empty-state">
+                <p>No hay lecciones registradas aún.</p>
+            </div>
             {% endif %}
         </div>
-
         <a href="{{ url_for('subir_leccion') }}" class="btn-toro-outline">
             + Crear lección
         </a>

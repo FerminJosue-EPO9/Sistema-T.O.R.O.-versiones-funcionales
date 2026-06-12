@@ -1,0 +1,1897 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='crear-actividad.css') }}">
+
+<div class="contenedor-creacAct">
+    <div class="header-center">
+        <h3>EDITAR ACTIVIDAD</h3>
+    </div>
+
+    <div class="stepper-wrapper">
+        <div class="progress-bar">
+            <div class="progress-bar-fill" id="progress"></div>
+        </div>
+        <div class="stepper">
+            <div class="step active">
+                <div class="circle">1</div>
+                <p>Plantilla</p>
+            </div>
+            <div class="step">
+                <div class="circle">2</div>
+                <p>Configurar</p>
+            </div>
+            <div class="step">
+                <div class="circle">3</div>
+                <p>Métricas</p>
+            </div>
+            <div class="step">
+                <div class="circle">4</div>
+                <p>Finalizar</p>
+            </div>
+        </div>
+    </div>
+
+    <form id="wizard-form" action="{{ url_for('editar_actividad_json', nombre_archivo=nombre_archivo) }}" method="POST"
+        novalidate>
+        <div class="step-content-container" id="content">
+            <div class="step-pane active" id="step-1">
+                <h4 class="step-title">Selecciona el tipo de actividad</h4>
+                <input type="hidden" name="plantilla_seleccionada" id="input_plantilla" required>
+                <div class="cards-grid" id="main-options">
+                    <div class="plantilla-card group-card" onclick="mostrarSubOpciones('quiz')">
+                        <img src="{{ url_for('static', filename='img/imagenesActividades/CUESTIONARIOS.png') }}"
+                            alt="Cuestionarios">
+                        <div class="card-overlay"><span>Cuestionarios</span></div>
+                    </div>
+                    <div class="plantilla-card" onclick="seleccionarCamino(this)">
+                        <img src="{{ url_for('static', filename='img/imagenesActividades/COMPLETARCAMINO.png') }}"
+                            alt="Completar camino">
+                        <div class="card-overlay"><span>Completar camino</span></div>
+                    </div>
+                    <div class="plantilla-card" onclick="seleccionarFinal('P004', this)">
+                        <img src="{{ url_for('static', filename='img/imagenesActividades/SOPA.png') }}">
+                        <div class="card-overlay"><span>Sopa de Letras</span></div>
+                    </div>
+                    <div class="plantilla-card" onclick="seleccionarFinal('P006', this)"
+                        style="visibility: hidden; pointer-events: none; opacity: 0;">
+                        <img src="{{ url_for('static', filename='img/imagenesActividades/COMPLETARPALABRA.png') }}">
+                        <div class="card-overlay"><span>Completar palabra</span></div>
+                    </div>
+                </div>
+                <div id="sub-options-quiz" class="sub-options-container" style="display: none;">
+                    <h3 class="subtitulo-cuestionario">¿Qué tipo de cuestionario?</h3>
+                    <div class="cards-grid">
+                        <div class="plantilla-card" onclick="seleccionarFV(this)">
+                            <img src="{{ url_for('static', filename='img/imagenesActividades/FV.png') }}" alt="FV">
+                            <div class="card-overlay"><span>Falso / Verdadero</span></div>
+                        </div>
+                        <div class="plantilla-card" onclick="seleccionarFinal('P003', this)">
+                            <img src="{{ url_for('static', filename='img/imagenesActividades/OPCIONES.png') }}"
+                                alt="Opciones">
+                            <div class="card-overlay"><span>Opción Múltiple</span></div>
+                        </div>
+                    </div>
+                </div>
+                <p id="error-msg" class="error-msg-step1">Por favor selecciona una actividad.</p>
+            </div>
+
+            <div class="step-pane" id="step-2">
+                <h4 class="step-title">Configurar Actividad</h4>
+
+                <div id="camino-form-container" style="display: none;">
+                    <div class="encabezado-panel encabezado-con-boton">
+                        Completar camino
+                        <button type="button" class="boton-info btn-info-header" id="botonInfoCamino">?</button>
+                    </div>
+                    <div class="contenido-panel">
+                        <div class="tabla-palabra-pregunta">
+                            <div class="tabla-header">
+                                <div class="col-palabra">Palabra</div>
+                                <div class="col-pregunta">Descripción</div>
+                                <div class="col-accion"></div>
+                            </div>
+                            <div id="camino-items-list"></div>
+                            <button type="button" class="btn-add-question" id="agregar-fila-camino"
+                                onclick="agregarFilaCamino()">+ Agregar pregunta (Máx. 15)</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="fv-form-container" style="display: none;">
+                    <div class="encabezado-panel encabezado-con-boton">
+                        Cuestionario de Falso/Verdadero
+                        <button type="button" class="boton-info btn-info-header" id="botonInfoFV">?</button>
+                    </div>
+                    <div class="contenido-panel">
+                        <div id="fv-questions-container"></div>
+                        <div class="estado-vacio" id="estado-vacio-fv">
+                            <p class="mensaje-vacio">Aún no has agregado ninguna pregunta. ¡Comienza creando la primera!
+                            </p>
+                        </div>
+                        <button type="button" class="boton-agregar" id="botonAgregarPreguntaFV">+ Agregar
+                            pregunta</button>
+                    </div>
+                </div>
+
+                <div id="opcion-multiple-container" style="display: none;">
+                    <div class="encabezado-panel encabezado-con-boton">
+                        Cuestionario de Opción Múltiple
+                        <button type="button" class="boton-info btn-info-header" id="botonInfoMC">?</button>
+                    </div>
+                    <div class="contenido-panel">
+                        <div id="mc-questions-container"></div>
+                        <div class="estado-vacio" id="estado-vacio-mc">
+                            <p class="mensaje-vacio">Aún no has agregado ninguna pregunta. ¡Comienza creando la primera!
+                            </p>
+                        </div>
+                        <button type="button" class="boton-agregar" id="botonAgregarPreguntaMC">+ Agregar
+                            pregunta</button>
+                    </div>
+                </div>
+
+                <div id="sopa-form-container" style="display: none;">
+                    <div class="encabezado-panel encabezado-con-boton">
+                        Sopa de Letras
+                        <button type="button" class="boton-info btn-info-header" id="botonInfoSopa">?</button>
+                    </div>
+                    <div class="contenido-panel">
+                        <div class="tabla-palabra-pregunta">
+                            <div class="tabla-header">
+                                <div class="col-pregunta">Descripción</div>
+                                <div class="col-palabra">Palabra</div>
+                                <div class="col-accion"></div>
+                            </div>
+                            <div id="sopa-items-list"></div>
+                            <button type="button" class="btn-add-question" id="agregar-fila-sopa"
+                                onclick="agregarFilaSopa()">+ Agregar palabra (Máx. 15)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-pane" id="step-3">
+                <h4 class="step-title">Configuración de Métricas</h4>
+                <div class="metrics-container">
+                    <div class="form-group">
+                        <label>Título de la actividad:</label>
+                        <input type="text" name="nombre_confirmacion" class="input-toro"
+                            placeholder="Ej: Conocimientos básicos" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha de vencimiento:</label>
+                        <input type="date" name="fecha_vencimiento" class="input-toro" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Tiempo límite (minutos):</label>
+                        <input type="number" name="tiempo_limite" class="input-toro" min="1" max="120"
+                            placeholder="Ej: 60">
+                    </div>
+                    <div class="form-group">
+                        <label>Intentos máximos:</label>
+                        <input type="number" name="intentos" id="intentos-input" class="input-toro" min="1" max="5"
+                            value="3" placeholder="Ej: 3" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Ponderación en puntos:</label>
+                        <input type="number" name="ponderacion" class="input-toro" min="1" max="100"
+                            placeholder="Ej: 10" required>
+                    </div>
+                    <input type="hidden" name="instrucciones" value="Sin instrucciones adicionales.">
+                </div>
+            </div>
+
+            <div class="step-pane" id="step-4">
+                <h4 class="step-title">Resumen de la Actividad</h4>
+                <div class="summary-card">
+                    <div class="summary-header">
+                        <h5>¡Actividad lista!</h5>
+                    </div>
+                    <div class="summary-details">
+                        <div class="summary-item"><span class="label">Tipo:</span> <span class="value"
+                                id="summary-type">---</span></div>
+                        <div class="summary-item"><span class="label">Nombre:</span> <span class="value"
+                                id="summary-name">---</span></div>
+                        <div class="summary-item"><span class="label">Preguntas:</span> <span class="value"
+                                id="summary-questions">0</span></div>
+                        <div class="summary-item"><span class="label">Intentos:</span> <span class="value"
+                                id="summary-attempts">---</span></div>
+                        <div class="summary-item"><span class="label">Tiempo:</span> <span class="value"
+                                id="summary-time">---</span></div>
+                        <div class="summary-item"><span class="label">Fecha vencimiento:</span> <span class="value"
+                                id="summary-fecha">---</span></div>
+                        <div class="summary-item"><span class="label">Ponderación:</span> <span class="value"
+                                id="summary-ponderacion">---</span></div>
+                    </div>
+                    <p class="summary-note">Al hacer clic en "Guardar", la actividad se generará en formato TXT.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="buttons-container">
+            <button type="button" class="btn-wizard prev" id="btn-prev" onclick="prevStep()">Regresar</button>
+            <button type="button" class="btn-wizard next" id="btn-next" onclick="nextStep()">Siguiente</button>
+            <button type="submit" class="btn-wizard finish" id="btn-finish" style="display:none;">Guardar</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    // ==========================================
+    // VARIABLES GLOBALES (WIZARD)
+    // ==========================================
+    var actividadData = {{ actividad | tojson | safe }};
+    var nombreArchivo = "{{ nombre_archivo }}";
+    var modoEdicion = true;
+
+    let currentStep = 1;
+    const totalSteps = 4;
+    let isSubMenuOpen = false;
+    let filaCaminoCount = 0;
+    const MAX_FILAS_CAMINO = 15;
+    const MAX_PREGUNTAS_FV = 15;
+    const MAX_PREGUNTAS_MC = 15;
+    let filaSopaCount = 0;
+    const MAX_FILAS_SOPA = 15;
+
+    // Variables para F/V
+    let fvQuestionCount = 0;
+    let currentEditingCard = null;
+    let preguntaAEliminar = null;
+
+    // Variables para Opción Múltiple
+    let mcQuestionCount = 0;
+    let currentEditingMCCard = null;
+
+    const mainOptions = document.getElementById('main-options');
+    const subOptions = document.getElementById('sub-options-quiz');
+    const inputPlantilla = document.getElementById('input_plantilla');
+    const title = document.querySelector('.step-title');
+    const errorMsg = document.getElementById('error-msg');
+    const progressBar = document.getElementById('progress');
+
+    // Elementos F/V
+    let botonAgregarFV, botonInfoFV, estadoVacioFV, contenedorFVPreguntas;
+
+    // Elementos Opción Múltiple
+    let botonAgregarMC, botonInfoMC, estadoVacioMC, contenedorMCPreguntas;
+
+    // Botones de información
+    let botonInfoCamino;
+    let botonInfoSopa;
+
+    // Modales
+    let fondoModalInfo, fondoModalEliminar;
+
+    function precargarMetricas() {
+        if (!modoEdicion || !actividadData) return;
+        document.querySelector('input[name="nombre_confirmacion"]').value = actividadData.nombre || '';
+        document.querySelector('input[name="fecha_vencimiento"]').value = actividadData.fecha_vencimiento || '';
+        document.querySelector('input[name="tiempo_limite"]').value = actividadData.tiempo || '';
+        document.querySelector('input[name="intentos"]').value = actividadData.intentos || 3;
+        document.querySelector('input[name="ponderacion"]').value = actividadData.ponderacion || '';
+    }
+
+    // ==========================================
+    // FUNCIÓN PARA RESTABLECER BOTÓN SIGUIENTE
+    // ==========================================
+    function restablecerBotonSiguiente() {
+        const btnNext = document.getElementById('btn-next');
+        btnNext.disabled = false;
+        btnNext.style.opacity = '1';
+        btnNext.style.cursor = 'pointer';
+    }
+
+    // ==========================================
+    // FUNCIONES DE INICIALIZACIÓN DE MODALES
+    // ==========================================
+    function crearModales() {
+        // Modal de información
+        fondoModalInfo = document.createElement("div");
+        fondoModalInfo.classList.add("fondo-modal");
+        const modalInfo = document.createElement("div");
+        modalInfo.classList.add("modal-personalizado");
+        modalInfo.innerHTML = `
+            <p>Mientras esté añadiendo una nueva pregunta no podrá avanzar hasta que la guarde.<br>
+            Podrá continuar creando su actividad cuando haya guardado de 5 a 15 preguntas.</p>
+            <button class="boton-modal" id="btnCerrarModalInfo">Aceptar</button>
+        `;
+        fondoModalInfo.appendChild(modalInfo);
+        document.body.appendChild(fondoModalInfo);
+
+        // Modal de eliminación
+        fondoModalEliminar = document.createElement("div");
+        fondoModalEliminar.classList.add("fondo-modal");
+        const modalEliminar = document.createElement("div");
+        modalEliminar.classList.add("modal-personalizado");
+        modalEliminar.innerHTML = `
+            <p class="texto-eliminar">¿Estás seguro de que deseas eliminar esta pregunta? Esta acción no se puede deshacer.</p>
+            <div class="botones-eliminar">
+                <button class="boton-cancelar-eliminar">Cancelar</button>
+                <button class="boton-confirmar-eliminar">Aceptar</button>
+            </div>
+        `;
+        fondoModalEliminar.appendChild(modalEliminar);
+        document.body.appendChild(fondoModalEliminar);
+
+        // Eventos modales
+        document.getElementById("btnCerrarModalInfo")?.addEventListener("click", () => {
+            fondoModalInfo.classList.remove("activo");
+        });
+
+        modalEliminar.querySelector(".boton-cancelar-eliminar").addEventListener("click", () => {
+            fondoModalEliminar.classList.remove("activo");
+            preguntaAEliminar = null;
+        });
+
+        modalEliminar.querySelector(".boton-confirmar-eliminar").addEventListener("click", () => {
+            if (preguntaAEliminar) {
+                const tarjeta = preguntaAEliminar;
+                tarjeta.remove();
+                mostrarMensajeExito("El elemento se ha eliminado exitosamente!");
+
+                // Determinar qué tipo de pregunta se eliminó y actualizar según corresponda
+                if (inputPlantilla.value === 'FV01') {
+                    renumerarPreguntasFV();
+                    actualizarEstadoVacioFV();
+                    actualizarTextoBotonAgregar();
+                    actualizarBotonSiguienteFV();
+                    if (document.querySelectorAll('#fv-questions-container .tarjeta-pregunta.guardado').length === 0) {
+                        botonAgregarFV.disabled = false;
+                    }
+                } else if (inputPlantilla.value === 'P003') {
+                    renumerarPreguntasMC();
+                    actualizarEstadoVacioMC();
+                    actualizarTextoBotonAgregarMC();
+                    actualizarBotonSiguienteMC();
+                    if (document.querySelectorAll('#mc-questions-container .tarjeta-pregunta.guardado').length === 0) {
+                        botonAgregarMC.disabled = false;
+                    }
+                }
+                preguntaAEliminar = null;
+            }
+            fondoModalEliminar.classList.remove("activo");
+        });
+    }
+
+    function mostrarMensajeExito(texto) {
+        const msg = document.createElement("div");
+        msg.classList.add("mensaje-exito");
+        msg.textContent = texto;
+        document.body.appendChild(msg);
+        setTimeout(() => msg.remove(), 3000);
+    }
+
+    // ==========================================
+    // FUNCIONES PARA FALSO/VERDADERO
+    // ==========================================
+    function actualizarTextoBotonAgregar() {
+        const preguntasGuardadas = document.querySelectorAll('#fv-questions-container .tarjeta-pregunta.guardado').length;
+        if (botonAgregarFV) {
+            botonAgregarFV.textContent = `+ Agregar pregunta (${preguntasGuardadas}/${MAX_PREGUNTAS_FV})`;
+            botonAgregarFV.disabled = (preguntasGuardadas >= MAX_PREGUNTAS_FV);
+        }
+    }
+
+    function actualizarBotonSiguienteFV() {
+        const preguntasGuardadas = document.querySelectorAll('#fv-questions-container .tarjeta-pregunta.guardado').length;
+        const btnNext = document.getElementById('btn-next');
+        if (inputPlantilla.value === 'FV01') {
+            btnNext.disabled = !(preguntasGuardadas >= 5 && preguntasGuardadas <= MAX_PREGUNTAS_FV);
+            btnNext.style.opacity = btnNext.disabled ? '0.5' : '1';
+            btnNext.style.cursor = btnNext.disabled ? 'not-allowed' : 'pointer';
+        }
+    }
+
+    function inicializarFV() {
+        botonAgregarFV = document.getElementById("botonAgregarPreguntaFV");
+        botonInfoFV = document.getElementById("botonInfoFV");
+        estadoVacioFV = document.getElementById("estado-vacio-fv");
+        contenedorFVPreguntas = document.getElementById("fv-questions-container");
+
+        botonAgregarFV.addEventListener("click", () => {
+            if (currentEditingCard) {
+                alert("Primero guarda o cancela la pregunta actual.");
+                return;
+            }
+            estadoVacioFV.classList.add("oculto");
+            botonInfoFV.classList.add("oculto");
+            botonAgregarFV.disabled = true;
+            crearTarjetaPreguntaEdicion();
+        });
+
+        botonInfoFV.addEventListener("click", () => {
+            fondoModalInfo.classList.add("activo");
+        });
+
+        actualizarEstadoVacioFV();
+        actualizarTextoBotonAgregar();
+        actualizarBotonSiguienteFV();
+    }
+
+    function actualizarEstadoVacioFV() {
+        const preguntasGuardadas = document.querySelectorAll('#fv-questions-container .tarjeta-pregunta.guardado').length;
+        if (preguntasGuardadas === 0 && contenedorFVPreguntas.children.length === 0) {
+            estadoVacioFV.classList.remove("oculto");
+            botonInfoFV.classList.remove("oculto");
+            botonAgregarFV.disabled = false;
+        } else {
+            estadoVacioFV.classList.add("oculto");
+            botonInfoFV.classList.add("oculto");
+        }
+    }
+
+    function crearTarjetaPreguntaEdicion() {
+        fvQuestionCount++;
+        const nuevaTarjeta = document.createElement("div");
+        nuevaTarjeta.classList.add("tarjeta-pregunta");
+        nuevaTarjeta.dataset.questionNumber = fvQuestionCount;
+        nuevaTarjeta.innerHTML = `
+            <h3 class="titulo-pregunta">Pregunta ${fvQuestionCount}:</h3>
+            <span class="cerrar-pregunta">x</span>
+            <div class="fila-edicion">
+                <input type="text" class="entrada-pregunta" placeholder="Escribe la pregunta">
+                <div class="acciones-pregunta">
+                    <div class="contenedor-toggle">
+                        <label class="interruptor">
+                            <input type="checkbox" checked>
+                            <span class="deslizador"></span>
+                        </label>
+                        <span class="texto-toggle">Verdadero</span>
+                    </div>
+                    <button type="button" class="boton-guardar">Guardar pregunta</button>
+                </div>
+            </div>
+        `;
+        contenedorFVPreguntas.appendChild(nuevaTarjeta);
+        currentEditingCard = nuevaTarjeta;
+
+        const inputPregunta = nuevaTarjeta.querySelector(".entrada-pregunta");
+        const toggleCheckbox = nuevaTarjeta.querySelector(".interruptor input");
+        const toggleText = nuevaTarjeta.querySelector(".texto-toggle");
+        const toggleContainer = nuevaTarjeta.querySelector(".contenedor-toggle");
+        const botonGuardar = nuevaTarjeta.querySelector(".boton-guardar");
+        const botonCerrar = nuevaTarjeta.querySelector(".cerrar-pregunta");
+
+        toggleCheckbox.addEventListener("change", () => {
+            if (toggleCheckbox.checked) {
+                toggleText.textContent = "Verdadero";
+                toggleContainer.classList.remove("estado-falso");
+            } else {
+                toggleText.textContent = "Falso";
+                toggleContainer.classList.add("estado-falso");
+            }
+        });
+
+        botonGuardar.addEventListener("click", () => {
+            const texto = inputPregunta.value.trim();
+            if (texto === "") {
+                inputPregunta.classList.add("error");
+                mostrarMensajeExito("Por favor escribe la pregunta antes de guardarla.");
+                setTimeout(() => inputPregunta.classList.remove("error"), 2000);
+                return;
+            }
+            const esVerdadero = toggleCheckbox.checked;
+            guardarPregunta(nuevaTarjeta, texto, esVerdadero);
+        });
+
+        botonCerrar.addEventListener("click", () => {
+            if (confirm("¿Cancelar la creación de esta pregunta?")) {
+                nuevaTarjeta.remove();
+                fvQuestionCount--;
+                renumerarPreguntasFV();
+                currentEditingCard = null;
+                botonAgregarFV.disabled = false;
+                actualizarEstadoVacioFV();
+                actualizarTextoBotonAgregar();
+                actualizarBotonSiguienteFV();
+            }
+        });
+
+        inputPregunta.focus();
+    }
+
+    function guardarPregunta(tarjeta, texto, esVerdadero) {
+        const numero = parseInt(tarjeta.dataset.questionNumber);
+        tarjeta.classList.add("guardado");
+        tarjeta.innerHTML = `
+            <div class="contenido-pregunta-guardada">
+                <h3 class="titulo-pregunta-guardada">Pregunta ${numero}:</h3>
+                <p class="texto-pregunta-guardada">${escapeHtml(texto)}</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div class="contenedor-toggle ${esVerdadero ? "" : "estado-falso"}">
+                    <label class="interruptor">
+                        <input type="checkbox" ${esVerdadero ? "checked" : ""} disabled>
+                        <span class="deslizador"></span>
+                    </label>
+                    <span class="texto-toggle">${esVerdadero ? "Verdadero" : "Falso"}</span>
+                </div>
+                <span class="editar-pregunta">✎</span>
+                <span class="cerrar-pregunta cerrar-guardado">x</span>
+            </div>
+            <input type="hidden" name="fv_correcto_${numero}" value="${esVerdadero ? "Verdadero" : "Falso"}">
+            <input type="hidden" name="fv_pregunta_${numero}" value="${escapeHtml(texto)}">
+        `;
+        tarjeta.dataset.questionNumber = numero;
+
+        const botonEditar = tarjeta.querySelector(".editar-pregunta");
+        const botonEliminar = tarjeta.querySelector(".cerrar-guardado");
+
+        botonEditar.addEventListener("click", () => {
+            if (currentEditingCard) {
+                alert("Ya hay una pregunta en edición. Completa o cancela primero.");
+                return;
+            }
+            entrarModoEdicion(tarjeta, texto, esVerdadero, numero);
+        });
+
+        botonEliminar.addEventListener("click", () => {
+            preguntaAEliminar = tarjeta;
+            fondoModalEliminar.classList.add("activo");
+        });
+
+        currentEditingCard = null;
+        botonAgregarFV.disabled = false;
+        actualizarEstadoVacioFV();
+        renumerarPreguntasFV();
+        actualizarTextoBotonAgregar();
+        actualizarBotonSiguienteFV();
+    }
+
+    function entrarModoEdicion(tarjeta, textoAntiguo, esVerdaderoAntiguo, numero) {
+        currentEditingCard = tarjeta;
+        botonAgregarFV.disabled = true;
+
+        tarjeta.classList.remove("guardado");
+        tarjeta.innerHTML = `
+            <h3 class="titulo-pregunta">Pregunta ${numero}:</h3>
+            <span class="cerrar-pregunta">x</span>
+            <div class="fila-edicion">
+                <input type="text" class="entrada-pregunta" placeholder="Escribe la pregunta" value="${escapeHtml(textoAntiguo)}">
+                <div class="acciones-pregunta">
+                    <div class="contenedor-toggle ${esVerdaderoAntiguo ? "" : "estado-falso"}">
+                        <label class="interruptor">
+                            <input type="checkbox" ${esVerdaderoAntiguo ? "checked" : ""}>
+                            <span class="deslizador"></span>
+                        </label>
+                        <span class="texto-toggle">${esVerdaderoAntiguo ? "Verdadero" : "Falso"}</span>
+                    </div>
+                    <button type="button" class="boton-guardar">Guardar pregunta</button>
+                </div>
+            </div>
+        `;
+
+        const inputPregunta = tarjeta.querySelector(".entrada-pregunta");
+        const toggleCheckbox = tarjeta.querySelector(".interruptor input");
+        const toggleText = tarjeta.querySelector(".texto-toggle");
+        const toggleContainer = tarjeta.querySelector(".contenedor-toggle");
+        const botonGuardar = tarjeta.querySelector(".boton-guardar");
+        const botonCerrar = tarjeta.querySelector(".cerrar-pregunta");
+
+        toggleCheckbox.addEventListener("change", () => {
+            if (toggleCheckbox.checked) {
+                toggleText.textContent = "Verdadero";
+                toggleContainer.classList.remove("estado-falso");
+            } else {
+                toggleText.textContent = "Falso";
+                toggleContainer.classList.add("estado-falso");
+            }
+        });
+
+        botonGuardar.addEventListener("click", () => {
+            const nuevoTexto = inputPregunta.value.trim();
+            if (nuevoTexto === "") {
+                inputPregunta.classList.add("error");
+                mostrarMensajeExito("Por favor escribe la pregunta.");
+                setTimeout(() => inputPregunta.classList.remove("error"), 2000);
+                return;
+            }
+            const nuevoEsVerdadero = toggleCheckbox.checked;
+            guardarPregunta(tarjeta, nuevoTexto, nuevoEsVerdadero);
+        });
+
+        botonCerrar.addEventListener("click", () => {
+            if (confirm("¿Cancelar la edición? Se perderán los cambios.")) {
+                guardarPregunta(tarjeta, textoAntiguo, esVerdaderoAntiguo);
+            }
+        });
+
+        inputPregunta.focus();
+    }
+
+    function renumerarPreguntasFV() {
+        const tarjetas = document.querySelectorAll('#fv-questions-container .tarjeta-pregunta');
+        let nuevoContador = 0;
+        tarjetas.forEach((tarjeta, idx) => {
+            if (tarjeta.classList.contains("guardado")) {
+                nuevoContador++;
+                const nuevoNumero = nuevoContador;
+                tarjeta.dataset.questionNumber = nuevoNumero;
+                const titulo = tarjeta.querySelector(".titulo-pregunta-guardada");
+                if (titulo) titulo.textContent = `Pregunta ${nuevoNumero}:`;
+                const hiddenPreg = tarjeta.querySelector('input[name^="fv_pregunta_"]');
+                if (hiddenPreg) hiddenPreg.name = `fv_pregunta_${nuevoNumero}`;
+                const hiddenCorrect = tarjeta.querySelector('input[name^="fv_correcto_"]');
+                if (hiddenCorrect) hiddenCorrect.name = `fv_correcto_${nuevoNumero}`;
+            } else {
+                const tituloEdit = tarjeta.querySelector(".titulo-pregunta");
+                if (tituloEdit) tituloEdit.textContent = `Pregunta ${idx + 1}:`;
+                tarjeta.dataset.questionNumber = idx + 1;
+            }
+        });
+        fvQuestionCount = nuevoContador;
+    }
+
+    // ==========================================
+    // CARGA DE PREGUNTAS EXISTENTES (OPCIÓN MÚLTIPLE)
+    // ==========================================
+    function cargarPreguntasMC(preguntas) {
+        // preguntas = [
+        //   { afirmacion: "texto", opciones: ["op1","op2",...], respuesta: "A" }, ...
+        // ]
+        preguntas.forEach((p, idx) => {
+            mcQuestionCount++;
+            const numero = mcQuestionCount;
+            const tarjeta = document.createElement('div');
+            tarjeta.classList.add('tarjeta-pregunta', 'guardado');
+            tarjeta.dataset.questionNumber = numero;
+
+            // Construir el HTML de las opciones guardadas (radio deshabilitados, etc.)
+            let opcionesHtml = '';
+            for (let i = 0; i < p.opciones.length; i++) {
+                const letra = String.fromCharCode(65 + i);
+                const esCorrecta = (letra === p.respuesta);
+                opcionesHtml += `
+                <div style="display:flex; align-items:center; gap:8px; margin-top:5px;">
+                    <input type="radio" disabled ${esCorrecta ? 'checked' : ''}>
+                    <strong>${letra})</strong> ${escapeHtml(p.opciones[i])}
+                </div>
+            `;
+            }
+
+            tarjeta.innerHTML = `
+            <div class="contenido-pregunta-guardada">
+                <h3 class="titulo-pregunta-guardada">Pregunta ${numero}:</h3>
+                <p class="texto-pregunta-guardada">${escapeHtml(p.afirmacion)}</p>
+                <div class="opciones-guardadas" style="margin-top:10px;">
+                    ${opcionesHtml}
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <span class="editar-pregunta">✎</span>
+                <span class="cerrar-pregunta cerrar-guardado">x</span>
+            </div>
+            <input type="hidden" name="mc_pregunta_${numero}" value="${escapeHtml(p.afirmacion)}">
+            <input type="hidden" name="mc_opciones_${numero}" value="${p.opciones.join('||')}">
+            <input type="hidden" name="mc_correcta_${numero}" value="${p.respuesta}">
+        `;
+
+            contenedorMCPreguntas.appendChild(tarjeta);
+
+            // Reasignar eventos de editar y eliminar (igual que en guardarPreguntaMC)
+            const botonEditar = tarjeta.querySelector('.editar-pregunta');
+            const botonEliminar = tarjeta.querySelector('.cerrar-guardado');
+
+            botonEditar.addEventListener('click', () => {
+                if (currentEditingMCCard) {
+                    alert("Ya hay una pregunta en edición.");
+                    return;
+                }
+                entrarModoEdicionMC(tarjeta, p.afirmacion, p.opciones, p.respuesta, numero);
+            });
+
+            botonEliminar.addEventListener('click', () => {
+                preguntaAEliminar = tarjeta;
+                fondoModalEliminar.classList.add('activo');
+            });
+        });
+
+        // Actualizar contadores y estado del botón "siguiente"
+        actualizarTextoBotonAgregarMC();
+        actualizarBotonSiguienteMC();
+    }
+
+    function cargarPreguntasFV(preguntas) {
+        preguntas.forEach(p => {
+            fvQuestionCount++;
+            const tarjeta = document.createElement('div');
+            tarjeta.classList.add('tarjeta-pregunta', 'guardado');
+            tarjeta.dataset.questionNumber = fvQuestionCount;
+            const esVerdadero = (p.respuesta === 'Verdadero');
+            tarjeta.innerHTML = `
+            <div class="contenido-pregunta-guardada">
+                <h3 class="titulo-pregunta-guardada">Pregunta ${fvQuestionCount}:</h3>
+                <p class="texto-pregunta-guardada">${escapeHtml(p.afirmacion)}</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div class="contenedor-toggle ${esVerdadero ? '' : 'estado-falso'}">
+                    <label class="interruptor">
+                        <input type="checkbox" ${esVerdadero ? 'checked' : ''} disabled>
+                        <span class="deslizador"></span>
+                    </label>
+                    <span class="texto-toggle">${esVerdadero ? 'Verdadero' : 'Falso'}</span>
+                </div>
+                <span class="editar-pregunta">✎</span>
+                <span class="cerrar-pregunta cerrar-guardado">x</span>
+            </div>
+            <input type="hidden" name="fv_correcto_${fvQuestionCount}" value="${esVerdadero ? 'Verdadero' : 'Falso'}">
+            <input type="hidden" name="fv_pregunta_${fvQuestionCount}" value="${escapeHtml(p.afirmacion)}">
+        `;
+            contenedorFVPreguntas.appendChild(tarjeta);
+            // Reasignar eventos de editar/eliminar (similar a guardarPregunta)
+            const botonEditar = tarjeta.querySelector('.editar-pregunta');
+            const botonEliminar = tarjeta.querySelector('.cerrar-guardado');
+            botonEditar.addEventListener('click', () => {
+                if (currentEditingCard) {
+                    alert("Ya hay una pregunta en edición.");
+                    return;
+                }
+                entrarModoEdicion(tarjeta, p.afirmacion, esVerdadero, fvQuestionCount);
+            });
+            botonEliminar.addEventListener('click', () => {
+                preguntaAEliminar = tarjeta;
+                fondoModalEliminar.classList.add('activo');
+            });
+        });
+        actualizarTextoBotonAgregar();
+        actualizarBotonSiguienteFV();
+    }
+
+    function cargarCamino(izquierda, derecha) {
+        const container = document.getElementById('camino-items-list');
+        container.innerHTML = '';
+        filaCaminoCount = 0;
+        for (let i = 0; i < izquierda.length; i++) {
+            agregarFilaCamino();  // crea fila vacía
+            const fila = container.lastElementChild;
+            fila.querySelector('input[name^="camino_pregunta_"]').value = izquierda[i];
+            fila.querySelector('input[name^="camino_palabra_"]').value = derecha[i];
+        }
+        actualizarContadorFilas();
+    }
+
+    function cargarSopa(descripciones, palabras) {
+        const container = document.getElementById('sopa-items-list');
+        container.innerHTML = '';
+        filaSopaCount = 0;
+        for (let i = 0; i < descripciones.length; i++) {
+            agregarFilaSopa();
+            const fila = container.lastElementChild;
+            fila.querySelector('input[name^="sopa_pregunta_"]').value = descripciones[i];
+            fila.querySelector('input[name^="sopa_palabra_"]').value = palabras[i];
+        }
+        actualizarContadorFilasSopa();
+        actualizarBotonSiguienteSopa();
+    }
+
+    // ==========================================
+    // FUNCIONES PARA OPCIÓN MÚLTIPLE
+    // ==========================================
+    function actualizarTextoBotonAgregarMC() {
+        const preguntasGuardadas = document.querySelectorAll('#mc-questions-container .tarjeta-pregunta.guardado').length;
+        if (botonAgregarMC) {
+            botonAgregarMC.textContent = `+ Agregar pregunta (${preguntasGuardadas}/${MAX_PREGUNTAS_MC})`;
+            botonAgregarMC.disabled = (preguntasGuardadas >= MAX_PREGUNTAS_MC);
+        }
+    }
+
+    function actualizarBotonSiguienteMC() {
+        const preguntasGuardadas = document.querySelectorAll('#mc-questions-container .tarjeta-pregunta.guardado').length;
+        const btnNext = document.getElementById('btn-next');
+        if (inputPlantilla.value === 'P003') {
+            btnNext.disabled = !(preguntasGuardadas >= 5 && preguntasGuardadas <= MAX_PREGUNTAS_MC);
+            btnNext.style.opacity = btnNext.disabled ? '0.5' : '1';
+            btnNext.style.cursor = btnNext.disabled ? 'not-allowed' : 'pointer';
+        }
+    }
+
+    function inicializarMC() {
+        botonAgregarMC = document.getElementById("botonAgregarPreguntaMC");
+        botonInfoMC = document.getElementById("botonInfoMC");
+        estadoVacioMC = document.getElementById("estado-vacio-mc");
+        contenedorMCPreguntas = document.getElementById("mc-questions-container");
+
+        botonAgregarMC.addEventListener("click", () => {
+            if (currentEditingMCCard) {
+                alert("Primero guarda o cancela la pregunta actual.");
+                return;
+            }
+            estadoVacioMC.classList.add("oculto");
+            botonInfoMC.classList.add("oculto");
+            botonAgregarMC.disabled = true;
+            crearTarjetaEdicionMC();
+        });
+
+        botonInfoMC.addEventListener("click", () => {
+            fondoModalInfo.classList.add("activo");
+        });
+
+        actualizarEstadoVacioMC();
+        actualizarTextoBotonAgregarMC();
+        actualizarBotonSiguienteMC();
+    }
+
+    function actualizarEstadoVacioMC() {
+        const preguntasGuardadas = document.querySelectorAll('#mc-questions-container .tarjeta-pregunta.guardado').length;
+        if (preguntasGuardadas === 0 && contenedorMCPreguntas.children.length === 0) {
+            estadoVacioMC.classList.remove("oculto");
+            botonInfoMC.classList.remove("oculto");
+            botonAgregarMC.disabled = false;
+        } else {
+            estadoVacioMC.classList.add("oculto");
+            botonInfoMC.classList.add("oculto");
+        }
+    }
+
+    function crearTarjetaEdicionMC() {
+        mcQuestionCount++;
+        const nuevaTarjeta = document.createElement("div");
+        nuevaTarjeta.classList.add("tarjeta-pregunta");
+        nuevaTarjeta.dataset.questionNumber = mcQuestionCount;
+        nuevaTarjeta.innerHTML = `
+            <h3 class="titulo-pregunta">Pregunta ${mcQuestionCount}:</h3>
+            <span class="cerrar-pregunta">x</span>
+            <div class="fila-edicion" style="flex-direction: column; align-items: stretch;">
+                <input type="text" class="entrada-pregunta" placeholder="Escribe el enunciado" style="width:100%;">
+                <div class="opciones-container" data-opciones-count="2"></div>
+                <div class="acciones-pregunta" style="justify-content: flex-end; gap: 15px;">
+                    <button type="button" class="btn-add-option">+ Agregar opción</button>
+                    <button type="button" class="boton-guardar">Guardar pregunta</button>
+                </div>
+            </div>
+        `;
+        contenedorMCPreguntas.appendChild(nuevaTarjeta);
+        currentEditingMCCard = nuevaTarjeta;
+
+        const opcionesContainer = nuevaTarjeta.querySelector('.opciones-container');
+        const btnAddOption = nuevaTarjeta.querySelector('.btn-add-option');
+        let opcionCount = 2;
+        const letras = ['A', 'B', 'C', 'D'];
+
+        function agregarCampoOpcion(idx, letra) {
+            const div = document.createElement('div');
+            div.className = 'opt-row';
+            div.innerHTML = `
+                <input type="radio" name="correcta_${mcQuestionCount}" value="${letra}" ${idx === 0 ? 'checked' : ''}>
+                <strong>${letra})</strong>
+                <input type="text" class="input-opcion" placeholder="Opción ${letra}" style="flex:1; padding:8px; border-radius:6px; border:1px solid #ccc;">
+            `;
+            opcionesContainer.appendChild(div);
+        }
+
+        // Inicializar con dos opciones
+        for (let i = 0; i < 2; i++) {
+            agregarCampoOpcion(i, letras[i]);
+        }
+
+        btnAddOption.addEventListener('click', () => {
+            if (opcionCount >= 4) {
+                alert("Máximo 4 opciones por pregunta.");
+                return;
+            }
+            agregarCampoOpcion(opcionCount, letras[opcionCount]);
+            opcionCount++;
+            if (opcionCount === 4) btnAddOption.disabled = true;
+        });
+
+        const inputPregunta = nuevaTarjeta.querySelector('.entrada-pregunta');
+        const botonGuardar = nuevaTarjeta.querySelector('.boton-guardar');
+        const botonCerrar = nuevaTarjeta.querySelector('.cerrar-pregunta');
+
+        botonGuardar.addEventListener('click', () => {
+            const texto = inputPregunta.value.trim();
+            if (texto === "") {
+                inputPregunta.classList.add("error");
+                mostrarMensajeExito("Escribe el enunciado.");
+                setTimeout(() => inputPregunta.classList.remove("error"), 2000);
+                return;
+            }
+            const radios = nuevaTarjeta.querySelectorAll(`input[name="correcta_${mcQuestionCount}"]`);
+            let correcta = null;
+            for (let radio of radios) if (radio.checked) correcta = radio.value;
+            const inputsOpcion = nuevaTarjeta.querySelectorAll('.input-opcion');
+            const opciones = [];
+            let todasLlenas = true;
+            for (let inp of inputsOpcion) {
+                const val = inp.value.trim();
+                if (val === "") todasLlenas = false;
+                opciones.push(val);
+            }
+            if (!todasLlenas) {
+                mostrarMensajeExito("Completa todas las opciones.");
+                return;
+            }
+            guardarPreguntaMC(nuevaTarjeta, texto, opciones, correcta);
+        });
+
+        botonCerrar.addEventListener('click', () => {
+            if (confirm("¿Cancelar la creación de esta pregunta?")) {
+                nuevaTarjeta.remove();
+                mcQuestionCount--;
+                renumerarPreguntasMC();
+                currentEditingMCCard = null;
+                botonAgregarMC.disabled = false;
+                actualizarEstadoVacioMC();
+                actualizarTextoBotonAgregarMC();
+                actualizarBotonSiguienteMC();
+            }
+        });
+
+        inputPregunta.focus();
+    }
+
+    function guardarPreguntaMC(tarjeta, texto, opciones, letraCorrecta) {
+        const numero = parseInt(tarjeta.dataset.questionNumber);
+        tarjeta.classList.add("guardado");
+        let html = `
+            <div class="contenido-pregunta-guardada">
+                <h3 class="titulo-pregunta-guardada">Pregunta ${numero}:</h3>
+                <p class="texto-pregunta-guardada">${escapeHtml(texto)}</p>
+                <div class="opciones-guardadas" style="margin-top:10px;">
+        `;
+        for (let i = 0; i < opciones.length; i++) {
+            const letra = String.fromCharCode(65 + i);
+            const esCorrecta = (letra === letraCorrecta);
+            html += `
+                <div style="display:flex; align-items:center; gap:8px; margin-top:5px;">
+                    <input type="radio" disabled ${esCorrecta ? 'checked' : ''}>
+                    <strong>${letra})</strong> ${escapeHtml(opciones[i])}
+                </div>
+            `;
+        }
+        html += `
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <span class="editar-pregunta">✎</span>
+                <span class="cerrar-pregunta cerrar-guardado">x</span>
+            </div>
+            <input type="hidden" name="mc_pregunta_${numero}" value="${escapeHtml(texto)}">
+            <input type="hidden" name="mc_opciones_${numero}" value="${opciones.join('||')}">
+            <input type="hidden" name="mc_correcta_${numero}" value="${letraCorrecta}">
+        `;
+        tarjeta.innerHTML = html;
+        tarjeta.dataset.questionNumber = numero;
+
+        const botonEditar = tarjeta.querySelector(".editar-pregunta");
+        const botonEliminar = tarjeta.querySelector(".cerrar-guardado");
+
+        botonEditar.addEventListener("click", () => {
+            if (currentEditingMCCard) {
+                alert("Ya hay una pregunta en edición.");
+                return;
+            }
+            entrarModoEdicionMC(tarjeta, texto, opciones, letraCorrecta, numero);
+        });
+
+        botonEliminar.addEventListener("click", () => {
+            preguntaAEliminar = tarjeta;
+            fondoModalEliminar.classList.add("activo");
+        });
+
+        currentEditingMCCard = null;
+        botonAgregarMC.disabled = false;
+        actualizarEstadoVacioMC();
+        renumerarPreguntasMC();
+        actualizarTextoBotonAgregarMC();
+        actualizarBotonSiguienteMC();
+    }
+
+    function entrarModoEdicionMC(tarjeta, textoAntiguo, opcionesAntiguas, letraCorrectaAntigua, numero) {
+        currentEditingMCCard = tarjeta;
+        botonAgregarMC.disabled = true;
+        tarjeta.classList.remove("guardado");
+
+        let opcionesHtml = '';
+        for (let i = 0; i < opcionesAntiguas.length; i++) {
+            const letra = String.fromCharCode(65 + i);
+            opcionesHtml += `
+                <div class="opt-row">
+                    <input type="radio" name="correcta_${numero}" value="${letra}" ${letra === letraCorrectaAntigua ? 'checked' : ''}>
+                    <strong>${letra})</strong>
+                    <input type="text" class="input-opcion" value="${escapeHtml(opcionesAntiguas[i])}" style="flex:1; padding:8px; border-radius:6px; border:1px solid #ccc;">
+                </div>
+            `;
+        }
+        tarjeta.innerHTML = `
+            <h3 class="titulo-pregunta">Pregunta ${numero}:</h3>
+            <span class="cerrar-pregunta">x</span>
+            <div class="fila-edicion" style="flex-direction: column; align-items: stretch;">
+                <input type="text" class="entrada-pregunta" value="${escapeHtml(textoAntiguo)}" style="width:100%;">
+                <div class="opciones-container" data-opciones-count="${opcionesAntiguas.length}">
+                    ${opcionesHtml}
+                </div>
+                    <div class="acciones-pregunta" style="justify-content: flex-end; gap: 15px;">
+                        <button type="button" class="btn-add-option">+ Agregar opción</button>
+                        <button type="button" class="boton-guardar">Guardar pregunta</button>
+                    </div>
+            </div>
+        `;
+
+        const opcionesContainer = tarjeta.querySelector('.opciones-container');
+        let opcionCount = opcionesAntiguas.length;
+        const btnAddOption = tarjeta.querySelector('.btn-add-option');
+        const letras = ['A', 'B', 'C', 'D'];
+
+        btnAddOption.addEventListener('click', () => {
+            if (opcionCount >= 4) {
+                alert("Máximo 4 opciones.");
+                return;
+            }
+            const letra = letras[opcionCount];
+            const div = document.createElement('div');
+            div.className = 'opt-row';
+            div.innerHTML = `
+                <input type="radio" name="correcta_${numero}" value="${letra}">
+                <strong>${letra})</strong>
+                <input type="text" class="input-opcion" placeholder="Opción ${letra}" style="flex:1; padding:8px; border-radius:6px; border:1px solid #ccc;">
+            `;
+            opcionesContainer.appendChild(div);
+            opcionCount++;
+            if (opcionCount === 4) btnAddOption.disabled = true;
+        });
+        if (opcionCount === 4) btnAddOption.disabled = true;
+
+        const inputPregunta = tarjeta.querySelector('.entrada-pregunta');
+        const botonGuardar = tarjeta.querySelector('.boton-guardar');
+        const botonCerrar = tarjeta.querySelector('.cerrar-pregunta');
+
+        botonGuardar.addEventListener('click', () => {
+            const texto = inputPregunta.value.trim();
+            if (texto === "") {
+                inputPregunta.classList.add("error");
+                mostrarMensajeExito("Escribe el enunciado.");
+                setTimeout(() => inputPregunta.classList.remove("error"), 2000);
+                return;
+            }
+            const radios = tarjeta.querySelectorAll(`input[name="correcta_${numero}"]`);
+            let correcta = null;
+            for (let radio of radios) if (radio.checked) correcta = radio.value;
+            const inputsOpcion = tarjeta.querySelectorAll('.input-opcion');
+            const nuevasOpciones = [];
+            let todasLlenas = true;
+            for (let inp of inputsOpcion) {
+                const val = inp.value.trim();
+                if (val === "") todasLlenas = false;
+                nuevasOpciones.push(val);
+            }
+            if (!todasLlenas) {
+                mostrarMensajeExito("Completa todas las opciones.");
+                return;
+            }
+            if (nuevasOpciones.length < 2) {
+                mostrarMensajeExito("Debe haber al menos 2 opciones.");
+                return;
+            }
+            guardarPreguntaMC(tarjeta, texto, nuevasOpciones, correcta);
+        });
+
+        botonCerrar.addEventListener('click', () => {
+            if (confirm("¿Cancelar la edición? Se perderán los cambios.")) {
+                guardarPreguntaMC(tarjeta, textoAntiguo, opcionesAntiguas, letraCorrectaAntigua);
+            }
+        });
+
+        inputPregunta.focus();
+    }
+
+    function renumerarPreguntasMC() {
+        const tarjetas = document.querySelectorAll('#mc-questions-container .tarjeta-pregunta');
+        let nuevoContador = 0;
+        tarjetas.forEach((tarjeta, idx) => {
+            if (tarjeta.classList.contains("guardado")) {
+                nuevoContador++;
+                const nuevoNumero = nuevoContador;
+                tarjeta.dataset.questionNumber = nuevoNumero;
+                const titulo = tarjeta.querySelector(".titulo-pregunta-guardada");
+                if (titulo) titulo.textContent = `Pregunta ${nuevoNumero}:`;
+                const hiddenPreg = tarjeta.querySelector('input[name^="mc_pregunta_"]');
+                if (hiddenPreg) hiddenPreg.name = `mc_pregunta_${nuevoNumero}`;
+                const hiddenOpc = tarjeta.querySelector('input[name^="mc_opciones_"]');
+                if (hiddenOpc) hiddenOpc.name = `mc_opciones_${nuevoNumero}`;
+                const hiddenCorr = tarjeta.querySelector('input[name^="mc_correcta_"]');
+                if (hiddenCorr) hiddenCorr.name = `mc_correcta_${nuevoNumero}`;
+            } else {
+                const tituloEdit = tarjeta.querySelector(".titulo-pregunta");
+                if (tituloEdit) tituloEdit.textContent = `Pregunta ${idx + 1}:`;
+                tarjeta.dataset.questionNumber = idx + 1;
+            }
+        });
+        mcQuestionCount = nuevoContador;
+    }
+
+    // ==========================================
+    // FUNCIONES PARA COMPLETAR CAMINO
+    // ==========================================
+    function agregarFilaCamino() {
+        if (filaCaminoCount >= MAX_FILAS_CAMINO) {
+            alert(`Máximo ${MAX_FILAS_CAMINO} preguntas permitidas.`);
+            return;
+        }
+        filaCaminoCount++;
+        const container = document.getElementById('camino-items-list');
+        const filaId = `camino-fila-${filaCaminoCount}`;
+        const html = `
+            <div class="fila-palabra-pregunta" id="${filaId}">
+                <input type="text" name="camino_palabra_${filaCaminoCount}" placeholder="Ej: ESP-32" required>
+                <input type="text" name="camino_pregunta_${filaCaminoCount}" placeholder="Ej: Placa de desarrollo con módulo WiFi" required>
+                <button type="button" class="btn-eliminar-fila" onclick="eliminarFilaCamino('${filaId}')">✖</button>
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', html);
+        actualizarContadorFilas();
+    }
+
+    function eliminarFilaCamino(filaId) {
+        const filas = document.querySelectorAll('#camino-items-list .fila-palabra-pregunta');
+        if (filas.length <= 5) {
+            alert(`Debe haber al menos 5 palabras/preguntas. No se puede eliminar más. (Actual: ${filas.length})`);
+            return;
+        }
+        const fila = document.getElementById(filaId);
+        if (fila) {
+            fila.remove();
+            renumerarFilasCamino();
+        }
+    }
+
+    function renumerarFilasCamino() {
+        const filas = document.querySelectorAll('#camino-items-list .fila-palabra-pregunta');
+        filaCaminoCount = filas.length;
+        filas.forEach((fila, idx) => {
+            const nuevoNumero = idx + 1;
+            const palabraInput = fila.querySelector('input[name^="camino_palabra_"]');
+            const preguntaInput = fila.querySelector('input[name^="camino_pregunta_"]');
+            if (palabraInput) palabraInput.name = `camino_palabra_${nuevoNumero}`;
+            if (preguntaInput) preguntaInput.name = `camino_pregunta_${nuevoNumero}`;
+            fila.id = `camino-fila-${nuevoNumero}`;
+        });
+        actualizarContadorFilas();
+    }
+
+    function actualizarContadorFilas() {
+        const boton = document.getElementById('agregar-fila-camino');
+        if (boton) {
+            boton.innerText = `+ Agregar pregunta (${filaCaminoCount}/${MAX_FILAS_CAMINO})`;
+            boton.disabled = (filaCaminoCount >= MAX_FILAS_CAMINO);
+        }
+    }
+
+    function inicializarFormularioCamino() {
+        const container = document.getElementById('camino-items-list');
+        if (container) container.innerHTML = '';
+        filaCaminoCount = 0;
+        for (let i = 0; i < 5; i++) agregarFilaCamino();
+    }
+
+    function inicializarCamino() {
+        botonInfoCamino = document.getElementById("botonInfoCamino");
+        if (botonInfoCamino) {
+            botonInfoCamino.addEventListener("click", () => {
+                fondoModalInfo.classList.add("activo");
+            });
+        }
+    }
+
+    // ==========================================
+    // FUNCIONES PARA SOPA DE LETRAS
+    // ==========================================
+    function agregarFilaSopa() {
+        if (filaSopaCount >= MAX_FILAS_SOPA) {
+            alert(`Máximo ${MAX_FILAS_SOPA} palabras permitidas.`);
+            return;
+        }
+        filaSopaCount++;
+        const container = document.getElementById('sopa-items-list');
+        const filaId = `sopa-fila-${filaSopaCount}`;
+        const html = `
+        <div class="fila-palabra-pregunta" id="${filaId}">
+            <input type="text" name="sopa_pregunta_${filaSopaCount}" placeholder="Ej: Fruta de piel roja o verde" required>
+            <input type="text" name="sopa_palabra_${filaSopaCount}" placeholder="Ej: MANZANA" required>
+            <button type="button" class="btn-eliminar-fila" onclick="eliminarFilaSopa('${filaId}')">✖</button>
+        </div>
+    `;
+        container.insertAdjacentHTML('beforeend', html);
+        actualizarContadorFilasSopa();
+        actualizarBotonSiguienteSopa();
+    }
+
+    function eliminarFilaSopa(filaId) {
+        const filas = document.querySelectorAll('#sopa-items-list .fila-palabra-pregunta');
+        if (filas.length <= 5) {
+            alert(`Debe haber al menos 5 palabras/preguntas. No se puede eliminar más. (Actual: ${filas.length})`);
+            return;
+        }
+        const fila = document.getElementById(filaId);
+        if (fila) {
+            fila.remove();
+            renumerarFilasSopa();
+        }
+    }
+
+    function renumerarFilasSopa() {
+        const filas = document.querySelectorAll('#sopa-items-list .fila-palabra-pregunta');
+        filaSopaCount = filas.length;
+        filas.forEach((fila, idx) => {
+            const nuevoNumero = idx + 1;
+            const palabraInput = fila.querySelector('input[name^="sopa_palabra_"]');
+            const preguntaInput = fila.querySelector('input[name^="sopa_pregunta_"]');
+            if (palabraInput) palabraInput.name = `sopa_palabra_${nuevoNumero}`;
+            if (preguntaInput) preguntaInput.name = `sopa_pregunta_${nuevoNumero}`;
+            fila.id = `sopa-fila-${nuevoNumero}`;
+        });
+        actualizarContadorFilasSopa();
+        actualizarBotonSiguienteSopa();
+    }
+
+    function actualizarContadorFilasSopa() {
+        const boton = document.getElementById('agregar-fila-sopa');
+        if (boton) {
+            boton.innerText = `+ Agregar palabra (${filaSopaCount}/${MAX_FILAS_SOPA})`;
+            boton.disabled = (filaSopaCount >= MAX_FILAS_SOPA);
+        }
+    }
+
+    function actualizarBotonSiguienteSopa() {
+        const filas = document.querySelectorAll('#sopa-items-list .fila-palabra-pregunta');
+        const btnNext = document.getElementById('btn-next');
+        if (inputPlantilla.value === 'P004') {
+            if (filas.length >= 5) {
+                btnNext.disabled = false;
+                btnNext.style.opacity = '1';
+                btnNext.style.cursor = 'pointer';
+            } else {
+                btnNext.disabled = true;
+                btnNext.style.opacity = '0.5';
+                btnNext.style.cursor = 'not-allowed';
+            }
+        }
+    }
+
+    function inicializarFormularioSopa() {
+        const container = document.getElementById('sopa-items-list');
+        if (container) container.innerHTML = '';
+        filaSopaCount = 0;
+        for (let i = 0; i < 5; i++) agregarFilaSopa();
+    }
+
+    function inicializarSopa() {
+        botonInfoSopa = document.getElementById("botonInfoSopa");
+        if (botonInfoSopa) {
+            botonInfoSopa.addEventListener("click", () => {
+                fondoModalInfo.classList.add("activo");
+            });
+        }
+        // También actualizar el botón siguiente cuando se cargue la sopa
+        actualizarBotonSiguienteSopa();
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/[&<>]/g, function (m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    // ==========================================
+    // GENERACIÓN DEL ARCHIVO .txt
+    // ==========================================
+    function generarTxtActividad() {
+        // Solo permite los tipos implementados
+        if (!(inputPlantilla.value === 'C001' || inputPlantilla.value === 'FV01' || inputPlantilla.value === 'P003' || inputPlantilla.value === 'P004')) {
+            alert("Por ahora solo se exporta 'Completar camino', 'Falso / Verdadero', 'Opción Múltiple' y 'Sopa de Letras'.");
+            return false;
+        }
+
+        const nombre = document.querySelector('input[name="nombre_confirmacion"]').value.trim() || "Sin título";
+        const intentos = document.querySelector('input[name="intentos"]').value || "3";
+        const tiempo = document.querySelector('input[name="tiempo_limite"]').value || "";
+        const fecha = document.querySelector('input[name="fecha_vencimiento"]').value || "No definida";
+        const ponderacion = document.querySelector('input[name="ponderacion"]').value || "0";
+
+        let payload = {
+            nombre: nombre,
+            intentos: intentos,
+            tiempo: tiempo,
+            fecha_vencimiento: fecha,
+            ponderacion: ponderacion
+        };
+
+        if (inputPlantilla.value === 'C001') {
+            const filas = document.querySelectorAll('#camino-items-list .fila-palabra-pregunta');
+            if (filas.length === 0) { alert("No hay datos para exportar."); return false; }
+            const izquierda = [], derecha = [], respuestas = {};
+            filas.forEach(fila => {
+                const preguntaInput = fila.querySelector('input[name^="camino_pregunta_"]');
+                const palabraInput = fila.querySelector('input[name^="camino_palabra_"]');
+                if (preguntaInput && palabraInput) {
+                    const pregunta = preguntaInput.value.trim();
+                    const palabra = palabraInput.value.trim();
+                    if (pregunta && palabra) {
+                        izquierda.push(pregunta);
+                        derecha.push(palabra);
+                        respuestas[pregunta] = palabra;
+                    }
+                }
+            });
+            payload.tipo = "completar-camino";
+            payload.izquierda = izquierda;
+            payload.derecha = derecha;
+            payload.respuestas = respuestas;
+        } else if (inputPlantilla.value === 'FV01') {
+            const tarjetas = document.querySelectorAll('#fv-questions-container .tarjeta-pregunta.guardado');
+            if (tarjetas.length === 0) { return false; }
+            const preguntas = [];
+            tarjetas.forEach(tarjeta => {
+                const preguntaText = tarjeta.querySelector('.texto-pregunta-guardada')?.textContent.trim();
+                const hiddenCorrect = tarjeta.querySelector('input[name^="fv_correcto_"]');
+                if (preguntaText && hiddenCorrect) {
+                    preguntas.push({
+                        afirmacion: preguntaText,
+                        respuesta: hiddenCorrect.value
+                    });
+                }
+            });
+            payload.tipo = "falso-verdadero";
+            payload.preguntas = preguntas;
+        } else if (inputPlantilla.value === 'P003') {
+            const tarjetas = document.querySelectorAll('#mc-questions-container .tarjeta-pregunta.guardado');
+            if (tarjetas.length === 0) { return false; }
+            const preguntas = [];
+            tarjetas.forEach(tarjeta => {
+                const preguntaText = tarjeta.querySelector('.texto-pregunta-guardada')?.textContent.trim();
+                const opcionesHidden = tarjeta.querySelector('input[name^="mc_opciones_"]');
+                const correctaHidden = tarjeta.querySelector('input[name^="mc_correcta_"]');
+                if (preguntaText && opcionesHidden && correctaHidden) {
+                    preguntas.push({
+                        afirmacion: preguntaText,
+                        opciones: opcionesHidden.value.split('||'),
+                        respuesta: correctaHidden.value
+                    });
+                }
+            });
+            payload.tipo = "opcion-multiple";
+            payload.preguntas = preguntas;
+        } else if (inputPlantilla.value === 'P004') {
+            const filas = document.querySelectorAll('#sopa-items-list .fila-palabra-pregunta');
+            if (filas.length === 0) { alert("No hay datos para exportar."); return false; }
+            const palabras = [];
+            const descripciones = [];
+            const respuestas = {};
+
+            // Función auxiliar para normalizar palabras (mayúsculas, sin acentos)
+            function normalizarPalabra(palabra) {
+                return palabra.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+            }
+
+            filas.forEach(fila => {
+                let palabra = fila.querySelector('input[name^="sopa_palabra_"]').value.trim();
+                const descripcion = fila.querySelector('input[name^="sopa_pregunta_"]').value.trim();
+                if (palabra && descripcion) {
+                    const palabraNormalizada = normalizarPalabra(palabra);
+                    palabras.push(palabraNormalizada);
+                    descripciones.push(descripcion);
+                    respuestas[descripcion] = palabraNormalizada;
+                }
+            });
+            payload.tipo = "sopa-letras";
+            payload.palabras = palabras;
+            payload.descripciones = descripciones;
+            payload.respuestas = respuestas;
+        }
+
+        fetch('/guardar_actividad_txt', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`✅ Actividad guardada correctamente en:\n${data.ruta}`);
+                    window.location.href = "{{ url_for('vista_contenido') }}";
+                } else {
+                    alert("❌ Error al guardar: " + (data.error || "Desconocido"));
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("Error de conexión con el servidor.");
+            });
+        return true;
+    }
+
+    // ==========================================
+    // GUARDAR CAMBIOS DE UNA ACTIVIDAD EXISTENTE
+    // ==========================================
+    function guardarEdicion() {
+        // Validar tipo de actividad
+        const tipoValido = inputPlantilla.value === 'C001' ||
+            inputPlantilla.value === 'FV01' ||
+            inputPlantilla.value === 'P003' ||
+            inputPlantilla.value === 'P004';
+        if (!tipoValido) {
+            alert("Por ahora solo se puede editar 'Completar camino', 'Falso / Verdadero', 'Opción Múltiple' y 'Sopa de Letras'.");
+            return false;
+        }
+
+        // Datos comunes
+        const nombre = document.querySelector('input[name="nombre_confirmacion"]').value.trim() || "Sin título";
+        const intentos = document.querySelector('input[name="intentos"]').value || "3";
+        const tiempo = document.querySelector('input[name="tiempo_limite"]').value || "";
+        const fecha = document.querySelector('input[name="fecha_vencimiento"]').value || "No definida";
+        const ponderacion = document.querySelector('input[name="ponderacion"]').value || "0";
+
+        let payload = {
+            id_actividad: actividadData.id_actividad || '',  // ← añade esta línea
+            nombre: nombre,
+            intentos: intentos,
+            tiempo: tiempo,
+            fecha_vencimiento: fecha,
+            ponderacion: ponderacion
+        };
+
+        // ========== COMPLETAR CAMINO ==========
+        if (inputPlantilla.value === 'C001') {
+            const filas = document.querySelectorAll('#camino-items-list .fila-palabra-pregunta');
+            if (filas.length === 0) {
+                alert("No hay datos para exportar.");
+                return false;
+            }
+            const izquierda = [], derecha = [], respuestas = {};
+            filas.forEach(fila => {
+                const preguntaInput = fila.querySelector('input[name^="camino_pregunta_"]');
+                const palabraInput = fila.querySelector('input[name^="camino_palabra_"]');
+                if (preguntaInput && palabraInput) {
+                    const pregunta = preguntaInput.value.trim();
+                    const palabra = palabraInput.value.trim();
+                    if (pregunta && palabra) {
+                        izquierda.push(pregunta);
+                        derecha.push(palabra);
+                        respuestas[pregunta] = palabra;
+                    }
+                }
+            });
+            payload.tipo = "completar-camino";
+            payload.izquierda = izquierda;
+            payload.derecha = derecha;
+            payload.respuestas = respuestas;
+        }
+        // ========== FALSO / VERDADERO ==========
+        else if (inputPlantilla.value === 'FV01') {
+            const tarjetas = document.querySelectorAll('#fv-questions-container .tarjeta-pregunta.guardado');
+            if (tarjetas.length === 0) {
+                alert("No hay preguntas guardadas.");
+                return false;
+            }
+            const preguntas = [];
+            tarjetas.forEach(tarjeta => {
+                const preguntaText = tarjeta.querySelector('.texto-pregunta-guardada')?.textContent.trim();
+                const hiddenCorrect = tarjeta.querySelector('input[name^="fv_correcto_"]');
+                if (preguntaText && hiddenCorrect) {
+                    preguntas.push({
+                        afirmacion: preguntaText,
+                        respuesta: hiddenCorrect.value
+                    });
+                }
+            });
+            payload.tipo = "falso-verdadero";
+            payload.preguntas = preguntas;
+        }
+        // ========== OPCIÓN MÚLTIPLE ==========
+        else if (inputPlantilla.value === 'P003') {
+            const tarjetas = document.querySelectorAll('#mc-questions-container .tarjeta-pregunta.guardado');
+            if (tarjetas.length === 0) {
+                alert("No hay preguntas guardadas.");
+                return false;
+            }
+            const preguntas = [];
+            tarjetas.forEach(tarjeta => {
+                const preguntaText = tarjeta.querySelector('.texto-pregunta-guardada')?.textContent.trim();
+                const opcionesHidden = tarjeta.querySelector('input[name^="mc_opciones_"]');
+                const correctaHidden = tarjeta.querySelector('input[name^="mc_correcta_"]');
+                if (preguntaText && opcionesHidden && correctaHidden) {
+                    preguntas.push({
+                        afirmacion: preguntaText,
+                        opciones: opcionesHidden.value.split('||'),
+                        respuesta: correctaHidden.value
+                    });
+                }
+            });
+            payload.tipo = "opcion-multiple";
+            payload.preguntas = preguntas;
+        }
+        // ========== SOPA DE LETRAS ==========
+        else if (inputPlantilla.value === 'P004') {
+            const filas = document.querySelectorAll('#sopa-items-list .fila-palabra-pregunta');
+            if (filas.length === 0) {
+                alert("No hay datos para exportar.");
+                return false;
+            }
+            const palabras = [];
+            const descripciones = [];
+            const respuestas = {};
+
+            function normalizarPalabra(palabra) {
+                return palabra.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+            }
+
+            filas.forEach(fila => {
+                let palabra = fila.querySelector('input[name^="sopa_palabra_"]').value.trim();
+                const descripcion = fila.querySelector('input[name^="sopa_pregunta_"]').value.trim();
+                if (palabra && descripcion) {
+                    const palabraNormalizada = normalizarPalabra(palabra);
+                    palabras.push(palabraNormalizada);
+                    descripciones.push(descripcion);
+                    respuestas[descripcion] = palabraNormalizada;
+                }
+            });
+            payload.tipo = "sopa-letras";
+            payload.palabras = palabras;
+            payload.descripciones = descripciones;
+            payload.respuestas = respuestas;
+        }
+
+        // Enviar al endpoint de edición (sobrescribe el archivo)
+        fetch(`/editar_actividad/${nombreArchivo}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`✅ Actividad actualizada correctamente en:\n${data.ruta}`);
+                    window.location.href = "{{ url_for('vista_contenido') }}";
+                } else {
+                    alert("❌ Error al guardar: " + (data.error || "Desconocido"));
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("Error de conexión con el servidor.");
+            });
+        return true;
+    }
+
+    // ==========================================
+    // FUNCIONES DE ACTUALIZACIÓN DE PASOS
+    // ==========================================
+    function actualizarPaso2() {
+        if (currentStep === 2) {
+            if (inputPlantilla.value === 'C001') {
+                document.getElementById('camino-form-container').style.display = 'block';
+                document.getElementById('fv-form-container').style.display = 'none';
+                document.getElementById('opcion-multiple-container').style.display = 'none';
+                document.getElementById('sopa-form-container').style.display = 'none';
+                if (document.querySelectorAll('#camino-items-list .fila-palabra-pregunta').length === 0) {
+                    inicializarFormularioCamino();
+                }
+            } else if (inputPlantilla.value === 'FV01') {
+                document.getElementById('camino-form-container').style.display = 'none';
+                document.getElementById('fv-form-container').style.display = 'block';
+                document.getElementById('opcion-multiple-container').style.display = 'none';
+                document.getElementById('sopa-form-container').style.display = 'none';
+                if (document.querySelectorAll('#fv-questions-container .tarjeta-pregunta').length === 0) {
+                    contenedorFVPreguntas.innerHTML = '';
+                    fvQuestionCount = 0;
+                    currentEditingCard = null;
+                    actualizarEstadoVacioFV();
+                    actualizarTextoBotonAgregar();
+                    actualizarBotonSiguienteFV();
+                }
+            } else if (inputPlantilla.value === 'P003') {
+                document.getElementById('camino-form-container').style.display = 'none';
+                document.getElementById('fv-form-container').style.display = 'none';
+                document.getElementById('opcion-multiple-container').style.display = 'block';
+                document.getElementById('sopa-form-container').style.display = 'none';
+                if (document.querySelectorAll('#mc-questions-container .tarjeta-pregunta').length === 0) {
+                    contenedorMCPreguntas.innerHTML = '';
+                    mcQuestionCount = 0;
+                    currentEditingMCCard = null;
+                    actualizarEstadoVacioMC();
+                    actualizarTextoBotonAgregarMC();
+                    actualizarBotonSiguienteMC();
+                }
+            } else if (inputPlantilla.value === 'P004') {
+                document.getElementById('camino-form-container').style.display = 'none';
+                document.getElementById('fv-form-container').style.display = 'none';
+                document.getElementById('opcion-multiple-container').style.display = 'none';
+                document.getElementById('sopa-form-container').style.display = 'block';
+                if (document.querySelectorAll('#sopa-items-list .fila-palabra-pregunta').length === 0) {
+                    inicializarFormularioSopa();
+                }
+            } else {
+                document.getElementById('camino-form-container').style.display = 'none';
+                document.getElementById('fv-form-container').style.display = 'none';
+                document.getElementById('opcion-multiple-container').style.display = 'none';
+                document.getElementById('sopa-form-container').style.display = 'none';
+            }
+        }
+    }
+
+    // ==========================================
+    // FUNCIONES DE NAVEGACIÓN DEL WIZARD
+    // ==========================================
+    function seleccionarCamino(elemento) {
+        inputPlantilla.value = 'C001';
+        document.querySelectorAll('.plantilla-card').forEach(c => c.classList.remove('selected'));
+        elemento.classList.add('selected');
+        errorMsg.style.display = 'none';
+        restablecerBotonSiguiente();
+    }
+
+    function seleccionarFV(elemento) {
+        inputPlantilla.value = 'FV01';
+        document.querySelectorAll('.plantilla-card').forEach(c => c.classList.remove('selected'));
+        elemento.classList.add('selected');
+        errorMsg.style.display = 'none';
+        restablecerBotonSiguiente();
+    }
+
+    function seleccionarFinal(id, elemento) {
+        inputPlantilla.value = id;
+        document.querySelectorAll('.plantilla-card').forEach(c => c.classList.remove('selected'));
+        elemento.classList.add('selected');
+        errorMsg.style.display = 'none';
+        restablecerBotonSiguiente();
+    }
+
+    function mostrarSubOpciones(tipo) {
+        if (tipo === 'quiz') {
+            mainOptions.style.display = 'none';
+            subOptions.style.display = 'block';
+            title.innerText = 'Selecciona el formato del cuestionario';
+            inputPlantilla.value = "";
+            subOptions.style.opacity = 0;
+            setTimeout(() => subOptions.style.opacity = 1, 50);
+            isSubMenuOpen = true;
+            restablecerBotonSiguiente();
+        }
+    }
+
+    function resetSelection() {
+        mainOptions.style.display = 'flex';
+        subOptions.style.display = 'none';
+        inputPlantilla.value = "";
+        title.innerText = 'Selecciona el tipo de actividad';
+        document.querySelectorAll('.plantilla-card').forEach(c => c.classList.remove('selected'));
+        errorMsg.style.display = 'none';
+        isSubMenuOpen = false;
+        restablecerBotonSiguiente();
+    }
+
+    function updateUI() {
+        document.querySelectorAll('.step-pane').forEach(pane => pane.classList.remove('active'));
+        document.getElementById('step-' + currentStep).classList.add('active');
+
+        document.querySelectorAll('.step').forEach((stepElem, index) => {
+            if (index < currentStep) stepElem.classList.add('active');
+            else stepElem.classList.remove('active');
+        });
+
+        progressBar.style.width = ((currentStep - 1) / (totalSteps - 1)) * 100 + '%';
+
+        if (currentStep === 4) {
+            document.getElementById('summary-name').innerText = document.querySelector('input[name="nombre_confirmacion"]').value || "Sin título";
+            const tipos = { 'P003': 'Opción Múltiple', 'C001': 'Completar camino', 'FV01': 'Falso / Verdadero', 'P004': 'Sopa de Letras' };
+            document.getElementById('summary-type').innerText = tipos[inputPlantilla.value] || "No seleccionado";
+            let totalItems = 0;
+            if (inputPlantilla.value === 'C001') {
+                totalItems = document.querySelectorAll('#camino-items-list .fila-palabra-pregunta').length;
+            } else if (inputPlantilla.value === 'FV01') {
+                totalItems = document.querySelectorAll('#fv-questions-container .tarjeta-pregunta.guardado').length;
+            } else if (inputPlantilla.value === 'P003') {
+                totalItems = document.querySelectorAll('#mc-questions-container .tarjeta-pregunta.guardado').length;
+            } else if (inputPlantilla.value === 'P004') {
+                totalItems = document.querySelectorAll('#sopa-items-list .fila-palabra-pregunta').length;
+            }
+            document.getElementById('summary-questions').innerText = totalItems;
+            document.getElementById('summary-attempts').innerText = document.querySelector('input[name="intentos"]').value;
+            document.getElementById('summary-time').innerText = (() => {
+                const t = document.querySelector('input[name="tiempo_limite"]').value;
+                return t ? t + " min" : "Sin límite";
+            })();
+            document.getElementById('summary-fecha').innerText = document.querySelector('input[name="fecha_vencimiento"]').value || "No definida";
+            document.getElementById('summary-ponderacion').innerText = document.querySelector('input[name="ponderacion"]').value || "No definida";
+        }
+
+        const btnPrev = document.getElementById('btn-prev');
+        const btnNext = document.getElementById('btn-next');
+        const btnFinish = document.getElementById('btn-finish');
+        btnPrev.disabled = false;
+        if (currentStep === totalSteps) {
+            btnNext.style.display = 'none';
+            btnFinish.style.display = 'inline-block';
+        } else {
+            btnNext.style.display = 'inline-block';
+            btnFinish.style.display = 'none';
+        }
+
+        actualizarPaso2();
+    }
+
+    function nextStep() {
+        if (currentStep === 1 && !inputPlantilla.value) {
+            errorMsg.style.display = 'block';
+            return;
+        }
+        if (currentStep === 2) {
+            if (inputPlantilla.value === 'C001') {
+                const filas = document.querySelectorAll('#camino-items-list .fila-palabra-pregunta');
+                if (filas.length < 5) {
+                    alert(`Debes agregar al menos 5 palabras/preguntas. Actualmente tienes ${filas.length}.`);
+                    return;
+                }
+                let vacia = false, primera = null;
+                filas.forEach((fila, idx) => {
+                    const palabra = fila.querySelector('input[name^="camino_palabra_"]').value.trim();
+                    const pregunta = fila.querySelector('input[name^="camino_pregunta_"]').value.trim();
+                    if (!palabra || !pregunta) {
+                        vacia = true;
+                        if (primera === null) primera = idx + 1;
+                    }
+                });
+                if (vacia) {
+                    alert(`Por favor completa todos los campos de Palabra y Pregunta. Faltan datos en la fila ${primera}.`);
+                    return;
+                }
+            } else if (inputPlantilla.value === 'FV01') {
+                const tarjetasGuardadas = document.querySelectorAll('#fv-questions-container .tarjeta-pregunta.guardado');
+                const cantidad = tarjetasGuardadas.length;
+                if (cantidad < 5) {
+                    alert(`Debes tener al menos 5 preguntas guardadas. Actualmente tienes ${cantidad}.`);
+                    return;
+                }
+                if (cantidad > MAX_PREGUNTAS_FV) {
+                    alert(`Máximo ${MAX_PREGUNTAS_FV} preguntas permitidas.`);
+                    return;
+                }
+            } else if (inputPlantilla.value === 'P003') {
+                const tarjetasGuardadas = document.querySelectorAll('#mc-questions-container .tarjeta-pregunta.guardado');
+                const cantidad = tarjetasGuardadas.length;
+                if (cantidad < 5) {
+                    alert(`Debes tener al menos 5 preguntas guardadas. Actualmente tienes ${cantidad}.`);
+                    return;
+                }
+                if (cantidad > MAX_PREGUNTAS_MC) {
+                    alert(`Máximo ${MAX_PREGUNTAS_MC} preguntas permitidas.`);
+                    return;
+                }
+            } else if (inputPlantilla.value === 'P004') {
+                const filas = document.querySelectorAll('#sopa-items-list .fila-palabra-pregunta');
+                if (filas.length < 5) {
+                    alert(`Debes agregar al menos 5 palabras/preguntas. Actualmente tienes ${filas.length}.`);
+                    return;
+                }
+                let vacia = false, primera = null;
+                filas.forEach((fila, idx) => {
+                    const palabra = fila.querySelector('input[name^="sopa_palabra_"]').value.trim();
+                    const pregunta = fila.querySelector('input[name^="sopa_pregunta_"]').value.trim();
+                    if (!palabra || !pregunta) {
+                        vacia = true;
+                        if (primera === null) primera = idx + 1;
+                    }
+                });
+                if (vacia) {
+                    alert(`Por favor completa todos los campos de Palabra y Pregunta. Faltan datos en la fila ${primera}.`);
+                    return;
+                }
+            }
+        }
+        if (currentStep === 3) {
+            const titulo = document.querySelector('input[name="nombre_confirmacion"]').value.trim();
+            const fecha = document.querySelector('input[name="fecha_vencimiento"]').value;
+            const intentos = document.querySelector('input[name="intentos"]').value;
+            const ponderacion = document.querySelector('input[name="ponderacion"]').value;
+            if (!titulo) { alert("Escribe un título para la actividad."); return; }
+            if (!fecha) { alert("Selecciona una fecha de vencimiento."); return; }
+            if (!intentos || intentos < 1 || intentos > 5) { alert("Los intentos máximos deben ser un número entre 1 y 5."); return; }
+            if (!ponderacion || ponderacion < 1 || ponderacion > 100) { alert("La ponderación debe ser un número entre 1 y 100 puntos."); return; }
+            const tiempo = document.querySelector('input[name="tiempo_limite"]').value;
+            if (tiempo && (tiempo < 1 || tiempo > 120)) { alert("El tiempo límite, si se ingresa, debe estar entre 1 y 120 minutos."); return; }
+        }
+        if (currentStep < totalSteps) {
+            currentStep++;
+            updateUI();
+        }
+    }
+
+function prevStep() {
+    // Si estamos en el paso 2 (editar preguntas), salir a la lista de actividades
+    if (currentStep === 2) {
+        // Preguntar si hay cambios sin guardar (opcional)
+        if (currentEditingCard && inputPlantilla.value === 'FV01') {
+            if (!confirm("Hay una pregunta sin guardar. ¿Cancelar la edición y regresar?")) {
+                return;
+            }
+            // Si confirma, no necesitas eliminar la tarjeta porque al salir de la página se pierde todo.
+        } else if (currentEditingMCCard && inputPlantilla.value === 'P003') {
+            if (!confirm("Hay una pregunta sin guardar. ¿Cancelar la edición y regresar?")) {
+                return;
+            }
+        }
+        window.location.href = "{{ url_for('vista_contenido') }}";
+        return;
+    }
+
+    // Para pasos 3 y 4, retroceder un paso normalmente
+    if (currentStep > 2) {
+        currentStep--;
+        updateUI();
+        // Actualizar botón siguiente según el tipo (solo si se necesita)
+        if (currentStep === 2) {
+            if (inputPlantilla.value === 'FV01') actualizarBotonSiguienteFV();
+            else if (inputPlantilla.value === 'P003') actualizarBotonSiguienteMC();
+            else if (inputPlantilla.value === 'P004') actualizarBotonSiguienteSopa();
+            else restablecerBotonSiguiente();
+        } else {
+            restablecerBotonSiguiente();
+        }
+    }
+}
+
+    // Inicialización
+    document.addEventListener('DOMContentLoaded', () => {
+    updateUI();
+    crearModales();
+    inicializarFV();
+    inicializarMC();
+    inicializarCamino();
+    inicializarSopa();
+
+    document.getElementById('btn-next').onclick = nextStep;
+    document.getElementById('btn-prev').onclick = prevStep;
+
+    document.getElementById('wizard-form').addEventListener('submit', function (e) {
+        if (inputPlantilla.value === 'C001' || inputPlantilla.value === 'FV01' || inputPlantilla.value === 'P003' || inputPlantilla.value === 'P004') {
+            e.preventDefault();
+            if (modoEdicion) {
+                guardarEdicion();
+            } else {
+                generarTxtActividad();
+            }
+        }
+    });
+
+    // ✅ Ahora sí, después de todo, cargamos los datos si estamos editando
+    if (modoEdicion) {
+        // Primero simulamos la selección de la plantilla
+        // (esto depende del tipo que viene en actividadData)
+        const tipo = actividadData.tipo;
+        if (tipo === 'falso-verdadero') {
+            seleccionarFV(document.querySelector('.plantilla-card[onclick*="seleccionarFV"]'));
+        } else if (tipo === 'opcion-multiple') {
+            seleccionarFinal('P003', document.querySelector('.plantilla-card[onclick*="seleccionarFinal(\'P003\'"]'));
+        } else if (tipo === 'completar-camino') {
+            seleccionarCamino(document.querySelector('.plantilla-card[onclick*="seleccionarCamino"]'));
+        } else if (tipo === 'sopa-letras') {
+            seleccionarFinal('P004', document.querySelector('.plantilla-card[onclick*="seleccionarFinal(\'P004\'"]'));
+        }
+
+        // Forzamos ir al paso 2 para que los contenedores se muestren
+        currentStep = 2;
+        updateUI();   // esto hace visible el paso 2
+
+        // Ahora sí, cargamos las preguntas con un pequeño retraso para asegurar que el DOM ya está visible
+        setTimeout(() => {
+            if (tipo === 'falso-verdadero') {
+                cargarPreguntasFV(actividadData.preguntas);
+            } else if (tipo === 'opcion-multiple') {
+                cargarPreguntasMC(actividadData.preguntas);
+            } else if (tipo === 'completar-camino') {
+                cargarCamino(actividadData.izquierda, actividadData.derecha);
+            } else if (tipo === 'sopa-letras') {
+                cargarSopa(actividadData.descripciones, actividadData.palabras);
+            }
+            precargarMetricas();
+        }, 150);
+    }
+});
+
+</script>
+
+{% endblock %}
