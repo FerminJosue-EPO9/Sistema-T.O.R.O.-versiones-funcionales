@@ -1,8 +1,9 @@
 %
-@204@
-#M1#
-*P1*
-&PRO1&
+@506@
+#Materia2#
+*Parcial 1*
+&Progresion1&
+*Parcial 2*
 -
 2026001|Juan Carlos|García López
 2026002|Valentina|Morales Torres
@@ -16,12 +17,20 @@
 2026010|Paola Andrea|Reyes Montoya
 -
 %
-@A@
-#Ingenieria de Software#
+@104@
+#Ingeniería de software#
 *Parcial 1*
 *Parcial 2*
-&Introducción&
+&ejemplo&
 *Parcial 3*
+-
+019283377|shoyo|fuentes
+872748272674|Andrés|Peña Muñóz
+273627|fer|mendez
+2983|fer|medina
+-
+%
+@A@
 #Matematicas#
 *Parcial 1*
 &Introducción&

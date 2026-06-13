@@ -6,12 +6,8 @@
 <div class="card">
     <h1>Crear nueva lección</h1>
 
-    <!-- IMPORTANTE: Se elimina enctype porque usaremos fetch; el manejo de archivos será manual -->
     <form id="formLeccion">
-        <!-- (El action se usa en el fetch, no es necesario aquí) -->
-
         <div class="content-wrapper">
-
             <div class="data-zone" style="margin-bottom: 20px; padding: 15px; background: #f9f9f9; border-radius: 8px;">
                 <h3>1. Configuración de la lección</h3>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -47,7 +43,6 @@
                 </div>
             </div>
 
-            <!-- Zona de subida de archivos (mejorada) -->
             <div class="upload-zone" id="drop-zone">
                 <div class="cloud-icon">☁️</div>
                 <h3>
@@ -71,7 +66,6 @@
                 </div>
             </div>
 
-            <!-- Selector de actividades -->
             <div class="actividad-selector" style="margin-top: 20px; text-align: left; width: 100%;">
                 <label for="actividad_seleccionada"
                     style="display: block; margin-bottom: 5px; font-weight: bold;">Seleccione la actividad de la
@@ -84,38 +78,90 @@
                     {% endfor %}
                 </select>
             </div>
-
         </div>
-        <!-- Hidden field para almacenar el orden de los archivos (se actualizará dinámicamente) -->
-        <input type="hidden" name="orden_archivos" id="ordenArchivos">
 
-        <!-- Campos ocultos para enviar los nombres reales -->
+        <input type="hidden" name="orden_archivos" id="ordenArchivos">
         <input type="hidden" name="grupo" id="hiddenGrupo">
         <input type="hidden" name="materia" id="hiddenMateria">
         <input type="hidden" name="parcial" id="hiddenParcial">
         <input type="hidden" name="tema" id="hiddenTema">
 
         <div class="footer-actions">
-            <a href="{{ url_for('vista_contenido') }}" class="btn-secondary"
-                style="text-decoration: none; display:inline-block; text-align:center; padding: 10px 20px;">Regresar</a>
+            <button type="button" id="btnRegresar" class="btn-secondary">Regresar</button>
             <button type="button" id="btnContinuar" disabled class="btn-primary">Guardar lección</button>
         </div>
 
         <p class="footer-note">Asegúrate de llenar todos los campos antes de guardar.</p>
     </form>
+
+    <!-- Modal de Confirmación (reutilizable) -->
+    <div id="modalConfirmacion" class="modal">
+        <div class="modal-overlay" onclick="cerrarModalConfirmacion()"></div>
+        <div class="contenedor-modal">
+            <div class="icono-info">¿...?</div>
+            <h2 id="tituloConfirmacion">Confirmar acción</h2>
+            <p id="textoConfirmacion">¿Estás seguro de que deseas continuar?</p>
+            <div class="botones-modal">
+                <button type="button" class="btn-cancelar" onclick="cerrarModalConfirmacion()">Cancelar</button>
+                <button type="button" class="btn-guardar" id="btnConfirmarAccion">Aceptar</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
     // ========== ACUMULACIÓN DE ARCHIVOS ==========
-    let archivosSeleccionados = [];  // Array de objetos File
+    let archivosSeleccionados = [];
     const inputArchivoTemp = document.getElementById('inputArchivoTemp');
     const btnSeleccionar = document.getElementById('btnSeleccionar');
     const listaArchivosUl = document.getElementById('listaArchivos');
     const contadorSpan = document.getElementById('contador');
     const btnContinuar = document.getElementById('btnContinuar');
+    const btnRegresar = document.getElementById('btnRegresar');
     const ordenArchivosHidden = document.getElementById('ordenArchivos');
 
-    // Función para actualizar la lista visual y el campo orden
+    // ========== FUNCIONES DE MODAL ==========
+    let accionConfirmacion = null;
+
+    function _abrirModal(id) {
+        const modal = document.getElementById(id);
+        if (modal) modal.classList.add('activa');
+    }
+
+    function _cerrarModal(id) {
+        const modal = document.getElementById(id);
+        if (!modal) return;
+        modal.classList.add('cerrando');
+        setTimeout(() => {
+            modal.classList.remove('activa', 'cerrando');
+        }, 250);
+    }
+
+    function abrirModalConfirmacion(titulo, mensaje, onConfirm) {
+        document.getElementById('tituloConfirmacion').textContent = titulo;
+        document.getElementById('textoConfirmacion').textContent = mensaje;
+        accionConfirmacion = onConfirm;
+        _abrirModal('modalConfirmacion');
+    }
+
+    function cerrarModalConfirmacion() {
+        _cerrarModal('modalConfirmacion');
+        accionConfirmacion = null;
+    }
+
+    function ejecutarConfirmacion() {
+        if (typeof accionConfirmacion === 'function') {
+            accionConfirmacion();
+        }
+        cerrarModalConfirmacion();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const btnConfirmar = document.getElementById('btnConfirmarAccion');
+        if (btnConfirmar) btnConfirmar.onclick = ejecutarConfirmacion;
+    });
+
+    // ========== LISTA DE ARCHIVOS ==========
     function actualizarListaArchivos() {
         listaArchivosUl.innerHTML = '';
         if (archivosSeleccionados.length === 0) {
@@ -132,49 +178,40 @@
             li.style.justifyContent = "space-between";
             li.style.alignItems = "center";
             li.innerHTML = `
-                <span>📄 <strong>${archivo.name}</strong> <small>(${(archivo.size / 1024 / 1024).toFixed(2)} MB)</small></span>
+                <span>📄 <strong>${escapeHtml(archivo.name)}</strong> <small>(${(archivo.size / 1024 / 1024).toFixed(2)} MB)</small></span>
                 <button type="button" class="btn-eliminar-archivo" data-index="${index}" style="background:none; border:none; color:#c00; cursor:pointer; font-size:1.2rem;">🗑️</button>
             `;
             listaArchivosUl.appendChild(li);
         });
         contadorSpan.innerText = archivosSeleccionados.length;
-        // Actualizar el campo oculto con los nombres en orden
         const ordenNombres = archivosSeleccionados.map(f => f.name).join(',');
         ordenArchivosHidden.value = ordenNombres;
 
-        // Asignar eventos de eliminar a cada botón
         document.querySelectorAll('.btn-eliminar-archivo').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const idx = parseInt(btn.dataset.index);
                 if (!isNaN(idx)) {
                     archivosSeleccionados.splice(idx, 1);
                     actualizarListaArchivos();
-                    actualizarEstadoBoton();  // también actualizar habilitación del botón guardar
+                    actualizarEstadoBoton();
                 }
             });
         });
     }
 
-    // Agregar archivos desde el input temporal
     function agregarArchivosDesdeInput() {
         const nuevos = Array.from(inputArchivoTemp.files);
         if (nuevos.length === 0) return;
         archivosSeleccionados.push(...nuevos);
-        // Limpiar el input para poder seleccionar más archivos después
         inputArchivoTemp.value = '';
         actualizarListaArchivos();
         actualizarEstadoBoton();
     }
 
-    // Al hacer clic en "Buscar archivos", abrir el selector
-    btnSeleccionar.addEventListener('click', () => {
-        inputArchivoTemp.click();
-    });
-
-    // Cuando se seleccionan archivos en el input, agregarlos
+    btnSeleccionar.addEventListener('click', () => inputArchivoTemp.click());
     inputArchivoTemp.addEventListener('change', agregarArchivosDesdeInput);
 
-    // ========== LÓGICA DE GRUPOS, MATERIAS, PARCIALES, TEMAS (sin cambios) ==========
+    // ========== GRUPOS, MATERIAS, PARCIALES, TEMAS ==========
     let gruposData = [];
     let grupoIdxActual = null, materiaIdxActual = null, parcialIdxActual = null;
 
@@ -318,7 +355,7 @@
         actualizarCampoOculto(hiddenTema, temaNombre);
     });
 
-    // ========== FUNCIÓN PARA HABILITAR BOTÓN GUARDAR ==========
+    // ========== HABILITAR BOTÓN GUARDAR ==========
     function actualizarEstadoBoton() {
         const grupoValido = selectGrupo.value && selectGrupo.value !== "";
         const materiaValido = selectMateria.value && selectMateria.value !== "";
@@ -340,7 +377,6 @@
         }
     }
 
-    // Escuchar cambios en los campos que afectan el estado del botón
     selectGrupo.addEventListener('change', actualizarEstadoBoton);
     selectMateria.addEventListener('change', actualizarEstadoBoton);
     selectParcial.addEventListener('change', actualizarEstadoBoton);
@@ -348,47 +384,67 @@
     document.querySelector('input[name="actividad"]').addEventListener('input', actualizarEstadoBoton);
     document.getElementById('actividad_seleccionada').addEventListener('change', actualizarEstadoBoton);
 
-    // ========== ENVÍO DEL FORMULARIO CON FETCH ==========
-    const form = document.getElementById('formLeccion');
-
-    btnContinuar.addEventListener('click', async function (e) {
+    // ========== MODAL PARA GUARDAR ==========
+    btnContinuar.addEventListener('click', function(e) {
         if (btnContinuar.disabled) return;
+        abrirModalConfirmacion(
+            "Guardar lección",
+            "¿Estás seguro de que deseas guardar esta lección? Una vez guardada, podrá editarla más tarde si desea. Recalcamos el hecho de que este sistema; al ser off-line, no podrá reflejar ediciones posteriores a la entrega con los alumnos. Sugerimos estar seguro de su configuración antes de compartir la lección",
+            function() {
+                // Enviar formulario
+                const formData = new FormData();
+                const inputs = document.getElementById('formLeccion').querySelectorAll('input, select, textarea');
+                inputs.forEach(input => {
+                    if (input.type !== 'file' && input.name) {
+                        formData.append(input.name, input.value);
+                    }
+                });
+                archivosSeleccionados.forEach(archivo => {
+                    formData.append('archivos', archivo);
+                });
 
-        // Construir FormData con todos los campos del formulario
-        const formData = new FormData();
-
-        // Agregar los campos normales (excepto el input file original que ya no usamos)
-        const inputs = form.querySelectorAll('input, select, textarea');
-        inputs.forEach(input => {
-            if (input.type !== 'file' && input.name) {
-                formData.append(input.name, input.value);
+                fetch("{{ url_for('subir_leccion') }}", {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                    } else {
+                        return response.text().then(text => {
+                            document.open();
+                            document.write(text);
+                            document.close();
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Hubo un problema al guardar la lección.');
+                });
             }
-        });
-
-        // Agregar todos los archivos acumulados con el mismo nombre "archivos"
-        archivosSeleccionados.forEach(archivo => {
-            formData.append('archivos', archivo);
-        });
-
-        // Enviar a la URL del backend
-        try {
-            const response = await fetch("{{ url_for('subir_leccion') }}", {
-                method: 'POST',
-                body: formData
-            });
-            if (response.redirected) {
-                window.location.href = response.url;
-            } else {
-                const text = await response.text();
-                document.open();
-                document.write(text);
-                document.close();
-            }
-        } catch (error) {
-            console.error('Error al enviar:', error);
-            alert('Hubo un problema al enviar los datos.');
-        }
+        );
     });
+
+    // ========== MODAL PARA REGRESAR ==========
+    btnRegresar.addEventListener('click', function() {
+        abrirModalConfirmacion(
+            "Salir sin guardar",
+            "Si decides regresar, los cambios no se guardarán. ¿Estás seguro de que quieres salir?",
+            function() {
+                window.location.href = "{{ url_for('vista_contenido') }}";
+            }
+        );
+    });
+
+    function escapeHtml(str) {
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
 
     // Inicialización
     document.addEventListener('DOMContentLoaded', function () {

@@ -6,104 +6,215 @@
 <div class="contenido-container">
     <header class="contenido-header">
         <div class="tabs-container">
-            <!-- Cambio de orden: Actividades primero y con clase active -->
             <button class="tab-btn active" onclick="switchTab('actividades')">Actividades</button>
             <button class="tab-btn" onclick="switchTab('lecciones')">Lecciones</button>
         </div>
     </header>
 
-    <!-- Contenido de Actividades: ahora es el que se muestra por defecto -->
+    <!-- Actividades -->
     <div id="actividades" class="tab-content active">
         <div class="actividades-list">
             {% if actividades %}
-            {% for act in actividades %}
-            <div class="activity-card-horizontal">
-                <div class="act-img-container">
-                    <img src="{{ url_for('static', filename=act['IMAGEN']) }}" alt="Icono">
+                {% for act in actividades %}
+                <div class="activity-card-horizontal" id="act-card-{{ loop.index }}">
+                    <div class="act-img-container">
+                        <img src="{{ url_for('static', filename=act['IMAGEN']) }}" alt="Icono">
+                    </div>
+                    <div class="act-info">
+                        <h3>{{ act['NOMBRE'] }}</h3>
+                        <p class="tipo">Tipo: {{ act['TIPO_LEGIBLE'] }}</p>
+                        <p class="fecha">Creado: {{ act['FECHA'] }}</p>
+                    </div>
+                    <div class="act-actions">
+                        <a href="/editar_actividad/{{ act['ARCHIVO'] }}" class="action-icon-btn" title="Editar">
+                            <img src="{{ url_for('static', filename='img/editar_boton.png') }}" class="icon-small">
+                        </a>
+                        <a href="javascript:void(0);" class="action-icon-btn" title="Borrar"
+                           onclick="eliminarActividad('{{ act['ARCHIVO'] }}', '{{ act['NOMBRE'] }}')">
+                            <img src="{{ url_for('static', filename='img/cerrar_boton.png') }}" class="icon-small delete-tint">
+                        </a>
+                    </div>
                 </div>
-                <div class="act-info">
-                    <h3>{{ act['NOMBRE'] }}</h3>
-                    <p class="tipo">Tipo: {{ act['TIPO_LEGIBLE'] }}</p>
-                    <p class="fecha">Creado: {{ act['FECHA'] }}</p>
-                </div>
-                <div class="act-actions">
-                    <a href="/editar_actividad/{{ act['ARCHIVO'] }}" class="action-icon-btn" title="Editar">
-                        <img src="{{ url_for('static', filename='img/editar_boton.png') }}" class="icon-small">
-                    </a>
-                    <a href="{{ url_for('eliminar_actividad', nombre_archivo=act['ARCHIVO']) }}" class="action-icon-btn"
-                        title="Borrar"
-                        onclick="return confirm('¿Estás seguro de que quieres eliminar esta actividad permanentemente?');">
-                        <img src="{{ url_for('static', filename='img/cerrar_boton.png') }}"
-                            class="icon-small delete-tint">
-                    </a>
-                </div>
-            </div>
-            {% endfor %}
+                {% endfor %}
             {% else %}
-            <div class="empty-state">
-                <p>No hay actividades creadas aún.</p>
-                <a href="{{ url_for('crear_actividad') }}" class="btn-toro-outline">
-                    + Crear actividad
-                </a>
-            </div>
+                <div class="empty-state">
+                    <p>No hay actividades creadas aún.</p>
+                    <a href="{{ url_for('crear_actividad') }}" class="btn-toro-outline">+ Crear actividad</a>
+                </div>
             {% endif %}
         </div>
-
-        <!-- Botón flotante de crear actividad (fuera del empty-state para cuando sí hay actividades) -->
-        <a href="{{ url_for('crear_actividad') }}" class="btn-toro-outline">
-            + Crear actividad
-        </a>
+        <a href="{{ url_for('crear_actividad') }}" class="btn-toro-outline">+ Crear actividad</a>
     </div>
 
-    <!-- Contenido de Lecciones: oculto al inicio -->
+    <!-- Lecciones -->
     <div id="lecciones" class="tab-content">
         <div class="lecciones-list">
             {% if lecciones %}
-            {% for leccion in lecciones %}
-            <div class="leccion-card-horizontal">
-                <div class="leccion-icon-bg">
-                    <img src="{{ url_for('static', filename='img/contenido.png') }}" class="card-icon">
+                {% for leccion in lecciones %}
+                <div class="leccion-card-horizontal" id="leccion-card-{{ loop.index }}">
+                    <div class="leccion-icon-bg">
+                        <img src="{{ url_for('static', filename='img/contenido.png') }}" class="card-icon">
+                    </div>
+                    <div class="leccion-info">
+                        <h3>{{ leccion.replace('_', ' ') }}</h3>
+                        <p>Recurso didáctico disponible</p>
+                    </div>
+                    <div class="leccion-actions">
+                        <a href="{{ url_for('editar_leccion', carpeta=leccion) }}" class="action-icon-btn" title="Editar">
+                            <img src="{{ url_for('static', filename='img/editar_boton.png') }}" class="icon-small">
+                        </a>
+                        <a href="javascript:void(0);" class="action-icon-btn" title="Borrar"
+                           onclick="eliminarLeccion('{{ leccion }}')">
+                            <img src="{{ url_for('static', filename='img/cerrar_boton.png') }}" class="icon-small delete-tint">
+                        </a>
+                    </div>
                 </div>
-                <div class="leccion-info">
-                    <h3>{{ leccion.replace('_', ' ') }}</h3>
-                    <p>Recurso didáctico disponible</p>
-                </div>
-                <div class="leccion-actions">
-                    <a href="{{ url_for('editar_leccion', carpeta=leccion) }}" class="action-icon-btn" title="Editar">
-                        <img src="{{ url_for('static', filename='img/editar_boton.png') }}" class="icon-small">
-                    </a>
-                    <a href="{{ url_for('eliminar_leccion', carpeta=leccion) }}" class="action-icon-btn" title="Borrar"
-                        onclick="return confirm('¿Estás seguro de que quieres eliminar esta lección permanentemente? Se borrará la carpeta y el ZIP asociado.');">
-                        <img src="{{ url_for('static', filename='img/cerrar_boton.png') }}"
-                            class="icon-small delete-tint">
-                    </a>
-                </div>
-            </div>
-            {% endfor %}
+                {% endfor %}
             {% else %}
-            <div class="empty-state">
-                <p>No hay lecciones registradas aún.</p>
-            </div>
+                <div class="empty-state">
+                    <p>No hay lecciones registradas aún.</p>
+                </div>
             {% endif %}
         </div>
-        <a href="{{ url_for('subir_leccion') }}" class="btn-toro-outline">
-            + Crear lección
-        </a>
+        <a href="{{ url_for('subir_leccion') }}" class="btn-toro-outline">+ Crear lección</a>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     MODAL DE ELIMINACIÓN (reutilizable)
+══════════════════════════════════════════════════════════════════════ -->
+<div id="modalEliminar" class="modal">
+    <div class="modal-overlay" onclick="cerrarModalEliminar()"></div>
+    <div class="contenedor-modal contenedor-eliminar">
+        <div class="icono-advertencia">⚠️</div>
+        <h2 id="tituloModalEliminar">ELIMINAR</h2>
+        <p id="textoEliminarLinea1">¿Estás seguro?</p>
+        <p id="textoEliminarLinea2">Esta acción es permanente.</p>
+        <div id="infoEliminarExtra" class="info-eliminar-extra" style="display:none;"></div>
+        <div class="botones-modal">
+            <button type="button" class="btn-cancelar" onclick="cerrarModalEliminar()">Cancelar</button>
+            <button type="button" class="btn-eliminar-confirm" onclick="ejecutarEliminar()">
+                <span id="textoBotonEliminar">Eliminar</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     MODAL DE INFORMACIÓN
+══════════════════════════════════════════════════════════════════════ -->
+<div id="modalInfo" class="modal">
+    <div class="modal-overlay" onclick="cerrarModalInfo()"></div>
+    <div class="contenedor-modal">
+        <div class="icono-info">ℹ️</div>
+        <h2 id="tituloModalInfo">Información</h2>
+        <p id="textoModalInfo"></p>
+        <div class="botones-modal">
+            <button type="button" class="btn-aceptar" onclick="cerrarModalInfo()">Aceptar</button>
+        </div>
     </div>
 </div>
 
 <script>
     function switchTab(tabId) {
-        // 1. Quitar clase active de todo contenido y botones
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-
-        // 2. Activar el contenido seleccionado
         document.getElementById(tabId).classList.add('active');
-
-        // 3. Activar el botón que se clickeó
-        // Nota: event.currentTarget asegura que agarramos el botón aunque hagamos click en un borde
         event.currentTarget.classList.add('active');
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    //  MODALES
+    // ──────────────────────────────────────────────────────────────
+    let accionEliminar = null;
+
+    function abrirModalEliminar(titulo, linea1, linea2, textoBoton, chipsHTML, accion) {
+        document.getElementById("tituloModalEliminar").textContent = titulo;
+        document.getElementById("textoEliminarLinea1").textContent = linea1;
+        document.getElementById("textoEliminarLinea2").textContent = linea2;
+        document.getElementById("textoBotonEliminar").textContent = textoBoton;
+
+        const extra = document.getElementById("infoEliminarExtra");
+        if (chipsHTML) {
+            extra.innerHTML = chipsHTML;
+            extra.style.display = "flex";
+        } else {
+            extra.innerHTML = "";
+            extra.style.display = "none";
+        }
+        accionEliminar = accion;
+        _abrirModal("modalEliminar");
+    }
+
+    function cerrarModalEliminar() {
+        _cerrarModal("modalEliminar");
+        accionEliminar = null;
+    }
+
+    function ejecutarEliminar() {
+        if (typeof accionEliminar === "function") accionEliminar();
+        cerrarModalEliminar();
+    }
+
+    function mostrarModalInfo(titulo, mensaje) {
+        document.getElementById("tituloModalInfo").textContent = titulo;
+        document.getElementById("textoModalInfo").textContent = mensaje;
+        _abrirModal("modalInfo");
+    }
+
+    function cerrarModalInfo() {
+        _cerrarModal("modalInfo");
+    }
+
+    function _abrirModal(id) {
+        const modal = document.getElementById(id);
+        if (modal) modal.classList.add("activa");
+    }
+
+    function _cerrarModal(id) {
+        const modal = document.getElementById(id);
+        if (!modal) return;
+        modal.classList.add("cerrando");
+        setTimeout(() => {
+            modal.classList.remove("activa", "cerrando");
+        }, 250);
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    //  ELIMINAR ACTIVIDAD
+    // ──────────────────────────────────────────────────────────────
+    function eliminarActividad(archivo, nombre) {
+        abrirModalEliminar(
+            "ELIMINAR ACTIVIDAD",
+            `¿Estás seguro de que deseas eliminar la actividad "${nombre}"?`,
+            "Esta acción es permanente y no se puede deshacer.",
+            "Eliminar",
+            null,
+            () => {
+                fetch(`/actividad/eliminar/${archivo}`)
+                    .then(() => location.reload())
+                    .catch(() => mostrarModalInfo("Error", "No se pudo eliminar la actividad."));
+            }
+        );
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    //  ELIMINAR LECCIÓN
+    // ──────────────────────────────────────────────────────────────
+    function eliminarLeccion(carpeta) {
+        const nombreMostrar = carpeta.replace(/_/g, ' ');
+        abrirModalEliminar(
+            "ELIMINAR LECCIÓN",
+            `¿Estás seguro de que deseas eliminar la lección "${nombreMostrar}"?`,
+            "Se borrará la carpeta completa y su archivo ZIP asociado.",
+            "Eliminar",
+            null,
+            () => {
+                fetch(`/eliminar_leccion/${carpeta}`)
+                    .then(() => location.reload())
+                    .catch(() => mostrarModalInfo("Error", "No se pudo eliminar la lección."));
+            }
+        );
     }
 </script>
 {% endblock %}

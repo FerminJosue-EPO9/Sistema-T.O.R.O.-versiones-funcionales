@@ -209,6 +209,21 @@
             <button type="submit" class="btn-wizard finish" id="btn-finish" style="display:none;">Guardar</button>
         </div>
     </form>
+
+    <!-- Modal de Confirmación (estilo información, dos botones) -->
+<div id="modalConfirmacion" class="modal">
+    <div class="modal-overlay" onclick="cerrarModalConfirmacion()"></div>
+    <div class="contenedor-modal">
+        <div class="icono-info">¿...?</div>
+        <h2 id="tituloConfirmacion">Confirmar acción</h2>
+        <p id="textoConfirmacion">¿Estás seguro de que deseas continuar?</p>
+        <div class="botones-modal">
+            <button type="button" class="btn-cancelar" onclick="cerrarModalConfirmacion()">Cancelar</button>
+            <button type="button" class="btn-guardar" id="btnConfirmarAccion">Aceptar</button>
+        </div>
+    </div>
+</div>
+
 </div>
 
 <script>
@@ -253,6 +268,46 @@
 
     // Modales
     let fondoModalInfo, fondoModalEliminar;
+    let accionConfirmacion = null;
+
+    // ==========================================
+    // FUNCIONES DE MODALES (genéricas)
+    // ==========================================
+    function _abrirModal(id) {
+        const modal = document.getElementById(id);
+        if (modal) modal.classList.add('activa');
+    }
+
+    function _cerrarModal(id) {
+        const modal = document.getElementById(id);
+        if (!modal) return;
+        modal.classList.add('cerrando');
+        setTimeout(() => {
+            modal.classList.remove('activa', 'cerrando');
+        }, 250);
+    }
+
+    // ==========================================
+    // MODAL DE CONFIRMACIÓN
+    // ==========================================
+    function abrirModalConfirmacion(titulo, mensaje, onConfirm) {
+        document.getElementById('tituloConfirmacion').textContent = titulo;
+        document.getElementById('textoConfirmacion').textContent = mensaje;
+        accionConfirmacion = onConfirm;
+        _abrirModal('modalConfirmacion');
+    }
+
+    function cerrarModalConfirmacion() {
+        _cerrarModal('modalConfirmacion');
+        accionConfirmacion = null;
+    }
+
+    function ejecutarConfirmacion() {
+        if (typeof accionConfirmacion === 'function') {
+            accionConfirmacion();
+        }
+        cerrarModalConfirmacion();
+    }
 
     // ==========================================
     // FUNCIÓN PARA RESTABLECER BOTÓN SIGUIENTE
@@ -268,7 +323,7 @@
     // FUNCIONES DE INICIALIZACIÓN DE MODALES
     // ==========================================
     function crearModales() {
-        // Modal de información
+        // Modal de información (para el botón ?)
         fondoModalInfo = document.createElement("div");
         fondoModalInfo.classList.add("fondo-modal");
         const modalInfo = document.createElement("div");
@@ -281,7 +336,7 @@
         fondoModalInfo.appendChild(modalInfo);
         document.body.appendChild(fondoModalInfo);
 
-        // Modal de eliminación
+        // Modal de eliminación de preguntas
         fondoModalEliminar = document.createElement("div");
         fondoModalEliminar.classList.add("fondo-modal");
         const modalEliminar = document.createElement("div");
@@ -312,7 +367,6 @@
                 tarjeta.remove();
                 mostrarMensajeExito("El elemento se ha eliminado exitosamente!");
 
-                // Determinar qué tipo de pregunta se eliminó y actualizar según corresponda
                 if (inputPlantilla.value === 'FV01') {
                     renumerarPreguntasFV();
                     actualizarEstadoVacioFV();
@@ -700,7 +754,6 @@
             opcionesContainer.appendChild(div);
         }
 
-        // Inicializar con dos opciones
         for (let i = 0; i < 2; i++) {
             agregarCampoOpcion(i, letras[i]);
         }
@@ -1103,7 +1156,6 @@
                 fondoModalInfo.classList.add("activo");
             });
         }
-        // También actualizar el botón siguiente cuando se cargue la sopa
         actualizarBotonSiguienteSopa();
     }
 
@@ -1120,129 +1172,126 @@
     // GENERACIÓN DEL ARCHIVO .txt
     // ==========================================
     function generarTxtActividad() {
-    // Solo permite los tipos implementados
-    if (!(inputPlantilla.value === 'C001' || inputPlantilla.value === 'FV01' || inputPlantilla.value === 'P003' || inputPlantilla.value === 'P004')) {
-        alert("Por ahora solo se exporta 'Completar camino', 'Falso / Verdadero', 'Opción Múltiple' y 'Sopa de Letras'.");
-        return false;
-    }
-
-    const nombre = document.querySelector('input[name="nombre_confirmacion"]').value.trim() || "Sin título";
-    const intentos = document.querySelector('input[name="intentos"]').value || "3";
-    const tiempo = document.querySelector('input[name="tiempo_limite"]').value || "";
-    const fecha = document.querySelector('input[name="fecha_vencimiento"]').value || "No definida";
-    const ponderacion = document.querySelector('input[name="ponderacion"]').value || "0";
-
-    let payload = {
-        nombre: nombre,
-        intentos: intentos,
-        tiempo: tiempo,
-        fecha_vencimiento: fecha,
-        ponderacion: ponderacion
-    };
-
-    if (inputPlantilla.value === 'C001') {
-        const filas = document.querySelectorAll('#camino-items-list .fila-palabra-pregunta');
-        if (filas.length === 0) { alert("No hay datos para exportar."); return false; }
-        const izquierda = [], derecha = [], respuestas = {};
-        filas.forEach(fila => {
-            const preguntaInput = fila.querySelector('input[name^="camino_pregunta_"]');
-            const palabraInput = fila.querySelector('input[name^="camino_palabra_"]');
-            if (preguntaInput && palabraInput) {
-                const pregunta = preguntaInput.value.trim();
-                const palabra = palabraInput.value.trim();
-                if (pregunta && palabra) {
-                    izquierda.push(pregunta);
-                    derecha.push(palabra);
-                    respuestas[pregunta] = palabra;
-                }
-            }
-        });
-        payload.tipo = "completar-camino";
-        payload.izquierda = izquierda;
-        payload.derecha = derecha;
-        payload.respuestas = respuestas;
-    } else if (inputPlantilla.value === 'FV01') {
-        const tarjetas = document.querySelectorAll('#fv-questions-container .tarjeta-pregunta.guardado');
-        if (tarjetas.length === 0) { return false; }
-        const preguntas = [];
-        tarjetas.forEach(tarjeta => {
-            const preguntaText = tarjeta.querySelector('.texto-pregunta-guardada')?.textContent.trim();
-            const hiddenCorrect = tarjeta.querySelector('input[name^="fv_correcto_"]');
-            if (preguntaText && hiddenCorrect) {
-                preguntas.push({
-                    afirmacion: preguntaText,
-                    respuesta: hiddenCorrect.value
-                });
-            }
-        });
-        payload.tipo = "falso-verdadero";
-        payload.preguntas = preguntas;
-    } else if (inputPlantilla.value === 'P003') {
-        const tarjetas = document.querySelectorAll('#mc-questions-container .tarjeta-pregunta.guardado');
-        if (tarjetas.length === 0) { return false; }
-        const preguntas = [];
-        tarjetas.forEach(tarjeta => {
-            const preguntaText = tarjeta.querySelector('.texto-pregunta-guardada')?.textContent.trim();
-            const opcionesHidden = tarjeta.querySelector('input[name^="mc_opciones_"]');
-            const correctaHidden = tarjeta.querySelector('input[name^="mc_correcta_"]');
-            if (preguntaText && opcionesHidden && correctaHidden) {
-                preguntas.push({
-                    afirmacion: preguntaText,
-                    opciones: opcionesHidden.value.split('||'),
-                    respuesta: correctaHidden.value
-                });
-            }
-        });
-        payload.tipo = "opcion-multiple";
-        payload.preguntas = preguntas;
-    } else if (inputPlantilla.value === 'P004') {
-        const filas = document.querySelectorAll('#sopa-items-list .fila-palabra-pregunta');
-        if (filas.length === 0) { alert("No hay datos para exportar."); return false; }
-        const palabras = [];
-        const descripciones = [];
-        const respuestas = {};
-
-        // Función auxiliar para normalizar palabras (mayúsculas, sin acentos)
-        function normalizarPalabra(palabra) {
-            return palabra.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+        if (!(inputPlantilla.value === 'C001' || inputPlantilla.value === 'FV01' || inputPlantilla.value === 'P003' || inputPlantilla.value === 'P004')) {
+            alert("Por ahora solo se exporta 'Completar camino', 'Falso / Verdadero', 'Opción Múltiple' y 'Sopa de Letras'.");
+            return false;
         }
 
-        filas.forEach(fila => {
-            let palabra = fila.querySelector('input[name^="sopa_palabra_"]').value.trim();
-            const descripcion = fila.querySelector('input[name^="sopa_pregunta_"]').value.trim();
-            if (palabra && descripcion) {
-                const palabraNormalizada = normalizarPalabra(palabra);
-                palabras.push(palabraNormalizada);
-                descripciones.push(descripcion);
-                respuestas[descripcion] = palabraNormalizada;
-            }
-        });
-        payload.tipo = "sopa-letras";
-        payload.palabras = palabras;
-        payload.descripciones = descripciones;
-        payload.respuestas = respuestas;
-    }
+        const nombre = document.querySelector('input[name="nombre_confirmacion"]').value.trim() || "Sin título";
+        const intentos = document.querySelector('input[name="intentos"]').value || "3";
+        const tiempo = document.querySelector('input[name="tiempo_limite"]').value || "";
+        const fecha = document.querySelector('input[name="fecha_vencimiento"]').value || "No definida";
+        const ponderacion = document.querySelector('input[name="ponderacion"]').value || "0";
 
-    fetch('/guardar_actividad_txt', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert(`✅ Actividad guardada correctamente en:\n${data.ruta}`);
-                window.location.href = "{{ url_for('vista_contenido') }}";
-            } else {
-                alert("❌ Error al guardar: " + (data.error || "Desconocido"));
+        let payload = {
+            nombre: nombre,
+            intentos: intentos,
+            tiempo: tiempo,
+            fecha_vencimiento: fecha,
+            ponderacion: ponderacion
+        };
+
+        if (inputPlantilla.value === 'C001') {
+            const filas = document.querySelectorAll('#camino-items-list .fila-palabra-pregunta');
+            if (filas.length === 0) { alert("No hay datos para exportar."); return false; }
+            const izquierda = [], derecha = [], respuestas = {};
+            filas.forEach(fila => {
+                const preguntaInput = fila.querySelector('input[name^="camino_pregunta_"]');
+                const palabraInput = fila.querySelector('input[name^="camino_palabra_"]');
+                if (preguntaInput && palabraInput) {
+                    const pregunta = preguntaInput.value.trim();
+                    const palabra = palabraInput.value.trim();
+                    if (pregunta && palabra) {
+                        izquierda.push(pregunta);
+                        derecha.push(palabra);
+                        respuestas[pregunta] = palabra;
+                    }
+                }
+            });
+            payload.tipo = "completar-camino";
+            payload.izquierda = izquierda;
+            payload.derecha = derecha;
+            payload.respuestas = respuestas;
+        } else if (inputPlantilla.value === 'FV01') {
+            const tarjetas = document.querySelectorAll('#fv-questions-container .tarjeta-pregunta.guardado');
+            if (tarjetas.length === 0) { return false; }
+            const preguntas = [];
+            tarjetas.forEach(tarjeta => {
+                const preguntaText = tarjeta.querySelector('.texto-pregunta-guardada')?.textContent.trim();
+                const hiddenCorrect = tarjeta.querySelector('input[name^="fv_correcto_"]');
+                if (preguntaText && hiddenCorrect) {
+                    preguntas.push({
+                        afirmacion: preguntaText,
+                        respuesta: hiddenCorrect.value
+                    });
+                }
+            });
+            payload.tipo = "falso-verdadero";
+            payload.preguntas = preguntas;
+        } else if (inputPlantilla.value === 'P003') {
+            const tarjetas = document.querySelectorAll('#mc-questions-container .tarjeta-pregunta.guardado');
+            if (tarjetas.length === 0) { return false; }
+            const preguntas = [];
+            tarjetas.forEach(tarjeta => {
+                const preguntaText = tarjeta.querySelector('.texto-pregunta-guardada')?.textContent.trim();
+                const opcionesHidden = tarjeta.querySelector('input[name^="mc_opciones_"]');
+                const correctaHidden = tarjeta.querySelector('input[name^="mc_correcta_"]');
+                if (preguntaText && opcionesHidden && correctaHidden) {
+                    preguntas.push({
+                        afirmacion: preguntaText,
+                        opciones: opcionesHidden.value.split('||'),
+                        respuesta: correctaHidden.value
+                    });
+                }
+            });
+            payload.tipo = "opcion-multiple";
+            payload.preguntas = preguntas;
+        } else if (inputPlantilla.value === 'P004') {
+            const filas = document.querySelectorAll('#sopa-items-list .fila-palabra-pregunta');
+            if (filas.length === 0) { alert("No hay datos para exportar."); return false; }
+            const palabras = [];
+            const descripciones = [];
+            const respuestas = {};
+
+            function normalizarPalabra(palabra) {
+                return palabra.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
             }
+
+            filas.forEach(fila => {
+                let palabra = fila.querySelector('input[name^="sopa_palabra_"]').value.trim();
+                const descripcion = fila.querySelector('input[name^="sopa_pregunta_"]').value.trim();
+                if (palabra && descripcion) {
+                    const palabraNormalizada = normalizarPalabra(palabra);
+                    palabras.push(palabraNormalizada);
+                    descripciones.push(descripcion);
+                    respuestas[descripcion] = palabraNormalizada;
+                }
+            });
+            payload.tipo = "sopa-letras";
+            payload.palabras = palabras;
+            payload.descripciones = descripciones;
+            payload.respuestas = respuestas;
+        }
+
+        fetch('/guardar_actividad_txt', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
         })
-        .catch(error => {
-            console.error("Error:", error);
-            alert("Error de conexión con el servidor.");
-        });
-    return true;
-}
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = "{{ url_for('vista_contenido') }}";
+                } else {
+                    alert("❌ Error al guardar: " + (data.error || "Desconocido"));
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("Error de conexión con el servidor.");
+            });
+        return true;
+    }
 
     // ==========================================
     // FUNCIONES DE ACTUALIZACIÓN DE PASOS
@@ -1498,7 +1547,6 @@
             return;
         }
         if (currentStep === 2) {
-            // Si hay una pregunta en edición (FV o MC), preguntar antes de salir
             if (currentEditingCard && inputPlantilla.value === 'FV01') {
                 if (confirm("Hay una pregunta sin guardar. ¿Cancelar la edición y regresar?")) {
                     currentEditingCard.remove();
@@ -1554,9 +1602,19 @@
         document.getElementById('wizard-form').addEventListener('submit', function (e) {
             if (inputPlantilla.value === 'C001' || inputPlantilla.value === 'FV01' || inputPlantilla.value === 'P003' || inputPlantilla.value === 'P004') {
                 e.preventDefault();
-                generarTxtActividad();
+                abrirModalConfirmacion(
+                    "Guardar actividad",
+                    "¿Estás seguro de que deseas guardar esta actividad? Una vez guardada, podrás editarla más tarde.",
+                    generarTxtActividad
+                );
             }
         });
+
+        // Asignar evento al botón "Aceptar" del modal de confirmación
+        const btnConfirmar = document.getElementById('btnConfirmarAccion');
+        if (btnConfirmar) {
+            btnConfirmar.onclick = ejecutarConfirmacion;
+        }
     });
 </script>
 

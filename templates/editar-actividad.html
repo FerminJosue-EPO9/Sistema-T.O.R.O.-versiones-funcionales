@@ -214,6 +214,21 @@
             <button type="submit" class="btn-wizard finish" id="btn-finish" style="display:none;">Guardar</button>
         </div>
     </form>
+
+    <!-- Modal de Confirmación (estilo información, dos botones) -->
+<div id="modalConfirmacion" class="modal">
+    <div class="modal-overlay" onclick="cerrarModalConfirmacion()"></div>
+    <div class="contenedor-modal">
+        <div class="icono-info">¿...?</div>
+        <h2 id="tituloConfirmacion">Confirmar acción</h2>
+        <p id="textoConfirmacion">¿Estás seguro de que deseas continuar?</p>
+        <div class="botones-modal">
+            <button type="button" class="btn-cancelar" onclick="cerrarModalConfirmacion()">Cancelar</button>
+            <button type="button" class="btn-guardar" id="btnConfirmarAccion">Aceptar</button>
+        </div>
+    </div>
+</div>
+
 </div>
 
 <script>
@@ -262,14 +277,45 @@
 
     // Modales
     let fondoModalInfo, fondoModalEliminar;
+    let accionConfirmacion = null;
 
-    function precargarMetricas() {
-        if (!modoEdicion || !actividadData) return;
-        document.querySelector('input[name="nombre_confirmacion"]').value = actividadData.nombre || '';
-        document.querySelector('input[name="fecha_vencimiento"]').value = actividadData.fecha_vencimiento || '';
-        document.querySelector('input[name="tiempo_limite"]').value = actividadData.tiempo || '';
-        document.querySelector('input[name="intentos"]').value = actividadData.intentos || 3;
-        document.querySelector('input[name="ponderacion"]').value = actividadData.ponderacion || '';
+    // ==========================================
+    // FUNCIONES DE APERTURA/CIERRE DE MODALES
+    // ==========================================
+    function _abrirModal(id) {
+        const modal = document.getElementById(id);
+        if (modal) modal.classList.add('activa');
+    }
+
+    function _cerrarModal(id) {
+        const modal = document.getElementById(id);
+        if (!modal) return;
+        modal.classList.add('cerrando');
+        setTimeout(() => {
+            modal.classList.remove('activa', 'cerrando');
+        }, 250);
+    }
+
+    // ==========================================
+    // MODAL DE CONFIRMACIÓN
+    // ==========================================
+    function abrirModalConfirmacion(titulo, mensaje, onConfirm) {
+        document.getElementById("tituloConfirmacion").textContent = titulo;
+        document.getElementById("textoConfirmacion").textContent = mensaje;
+        accionConfirmacion = onConfirm;
+        _abrirModal("modalConfirmacion");
+    }
+
+    function cerrarModalConfirmacion() {
+        _cerrarModal("modalConfirmacion");
+        accionConfirmacion = null;
+    }
+
+    function ejecutarConfirmacion() {
+        if (typeof accionConfirmacion === "function") {
+            accionConfirmacion();
+        }
+        cerrarModalConfirmacion();
     }
 
     // ==========================================
@@ -330,7 +376,6 @@
                 tarjeta.remove();
                 mostrarMensajeExito("El elemento se ha eliminado exitosamente!");
 
-                // Determinar qué tipo de pregunta se eliminó y actualizar según corresponda
                 if (inputPlantilla.value === 'FV01') {
                     renumerarPreguntasFV();
                     actualizarEstadoVacioFV();
@@ -627,9 +672,6 @@
     // CARGA DE PREGUNTAS EXISTENTES (OPCIÓN MÚLTIPLE)
     // ==========================================
     function cargarPreguntasMC(preguntas) {
-        // preguntas = [
-        //   { afirmacion: "texto", opciones: ["op1","op2",...], respuesta: "A" }, ...
-        // ]
         preguntas.forEach((p, idx) => {
             mcQuestionCount++;
             const numero = mcQuestionCount;
@@ -637,7 +679,6 @@
             tarjeta.classList.add('tarjeta-pregunta', 'guardado');
             tarjeta.dataset.questionNumber = numero;
 
-            // Construir el HTML de las opciones guardadas (radio deshabilitados, etc.)
             let opcionesHtml = '';
             for (let i = 0; i < p.opciones.length; i++) {
                 const letra = String.fromCharCode(65 + i);
@@ -669,7 +710,6 @@
 
             contenedorMCPreguntas.appendChild(tarjeta);
 
-            // Reasignar eventos de editar y eliminar (igual que en guardarPreguntaMC)
             const botonEditar = tarjeta.querySelector('.editar-pregunta');
             const botonEliminar = tarjeta.querySelector('.cerrar-guardado');
 
@@ -687,7 +727,6 @@
             });
         });
 
-        // Actualizar contadores y estado del botón "siguiente"
         actualizarTextoBotonAgregarMC();
         actualizarBotonSiguienteMC();
     }
@@ -719,7 +758,6 @@
             <input type="hidden" name="fv_pregunta_${fvQuestionCount}" value="${escapeHtml(p.afirmacion)}">
         `;
             contenedorFVPreguntas.appendChild(tarjeta);
-            // Reasignar eventos de editar/eliminar (similar a guardarPregunta)
             const botonEditar = tarjeta.querySelector('.editar-pregunta');
             const botonEliminar = tarjeta.querySelector('.cerrar-guardado');
             botonEditar.addEventListener('click', () => {
@@ -743,7 +781,7 @@
         container.innerHTML = '';
         filaCaminoCount = 0;
         for (let i = 0; i < izquierda.length; i++) {
-            agregarFilaCamino();  // crea fila vacía
+            agregarFilaCamino();
             const fila = container.lastElementChild;
             fila.querySelector('input[name^="camino_pregunta_"]').value = izquierda[i];
             fila.querySelector('input[name^="camino_palabra_"]').value = derecha[i];
@@ -860,7 +898,6 @@
             opcionesContainer.appendChild(div);
         }
 
-        // Inicializar con dos opciones
         for (let i = 0; i < 2; i++) {
             agregarCampoOpcion(i, letras[i]);
         }
@@ -1263,7 +1300,6 @@
                 fondoModalInfo.classList.add("activo");
             });
         }
-        // También actualizar el botón siguiente cuando se cargue la sopa
         actualizarBotonSiguienteSopa();
     }
 
@@ -1277,12 +1313,129 @@
     }
 
     // ==========================================
-    // GENERACIÓN DEL ARCHIVO .txt
+    // GENERACIÓN DEL ARCHIVO .txt (NO SE USA EN EDICIÓN, PERO SE MANTIENE)
     // ==========================================
     function generarTxtActividad() {
-        // Solo permite los tipos implementados
         if (!(inputPlantilla.value === 'C001' || inputPlantilla.value === 'FV01' || inputPlantilla.value === 'P003' || inputPlantilla.value === 'P004')) {
             alert("Por ahora solo se exporta 'Completar camino', 'Falso / Verdadero', 'Opción Múltiple' y 'Sopa de Letras'.");
+            return false;
+        }
+        const nombre = document.querySelector('input[name="nombre_confirmacion"]').value.trim() || "Sin título";
+        const intentos = document.querySelector('input[name="intentos"]').value || "3";
+        const tiempo = document.querySelector('input[name="tiempo_limite"]').value || "";
+        const fecha = document.querySelector('input[name="fecha_vencimiento"]').value || "No definida";
+        const ponderacion = document.querySelector('input[name="ponderacion"]').value || "0";
+        let payload = {
+            nombre: nombre,
+            intentos: intentos,
+            tiempo: tiempo,
+            fecha_vencimiento: fecha,
+            ponderacion: ponderacion
+        };
+        if (inputPlantilla.value === 'C001') {
+            const filas = document.querySelectorAll('#camino-items-list .fila-palabra-pregunta');
+            if (filas.length === 0) { alert("No hay datos para exportar."); return false; }
+            const izquierda = [], derecha = [], respuestas = {};
+            filas.forEach(fila => {
+                const preguntaInput = fila.querySelector('input[name^="camino_pregunta_"]');
+                const palabraInput = fila.querySelector('input[name^="camino_palabra_"]');
+                if (preguntaInput && palabraInput) {
+                    const pregunta = preguntaInput.value.trim();
+                    const palabra = palabraInput.value.trim();
+                    if (pregunta && palabra) {
+                        izquierda.push(pregunta);
+                        derecha.push(palabra);
+                        respuestas[pregunta] = palabra;
+                    }
+                }
+            });
+            payload.tipo = "completar-camino";
+            payload.izquierda = izquierda;
+            payload.derecha = derecha;
+            payload.respuestas = respuestas;
+        } else if (inputPlantilla.value === 'FV01') {
+            const tarjetas = document.querySelectorAll('#fv-questions-container .tarjeta-pregunta.guardado');
+            if (tarjetas.length === 0) { return false; }
+            const preguntas = [];
+            tarjetas.forEach(tarjeta => {
+                const preguntaText = tarjeta.querySelector('.texto-pregunta-guardada')?.textContent.trim();
+                const hiddenCorrect = tarjeta.querySelector('input[name^="fv_correcto_"]');
+                if (preguntaText && hiddenCorrect) {
+                    preguntas.push({ afirmacion: preguntaText, respuesta: hiddenCorrect.value });
+                }
+            });
+            payload.tipo = "falso-verdadero";
+            payload.preguntas = preguntas;
+        } else if (inputPlantilla.value === 'P003') {
+            const tarjetas = document.querySelectorAll('#mc-questions-container .tarjeta-pregunta.guardado');
+            if (tarjetas.length === 0) { return false; }
+            const preguntas = [];
+            tarjetas.forEach(tarjeta => {
+                const preguntaText = tarjeta.querySelector('.texto-pregunta-guardada')?.textContent.trim();
+                const opcionesHidden = tarjeta.querySelector('input[name^="mc_opciones_"]');
+                const correctaHidden = tarjeta.querySelector('input[name^="mc_correcta_"]');
+                if (preguntaText && opcionesHidden && correctaHidden) {
+                    preguntas.push({
+                        afirmacion: preguntaText,
+                        opciones: opcionesHidden.value.split('||'),
+                        respuesta: correctaHidden.value
+                    });
+                }
+            });
+            payload.tipo = "opcion-multiple";
+            payload.preguntas = preguntas;
+        } else if (inputPlantilla.value === 'P004') {
+            const filas = document.querySelectorAll('#sopa-items-list .fila-palabra-pregunta');
+            if (filas.length === 0) { alert("No hay datos para exportar."); return false; }
+            const palabras = [], descripciones = [], respuestas = {};
+            function normalizarPalabra(palabra) {
+                return palabra.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+            }
+            filas.forEach(fila => {
+                let palabra = fila.querySelector('input[name^="sopa_palabra_"]').value.trim();
+                const descripcion = fila.querySelector('input[name^="sopa_pregunta_"]').value.trim();
+                if (palabra && descripcion) {
+                    const palabraNormalizada = normalizarPalabra(palabra);
+                    palabras.push(palabraNormalizada);
+                    descripciones.push(descripcion);
+                    respuestas[descripcion] = palabraNormalizada;
+                }
+            });
+            payload.tipo = "sopa-letras";
+            payload.palabras = palabras;
+            payload.descripciones = descripciones;
+            payload.respuestas = respuestas;
+        }
+        fetch('/guardar_actividad_txt', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = "{{ url_for('vista_contenido') }}";
+                } else {
+                    alert("❌ Error al guardar: " + (data.error || "Desconocido"));
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("Error de conexión con el servidor.");
+            });
+        return true;
+    }
+
+    // ==========================================
+    // GUARDAR CAMBIOS DE UNA ACTIVIDAD EXISTENTE
+    // ==========================================
+    function guardarEdicion() {
+        const tipoValido = inputPlantilla.value === 'C001' ||
+            inputPlantilla.value === 'FV01' ||
+            inputPlantilla.value === 'P003' ||
+            inputPlantilla.value === 'P004';
+        if (!tipoValido) {
+            alert("Por ahora solo se puede editar 'Completar camino', 'Falso / Verdadero', 'Opción Múltiple' y 'Sopa de Letras'.");
             return false;
         }
 
@@ -1293,6 +1446,7 @@
         const ponderacion = document.querySelector('input[name="ponderacion"]').value || "0";
 
         let payload = {
+            id_actividad: actividadData.id_actividad || '',
             nombre: nombre,
             intentos: intentos,
             tiempo: tiempo,
@@ -1323,23 +1477,20 @@
             payload.respuestas = respuestas;
         } else if (inputPlantilla.value === 'FV01') {
             const tarjetas = document.querySelectorAll('#fv-questions-container .tarjeta-pregunta.guardado');
-            if (tarjetas.length === 0) { return false; }
+            if (tarjetas.length === 0) { alert("No hay preguntas guardadas."); return false; }
             const preguntas = [];
             tarjetas.forEach(tarjeta => {
                 const preguntaText = tarjeta.querySelector('.texto-pregunta-guardada')?.textContent.trim();
                 const hiddenCorrect = tarjeta.querySelector('input[name^="fv_correcto_"]');
                 if (preguntaText && hiddenCorrect) {
-                    preguntas.push({
-                        afirmacion: preguntaText,
-                        respuesta: hiddenCorrect.value
-                    });
+                    preguntas.push({ afirmacion: preguntaText, respuesta: hiddenCorrect.value });
                 }
             });
             payload.tipo = "falso-verdadero";
             payload.preguntas = preguntas;
         } else if (inputPlantilla.value === 'P003') {
             const tarjetas = document.querySelectorAll('#mc-questions-container .tarjeta-pregunta.guardado');
-            if (tarjetas.length === 0) { return false; }
+            if (tarjetas.length === 0) { alert("No hay preguntas guardadas."); return false; }
             const preguntas = [];
             tarjetas.forEach(tarjeta => {
                 const preguntaText = tarjeta.querySelector('.texto-pregunta-guardada')?.textContent.trim();
@@ -1358,15 +1509,10 @@
         } else if (inputPlantilla.value === 'P004') {
             const filas = document.querySelectorAll('#sopa-items-list .fila-palabra-pregunta');
             if (filas.length === 0) { alert("No hay datos para exportar."); return false; }
-            const palabras = [];
-            const descripciones = [];
-            const respuestas = {};
-
-            // Función auxiliar para normalizar palabras (mayúsculas, sin acentos)
+            const palabras = [], descripciones = [], respuestas = {};
             function normalizarPalabra(palabra) {
                 return palabra.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
             }
-
             filas.forEach(fila => {
                 let palabra = fila.querySelector('input[name^="sopa_palabra_"]').value.trim();
                 const descripcion = fila.querySelector('input[name^="sopa_pregunta_"]').value.trim();
@@ -1383,159 +1529,6 @@
             payload.respuestas = respuestas;
         }
 
-        fetch('/guardar_actividad_txt', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert(`✅ Actividad guardada correctamente en:\n${data.ruta}`);
-                    window.location.href = "{{ url_for('vista_contenido') }}";
-                } else {
-                    alert("❌ Error al guardar: " + (data.error || "Desconocido"));
-                }
-            })
-            .catch(error => {
-                console.error("Error:", error);
-                alert("Error de conexión con el servidor.");
-            });
-        return true;
-    }
-
-    // ==========================================
-    // GUARDAR CAMBIOS DE UNA ACTIVIDAD EXISTENTE
-    // ==========================================
-    function guardarEdicion() {
-        // Validar tipo de actividad
-        const tipoValido = inputPlantilla.value === 'C001' ||
-            inputPlantilla.value === 'FV01' ||
-            inputPlantilla.value === 'P003' ||
-            inputPlantilla.value === 'P004';
-        if (!tipoValido) {
-            alert("Por ahora solo se puede editar 'Completar camino', 'Falso / Verdadero', 'Opción Múltiple' y 'Sopa de Letras'.");
-            return false;
-        }
-
-        // Datos comunes
-        const nombre = document.querySelector('input[name="nombre_confirmacion"]').value.trim() || "Sin título";
-        const intentos = document.querySelector('input[name="intentos"]').value || "3";
-        const tiempo = document.querySelector('input[name="tiempo_limite"]').value || "";
-        const fecha = document.querySelector('input[name="fecha_vencimiento"]').value || "No definida";
-        const ponderacion = document.querySelector('input[name="ponderacion"]').value || "0";
-
-        let payload = {
-            id_actividad: actividadData.id_actividad || '',  // ← añade esta línea
-            nombre: nombre,
-            intentos: intentos,
-            tiempo: tiempo,
-            fecha_vencimiento: fecha,
-            ponderacion: ponderacion
-        };
-
-        // ========== COMPLETAR CAMINO ==========
-        if (inputPlantilla.value === 'C001') {
-            const filas = document.querySelectorAll('#camino-items-list .fila-palabra-pregunta');
-            if (filas.length === 0) {
-                alert("No hay datos para exportar.");
-                return false;
-            }
-            const izquierda = [], derecha = [], respuestas = {};
-            filas.forEach(fila => {
-                const preguntaInput = fila.querySelector('input[name^="camino_pregunta_"]');
-                const palabraInput = fila.querySelector('input[name^="camino_palabra_"]');
-                if (preguntaInput && palabraInput) {
-                    const pregunta = preguntaInput.value.trim();
-                    const palabra = palabraInput.value.trim();
-                    if (pregunta && palabra) {
-                        izquierda.push(pregunta);
-                        derecha.push(palabra);
-                        respuestas[pregunta] = palabra;
-                    }
-                }
-            });
-            payload.tipo = "completar-camino";
-            payload.izquierda = izquierda;
-            payload.derecha = derecha;
-            payload.respuestas = respuestas;
-        }
-        // ========== FALSO / VERDADERO ==========
-        else if (inputPlantilla.value === 'FV01') {
-            const tarjetas = document.querySelectorAll('#fv-questions-container .tarjeta-pregunta.guardado');
-            if (tarjetas.length === 0) {
-                alert("No hay preguntas guardadas.");
-                return false;
-            }
-            const preguntas = [];
-            tarjetas.forEach(tarjeta => {
-                const preguntaText = tarjeta.querySelector('.texto-pregunta-guardada')?.textContent.trim();
-                const hiddenCorrect = tarjeta.querySelector('input[name^="fv_correcto_"]');
-                if (preguntaText && hiddenCorrect) {
-                    preguntas.push({
-                        afirmacion: preguntaText,
-                        respuesta: hiddenCorrect.value
-                    });
-                }
-            });
-            payload.tipo = "falso-verdadero";
-            payload.preguntas = preguntas;
-        }
-        // ========== OPCIÓN MÚLTIPLE ==========
-        else if (inputPlantilla.value === 'P003') {
-            const tarjetas = document.querySelectorAll('#mc-questions-container .tarjeta-pregunta.guardado');
-            if (tarjetas.length === 0) {
-                alert("No hay preguntas guardadas.");
-                return false;
-            }
-            const preguntas = [];
-            tarjetas.forEach(tarjeta => {
-                const preguntaText = tarjeta.querySelector('.texto-pregunta-guardada')?.textContent.trim();
-                const opcionesHidden = tarjeta.querySelector('input[name^="mc_opciones_"]');
-                const correctaHidden = tarjeta.querySelector('input[name^="mc_correcta_"]');
-                if (preguntaText && opcionesHidden && correctaHidden) {
-                    preguntas.push({
-                        afirmacion: preguntaText,
-                        opciones: opcionesHidden.value.split('||'),
-                        respuesta: correctaHidden.value
-                    });
-                }
-            });
-            payload.tipo = "opcion-multiple";
-            payload.preguntas = preguntas;
-        }
-        // ========== SOPA DE LETRAS ==========
-        else if (inputPlantilla.value === 'P004') {
-            const filas = document.querySelectorAll('#sopa-items-list .fila-palabra-pregunta');
-            if (filas.length === 0) {
-                alert("No hay datos para exportar.");
-                return false;
-            }
-            const palabras = [];
-            const descripciones = [];
-            const respuestas = {};
-
-            function normalizarPalabra(palabra) {
-                return palabra.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
-            }
-
-            filas.forEach(fila => {
-                let palabra = fila.querySelector('input[name^="sopa_palabra_"]').value.trim();
-                const descripcion = fila.querySelector('input[name^="sopa_pregunta_"]').value.trim();
-                if (palabra && descripcion) {
-                    const palabraNormalizada = normalizarPalabra(palabra);
-                    palabras.push(palabraNormalizada);
-                    descripciones.push(descripcion);
-                    respuestas[descripcion] = palabraNormalizada;
-                }
-            });
-            payload.tipo = "sopa-letras";
-            payload.palabras = palabras;
-            payload.descripciones = descripciones;
-            payload.respuestas = respuestas;
-        }
-
-        // Enviar al endpoint de edición (sobrescribe el archivo)
         fetch(`/editar_actividad/${nombreArchivo}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1544,7 +1537,6 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert(`✅ Actividad actualizada correctamente en:\n${data.ruta}`);
                     window.location.href = "{{ url_for('vista_contenido') }}";
                 } else {
                     alert("❌ Error al guardar: " + (data.error || "Desconocido"));
@@ -1800,29 +1792,28 @@
         }
     }
 
-function prevStep() {
-    // Si estamos en el paso 2 (editar preguntas), salir a la lista de actividades
+    // Versión final de prevStep (sin duplicados)
+    function prevStep() {
+    // Solo mostramos el modal si estamos en el paso de edición (paso 2) o superior?
+    // Según la lógica actual, al estar en paso 2 se sale directamente.
+    // Vamos a mostrar el modal para cualquier paso que implique salir de la edición.
+    // En este caso, cuando currentStep === 2 se sale de la página. Para pasos > 2 solo retrocedemos.
     if (currentStep === 2) {
-        // Preguntar si hay cambios sin guardar (opcional)
-        if (currentEditingCard && inputPlantilla.value === 'FV01') {
-            if (!confirm("Hay una pregunta sin guardar. ¿Cancelar la edición y regresar?")) {
-                return;
+        // Abrir modal de confirmación personalizado
+        abrirModalConfirmacion(
+            "Salir sin guardar",
+            "Si decides Aceptar, no se harán las ediciones hechas hasta que guardes la configuración completa. ¿Estás seguro de que quieres salir?",
+            function() {
+                // Si el usuario acepta, redirigir a la lista de actividades
+                window.location.href = "{{ url_for('vista_contenido') }}";
             }
-            // Si confirma, no necesitas eliminar la tarjeta porque al salir de la página se pierde todo.
-        } else if (currentEditingMCCard && inputPlantilla.value === 'P003') {
-            if (!confirm("Hay una pregunta sin guardar. ¿Cancelar la edición y regresar?")) {
-                return;
-            }
-        }
-        window.location.href = "{{ url_for('vista_contenido') }}";
+        );
         return;
     }
-
     // Para pasos 3 y 4, retroceder un paso normalmente
     if (currentStep > 2) {
         currentStep--;
         updateUI();
-        // Actualizar botón siguiente según el tipo (solo si se necesita)
         if (currentStep === 2) {
             if (inputPlantilla.value === 'FV01') actualizarBotonSiguienteFV();
             else if (inputPlantilla.value === 'P003') actualizarBotonSiguienteMC();
@@ -1834,64 +1825,77 @@ function prevStep() {
     }
 }
 
-    // Inicialización
+    // ==========================================
+    // INICIALIZACIÓN
+    // ==========================================
     document.addEventListener('DOMContentLoaded', () => {
-    updateUI();
-    crearModales();
-    inicializarFV();
-    inicializarMC();
-    inicializarCamino();
-    inicializarSopa();
+        updateUI();
+        crearModales();
+        inicializarFV();
+        inicializarMC();
+        inicializarCamino();
+        inicializarSopa();
 
-    document.getElementById('btn-next').onclick = nextStep;
-    document.getElementById('btn-prev').onclick = prevStep;
+        document.getElementById('btn-next').onclick = nextStep;
+        document.getElementById('btn-prev').onclick = prevStep;
 
-    document.getElementById('wizard-form').addEventListener('submit', function (e) {
-        if (inputPlantilla.value === 'C001' || inputPlantilla.value === 'FV01' || inputPlantilla.value === 'P003' || inputPlantilla.value === 'P004') {
-            e.preventDefault();
-            if (modoEdicion) {
-                guardarEdicion();
-            } else {
-                generarTxtActividad();
+        document.getElementById('wizard-form').addEventListener('submit', function (e) {
+            if (inputPlantilla.value === 'C001' || inputPlantilla.value === 'FV01' || inputPlantilla.value === 'P003' || inputPlantilla.value === 'P004') {
+                e.preventDefault();
+                abrirModalConfirmacion(
+                    "Guardar cambios",
+                    "¿Estás seguro de que deseas guardar los cambios en esta actividad?",
+                    guardarEdicion
+                );
             }
+        });
+
+        // Asignar evento al botón "Aceptar" del modal de confirmación
+        const btnConfirmar = document.getElementById('btnConfirmarAccion');
+        if (btnConfirmar) {
+            btnConfirmar.onclick = ejecutarConfirmacion;
+        }
+
+        // Cargar datos de la actividad en modo edición
+        if (modoEdicion) {
+            const tipo = actividadData.tipo;
+            if (tipo === 'falso-verdadero') {
+                seleccionarFV(document.querySelector('.plantilla-card[onclick*="seleccionarFV"]'));
+            } else if (tipo === 'opcion-multiple') {
+                seleccionarFinal('P003', document.querySelector('.plantilla-card[onclick*="seleccionarFinal(\'P003\'"]'));
+            } else if (tipo === 'completar-camino') {
+                seleccionarCamino(document.querySelector('.plantilla-card[onclick*="seleccionarCamino"]'));
+            } else if (tipo === 'sopa-letras') {
+                seleccionarFinal('P004', document.querySelector('.plantilla-card[onclick*="seleccionarFinal(\'P004\'"]'));
+            }
+
+            currentStep = 2;
+            updateUI();
+
+            setTimeout(() => {
+                if (tipo === 'falso-verdadero') {
+                    cargarPreguntasFV(actividadData.preguntas);
+                } else if (tipo === 'opcion-multiple') {
+                    cargarPreguntasMC(actividadData.preguntas);
+                } else if (tipo === 'completar-camino') {
+                    cargarCamino(actividadData.izquierda, actividadData.derecha);
+                } else if (tipo === 'sopa-letras') {
+                    cargarSopa(actividadData.descripciones, actividadData.palabras);
+                }
+                precargarMetricas();
+            }, 150);
         }
     });
 
-    // ✅ Ahora sí, después de todo, cargamos los datos si estamos editando
-    if (modoEdicion) {
-        // Primero simulamos la selección de la plantilla
-        // (esto depende del tipo que viene en actividadData)
-        const tipo = actividadData.tipo;
-        if (tipo === 'falso-verdadero') {
-            seleccionarFV(document.querySelector('.plantilla-card[onclick*="seleccionarFV"]'));
-        } else if (tipo === 'opcion-multiple') {
-            seleccionarFinal('P003', document.querySelector('.plantilla-card[onclick*="seleccionarFinal(\'P003\'"]'));
-        } else if (tipo === 'completar-camino') {
-            seleccionarCamino(document.querySelector('.plantilla-card[onclick*="seleccionarCamino"]'));
-        } else if (tipo === 'sopa-letras') {
-            seleccionarFinal('P004', document.querySelector('.plantilla-card[onclick*="seleccionarFinal(\'P004\'"]'));
-        }
-
-        // Forzamos ir al paso 2 para que los contenedores se muestren
-        currentStep = 2;
-        updateUI();   // esto hace visible el paso 2
-
-        // Ahora sí, cargamos las preguntas con un pequeño retraso para asegurar que el DOM ya está visible
-        setTimeout(() => {
-            if (tipo === 'falso-verdadero') {
-                cargarPreguntasFV(actividadData.preguntas);
-            } else if (tipo === 'opcion-multiple') {
-                cargarPreguntasMC(actividadData.preguntas);
-            } else if (tipo === 'completar-camino') {
-                cargarCamino(actividadData.izquierda, actividadData.derecha);
-            } else if (tipo === 'sopa-letras') {
-                cargarSopa(actividadData.descripciones, actividadData.palabras);
-            }
-            precargarMetricas();
-        }, 150);
+    // Función para precargar métricas (definida antes)
+    function precargarMetricas() {
+        if (!modoEdicion || !actividadData) return;
+        document.querySelector('input[name="nombre_confirmacion"]').value = actividadData.nombre || '';
+        document.querySelector('input[name="fecha_vencimiento"]').value = actividadData.fecha_vencimiento || '';
+        document.querySelector('input[name="tiempo_limite"]').value = actividadData.tiempo || '';
+        document.querySelector('input[name="intentos"]').value = actividadData.intentos || 3;
+        document.querySelector('input[name="ponderacion"]').value = actividadData.ponderacion || '';
     }
-});
-
 </script>
 
 {% endblock %}

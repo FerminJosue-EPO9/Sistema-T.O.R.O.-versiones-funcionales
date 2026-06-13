@@ -84,44 +84,94 @@
                     {% endfor %}
                 </select>
             </div>
-
         </div>
 
         <!-- Campos ocultos para el backend -->
         <input type="hidden" name="orden_archivos" id="ordenArchivos">
         <input type="hidden" name="archivos_conservar" id="archivosConservar">
-
-        <!-- Campos ocultos para enviar los nombres reales (los que el usuario selecciona en los selects) -->
         <input type="hidden" name="grupo" id="hiddenGrupo">
         <input type="hidden" name="materia" id="hiddenMateria">
         <input type="hidden" name="parcial" id="hiddenParcial">
         <input type="hidden" name="tema" id="hiddenTema">
         <input type="hidden" name="id_leccion_original" value="{{ leccion.id_leccion }}">
-        
+
         <div class="footer-actions">
-            <a href="{{ url_for('vista_contenido') }}" class="btn-secondary"
-                style="text-decoration: none; display:inline-block; text-align:center; padding: 10px 20px;">Regresar</a>
+            <button type="button" id="btnRegresar" class="btn-secondary">Regresar</button>
             <button type="button" id="btnContinuar" disabled class="btn-primary">Guardar cambios</button>
         </div>
 
         <p class="footer-note">Asegúrate de llenar todos los campos antes de guardar.</p>
     </form>
+
+    <!-- Modal de Confirmación (reutilizable) -->
+    <div id="modalConfirmacion" class="modal">
+        <div class="modal-overlay" onclick="cerrarModalConfirmacion()"></div>
+        <div class="contenedor-modal">
+            <div class="icono-info">¿...?</div>
+            <h2 id="tituloConfirmacion">Confirmar acción</h2>
+            <p id="textoConfirmacion">¿Estás seguro de que deseas continuar?</p>
+            <div class="botones-modal">
+                <button type="button" class="btn-cancelar" onclick="cerrarModalConfirmacion()">Cancelar</button>
+                <button type="button" class="btn-guardar" id="btnConfirmarAccion">Aceptar</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
+    // ========== MODALES ==========
+    let accionConfirmacion = null;
+
+    function _abrirModal(id) {
+        const modal = document.getElementById(id);
+        if (modal) modal.classList.add('activa');
+    }
+
+    function _cerrarModal(id) {
+        const modal = document.getElementById(id);
+        if (!modal) return;
+        modal.classList.add('cerrando');
+        setTimeout(() => {
+            modal.classList.remove('activa', 'cerrando');
+        }, 250);
+    }
+
+    function abrirModalConfirmacion(titulo, mensaje, onConfirm) {
+        document.getElementById('tituloConfirmacion').textContent = titulo;
+        document.getElementById('textoConfirmacion').textContent = mensaje;
+        accionConfirmacion = onConfirm;
+        _abrirModal('modalConfirmacion');
+    }
+
+    function cerrarModalConfirmacion() {
+        _cerrarModal('modalConfirmacion');
+        accionConfirmacion = null;
+    }
+
+    function ejecutarConfirmacion() {
+        if (typeof accionConfirmacion === 'function') {
+            accionConfirmacion();
+        }
+        cerrarModalConfirmacion();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const btnConfirmar = document.getElementById('btnConfirmarAccion');
+        if (btnConfirmar) btnConfirmar.onclick = ejecutarConfirmacion;
+    });
+
     // ========== DATOS PRECARGADOS ==========
-    const leccionArchivos = {{ leccion.archivos | tojson | safe }};   // [{"nombre": "archivo.pdf", "tamano": 12345}, ...]
+    const leccionArchivos = {{ leccion.archivos | tojson | safe }};
     const carpetaNombre = "{{ carpeta }}";
 
     // ========== ACUMULACIÓN DE ARCHIVOS ==========
-    let archivosSeleccionados = [];  // Cada elemento puede ser {name, size, isExisting: true} o un File (con .name, .size)
+    let archivosSeleccionados = [];
 
-    // Convertir los archivos existentes al formato interno (simulan objetos File pero sin el contenido)
     leccionArchivos.forEach(arch => {
         archivosSeleccionados.push({
             name: arch.nombre,
             size: arch.tamano,
-            isExisting: true      // Marcar como existente para no re-subirlo
+            isExisting: true
         });
     });
 
@@ -130,10 +180,10 @@
     const listaArchivosUl = document.getElementById('listaArchivos');
     const contadorSpan = document.getElementById('contador');
     const btnContinuar = document.getElementById('btnContinuar');
+    const btnRegresar = document.getElementById('btnRegresar');
     const ordenArchivosHidden = document.getElementById('ordenArchivos');
     const archivosConservarInput = document.getElementById('archivosConservar');
 
-    // Función para actualizar la lista visual y campos ocultos
     function actualizarListaArchivos() {
         listaArchivosUl.innerHTML = '';
         if (archivosSeleccionados.length === 0) {
@@ -153,7 +203,6 @@
             li.style.alignItems = "flex-start";
             li.style.gap = "10px";
 
-            // Contenedor del nombre (con wrap)
             const nombreSpan = document.createElement('span');
             nombreSpan.style.flex = "1";
             nombreSpan.style.wordBreak = "break-word";
@@ -180,19 +229,15 @@
         });
 
         contadorSpan.innerText = archivosSeleccionados.length;
-
-        // Orden de los archivos (solo nombres)
         const ordenNombres = archivosSeleccionados.map(f => f.name).join(',');
         ordenArchivosHidden.value = ordenNombres;
 
-        // Archivos existentes que se conservan (aquellos con isExisting === true)
         const conservarNombres = archivosSeleccionados
             .filter(item => item.isExisting === true)
             .map(item => item.name)
             .join(',');
         archivosConservarInput.value = conservarNombres;
 
-        // Asignar eventos de eliminar
         document.querySelectorAll('.btn-eliminar-archivo').forEach(btn => {
             btn.removeEventListener('click', handleEliminar);
             btn.addEventListener('click', handleEliminar);
@@ -209,24 +254,21 @@
         }
     }
 
-    // Agregar archivos nuevos desde el input temporal
     function agregarArchivosDesdeInput() {
         const nuevos = Array.from(inputArchivoTemp.files);
         if (nuevos.length === 0) return;
         nuevos.forEach(file => {
-            archivosSeleccionados.push(file);  // los File son objetos nativos, no tienen isExisting
+            archivosSeleccionados.push(file);
         });
         inputArchivoTemp.value = '';
         actualizarListaArchivos();
         actualizarEstadoBoton();
     }
 
-    btnSeleccionar.addEventListener('click', () => {
-        inputArchivoTemp.click();
-    });
+    btnSeleccionar.addEventListener('click', () => inputArchivoTemp.click());
     inputArchivoTemp.addEventListener('change', agregarArchivosDesdeInput);
 
-    // ========== LÓGICA DE GRUPOS, MATERIAS, PARCIALES, TEMAS (sin cambios) ==========
+    // ========== LÓGICA DE GRUPOS, MATERIAS, PARCIALES, TEMAS ==========
     let gruposData = [];
     let grupoIdxActual = null, materiaIdxActual = null, parcialIdxActual = null;
 
@@ -370,7 +412,7 @@
         actualizarCampoOculto(hiddenTema, temaNombre);
     });
 
-    // ========== FUNCIÓN PARA HABILITAR BOTÓN GUARDAR ==========
+    // ========== HABILITAR BOTÓN GUARDAR ==========
     function actualizarEstadoBoton() {
         const grupoValido = selectGrupo.value && selectGrupo.value !== "";
         const materiaValido = selectMateria.value && selectMateria.value !== "";
@@ -399,49 +441,59 @@
     document.querySelector('input[name="actividad"]').addEventListener('input', actualizarEstadoBoton);
     document.getElementById('actividad_seleccionada').addEventListener('change', actualizarEstadoBoton);
 
-    // ========== ENVÍO DEL FORMULARIO CON FETCH ==========
-    const form = document.getElementById('formLeccion');
-
-    btnContinuar.addEventListener('click', async function (e) {
+    // ========== MODAL PARA GUARDAR CAMBIOS ==========
+    btnContinuar.addEventListener('click', function(e) {
         if (btnContinuar.disabled) return;
 
-        const formData = new FormData();
+        abrirModalConfirmacion(
+            "Guardar cambios",
+            "¿Estás seguro de que deseas guardar los cambios en esta lección?",
+            function() {
+                const formData = new FormData();
+                const inputs = document.getElementById('formLeccion').querySelectorAll('input, select, textarea');
+                inputs.forEach(input => {
+                    if (input.type !== 'file' && input.name && input.id !== 'inputArchivoTemp') {
+                        formData.append(input.name, input.value);
+                    }
+                });
+                archivosSeleccionados.forEach(item => {
+                    if (item instanceof File) {
+                        formData.append('archivos', item);
+                    }
+                });
 
-        // Agregar todos los campos del formulario (input, select, textarea)
-        const inputs = form.querySelectorAll('input, select, textarea');
-        inputs.forEach(input => {
-            if (input.name && input.name !== '') {
-                // Los archivos existentes (objetos que no son File) no los enviamos como archivos; solo los nombres en archivos_conservar
-                if (input.type === 'file' || input.id === 'inputArchivoTemp') return;
-                formData.append(input.name, input.value);
+                fetch("{{ url_for('editar_leccion', carpeta=carpeta) }}", {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                    } else {
+                        return response.text().then(text => {
+                            document.open();
+                            document.write(text);
+                            document.close();
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al enviar:', error);
+                    alert('Hubo un problema al guardar los cambios.');
+                });
             }
-        });
+        );
+    });
 
-        // Agregar archivos NUEVOS (objetos File reales)
-        archivosSeleccionados.forEach(item => {
-            if (item instanceof File) {
-                formData.append('archivos', item);
+    // ========== MODAL PARA REGRESAR ==========
+    btnRegresar.addEventListener('click', function() {
+        abrirModalConfirmacion(
+            "Salir sin guardar",
+            "Si decides regresar, los cambios no se guardarán. ¿Estás seguro de que quieres salir?",
+            function() {
+                window.location.href = "{{ url_for('vista_contenido') }}";
             }
-        });
-
-        // Enviar a la URL de edición
-        try {
-            const response = await fetch("{{ url_for('editar_leccion', carpeta=carpeta) }}", {
-                method: 'POST',
-                body: formData
-            });
-            if (response.redirected) {
-                window.location.href = response.url;
-            } else {
-                const text = await response.text();
-                document.open();
-                document.write(text);
-                document.close();
-            }
-        } catch (error) {
-            console.error('Error al enviar:', error);
-            alert('Hubo un problema al guardar los cambios.');
-        }
+        );
     });
 
     function escapeHtml(str) {

@@ -1819,3 +1819,125 @@ input:checked+.deslizador:before {
 #fv-questions-container .tarjeta-pregunta {
     margin-bottom: 20px;
 }
+
+/* =========================================
+   VARIABLES DE COLOR (para modales)
+   ========================================= */
+:root {
+    --azul: #123B6E;
+    --azul-dark: #0c2a50;
+    --azul-light: #D0ECFF;
+    --blanco: #ffffff;
+}
+
+/* =========================================
+   MODALES MODERNOS (reutilizados de contenido.css)
+   ========================================= */
+.modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+.modal.activa {
+    visibility: visible;
+    opacity: 1;
+}
+.modal.activa .contenedor-modal {
+    transform: scale(1);
+    opacity: 1;
+}
+.modal.cerrando {
+    opacity: 0;
+    visibility: hidden;
+}
+.modal.cerrando .contenedor-modal {
+    transform: scale(0.95);
+    opacity: 0;
+}
+
+.modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(2px);
+}
+
+.contenedor-modal {
+    position: relative;
+    z-index: 1001;
+    background: var(--blanco);
+    border-radius: 20px;
+    padding: 36px 40px;
+    width: 90%;
+    max-width: 460px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    text-align: center;
+    opacity: 0;
+    transform: scale(0.95);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.contenedor-modal h2 {
+    color: var(--azul);
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+}
+
+.botones-modal {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.btn-cancelar {
+    background: transparent;
+    border: 2px solid var(--azul);
+    color: var(--azul);
+    border-radius: 50px;
+    padding: 10px 24px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.25s ease, color 0.25s ease;
+    min-width: 120px;
+}
+.btn-cancelar:hover {
+    background: var(--azul-light);
+}
+
+.btn-guardar {
+    background: var(--azul);
+    border: 2px solid var(--azul);
+    color: var(--blanco);
+    border-radius: 50px;
+    padding: 10px 24px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.25s ease;
+    min-width: 120px;
+}
+.btn-guardar:hover {
+    background: var(--azul-dark);
+    border-color: var(--azul-dark);
+}
+.btn-guardar:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+/* Icono de información para el modal de confirmación */
+.icono-info {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    color: var(--azul);
+}
