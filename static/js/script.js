@@ -151,6 +151,24 @@ function cargarListaMaterias(grupoId) {
 
     if (!grupo) return;
 
+    if (!grupo.materias || grupo.materias.length === 0) {
+       contenedor.classList.remove('grid-alumnos');
+
+        contenedor.innerHTML = `
+            <div class="cal-empty-state">
+                <p>No hay materias registradas.</p>
+                <p>Agrega una materia para visualizar estadísticas.</p>
+
+                <a href="/grupos" class="btn-redirect">
+                    Ir a Grupos
+                </a>
+            </div>
+        `;
+
+        return;
+    }
+    contenedor.classList.add('grid-alumnos');
+
     grupo.materias.forEach(materia => {
 
         const btn =
@@ -211,6 +229,24 @@ function cargarListaParciales() {
         grupo.materias.find(
             m => m.nombre === materiaSeleccionada
         );
+
+    if (!materia.parciales || materia.parciales.length === 0) {
+        contenedor.classList.remove('grid-alumnos');
+        contenedor.innerHTML = `
+            <div class="cal-empty-state">
+                <p>No hay parciales registrados.</p>
+                <p>Agrega un parcial para visualizar estadísticas.</p>
+
+                <a href="/grupos" class="btn-redirect">
+                    Ir a Grupos
+                </a>
+            </div>
+        `;
+
+        return;
+    }
+
+    contenedor.classList.add('grid-alumnos');
 
     if (!materia) return;
 

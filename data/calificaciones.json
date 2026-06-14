@@ -25,27 +25,6 @@
       "promedioFinal": "9.00"
     }
   ],
-  "1|0|1": [
-    {
-      "nombreArchivo": "REP_L-005_273627.toro",
-      "idLeccion": "L-005",
-      "grupo": "A",
-      "materia": "Ingeniería de software",
-      "parcial": "2",
-      "progresion": "Lenguajes de programación",
-      "actividad": "Sopa de letras de Lenguajes de Programación",
-      "estudiante": "fer",
-      "matricula": "273627",
-      "intentos": [
-        {
-          "numero": 1,
-          "calificacion": 10,
-          "fecha": "6/12/2026, 11:25:17 AM"
-        }
-      ],
-      "promedioFinal": "10.00"
-    }
-  ],
   "2|0|0": [
     {
       "nombreArchivo": "REP_L-002_2983.toro",
@@ -70,6 +49,69 @@
         }
       ],
       "promedioFinal": "9.00"
+    }
+  ],
+  "1|0|1": [
+    {
+      "nombreArchivo": "REP_L-005_273627.toro",
+      "idLeccion": "L-005",
+      "grupo": "A",
+      "materia": "Ingeniería de software",
+      "parcial": "2",
+      "progresion": "Lenguajes de programación",
+      "actividad": "Sopa de letras de Lenguajes de Programación",
+      "estudiante": "fer",
+      "matricula": "273627",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "14/6/2026, 14:43:39"
+        }
+      ],
+      "promedioFinal": "10.00"
+    }
+  ],
+  "2|1|1": [
+    {
+      "nombreArchivo": "REP_L-005_273627.toro",
+      "idLeccion": "L-005",
+      "grupo": "A",
+      "materia": "Ingeniería de software",
+      "parcial": "2",
+      "progresion": "Lenguajes de programación",
+      "actividad": "Sopa de letras de Lenguajes de Programación",
+      "estudiante": "fer",
+      "matricula": "273627",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "14/6/2026, 14:45:37"
+        }
+      ],
+      "promedioFinal": "10.00"
+    }
+  ],
+  "0|0|1": [
+    {
+      "nombreArchivo": "REP_L-005_273627.toro",
+      "idLeccion": "L-005",
+      "grupo": "A",
+      "materia": "Ingeniería de software",
+      "parcial": "2",
+      "progresion": "Lenguajes de programación",
+      "actividad": "Sopa de letras de Lenguajes de Programación",
+      "estudiante": "fer",
+      "matricula": "273627",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "14/6/2026, 16:27:26"
+        }
+      ],
+      "promedioFinal": "10.00"
     }
   ]
 }
