@@ -1,30 +1,5 @@
 {
-  "2|0|0": [
-    {
-      "nombreArchivo": "REP_L-002_2983.toro",
-      "idLeccion": "L-002",
-      "grupo": "A",
-      "materia": "Matemáticas",
-      "parcial": "1",
-      "progresion": "Introducción",
-      "actividad": "Ejemplo funcional 4",
-      "estudiante": "fer",
-      "matricula": "2983",
-      "intentos": [
-        {
-          "numero": 1,
-          "calificacion": 9,
-          "fecha": "6/12/2026, 11:34:32 AM"
-        },
-        {
-          "numero": 2,
-          "calificacion": 9,
-          "fecha": "6/12/2026, 11:34:32 AM"
-        }
-      ],
-      "promedioFinal": "9.00"
-    }
-  ],
+  "2|0|0": [],
   "2|0|1": [
     {
       "nombreArchivo": "REP_L-005_273627 (2).toro",
@@ -46,5 +21,103 @@
       "promedioFinal": "10.00"
     }
   ],
-  "1|0|1": []
+  "1|0|1": [],
+  "3|0|0": [
+    {
+      "nombreArchivo": "REP_L-023_12263_Cristal.toro",
+      "idLeccion": "L-023",
+      "grupo": "204",
+      "materia": "M1",
+      "parcial": null,
+      "progresion": "PRO1",
+      "actividad": "SOPA DE LETRAS ACTIVIDAD",
+      "estudiante": "Cristal",
+      "matricula": "12263",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 2,
+          "fecha": "14/6/2026, 5:01:10 p.m."
+        },
+        {
+          "numero": 2,
+          "calificacion": 6,
+          "fecha": "14/6/2026, 5:01:10 p.m."
+        }
+      ],
+      "promedioFinal": "4.00"
+    },
+    {
+      "nombreArchivo": "REP_L-023_098762_Jorge .toro",
+      "idLeccion": "L-023",
+      "grupo": "204",
+      "materia": "M1",
+      "parcial": null,
+      "progresion": "PRO1",
+      "actividad": "SOPA DE LETRAS ACTIVIDAD",
+      "estudiante": "Jorge",
+      "matricula": "098762",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "14/6/2026, 5:01:10 p.m."
+        },
+        {
+          "numero": 2,
+          "calificacion": 4,
+          "fecha": "14/6/2026, 5:01:10 p.m."
+        },
+        {
+          "numero": 3,
+          "calificacion": 8,
+          "fecha": "14/6/2026, 5:01:10 p.m."
+        }
+      ],
+      "promedioFinal": "7.33"
+    },
+    {
+      "nombreArchivo": "REP_L-023_1624352_Carlos.toro",
+      "idLeccion": "L-023",
+      "grupo": "204",
+      "materia": "M1",
+      "parcial": null,
+      "progresion": "PRO1",
+      "actividad": "SOPA DE LETRAS ACTIVIDAD",
+      "estudiante": "Carlos",
+      "matricula": "1624352",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "14/6/2026, 5:01:10 p.m."
+        }
+      ],
+      "promedioFinal": "10.00"
+    },
+    {
+      "nombreArchivo": "REP_L-023_12306472_David.toro",
+      "idLeccion": "L-023",
+      "grupo": "204",
+      "materia": "M1",
+      "parcial": null,
+      "progresion": "PRO1",
+      "actividad": "SOPA DE LETRAS ACTIVIDAD",
+      "estudiante": "David",
+      "matricula": "12306472",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 6,
+          "fecha": "14/6/2026, 5:01:10 p.m."
+        },
+        {
+          "numero": 2,
+          "calificacion": 8,
+          "fecha": "14/6/2026, 5:01:10 p.m."
+        }
+      ],
+      "promedioFinal": "7.00"
+    }
+  ]
 }

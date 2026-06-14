@@ -16,7 +16,6 @@
 *Parcial 2*
 #matematicas#
 *Parcial 1*
-*Parcial 2*
 #m csnn#
 *Parcial 1*
 *Parcial 2*
@@ -26,5 +25,26 @@
 872748272674|Andrés|Peña Muñóz
 273627|fer|mendez
 2983|fer|medina
+-
+%
+@604@
+#prueba#
+*Parcial 1*
+*Parcial 2*
+-
+12263|Cristal Maria|Hernández Antonio
+098762|Jorge Luis|Rodríguez Antoni
+1624352|Carlos Torres|Gallegos Flores
+12306472|David Jacinto|Martines Gomez
+-
+%
+@204@
+#M1#
+*Parcial 1*
+-
+12263|Cristal Maria|Hernández Antonio
+098762|Jorge Luis|Rodríguez Antoni
+1624352|Carlos Torres|Gallegos Flores
+12306472|David Jacinto|Martines Gomez
 -
 %

@@ -19,6 +19,8 @@ let archivosProcesadosTemp = [];
 // ==================== INICIALIZACIÓN ====================
 
 window.addEventListener('DOMContentLoaded', () => {
+    // ✅ Limpiar temp al cargar cualquier página nueva
+    archivosProcesadosTemp = [];
     verificarYMostrarInterfaz();
 });
 
@@ -414,6 +416,10 @@ async function ejecutarEliminarAlumno(matriculaKey) {
             calificacionesServer = (calificacionesServer || []).filter(
                 c => (c.matricula || c.estudiante) !== matriculaKey
             );
+            // ✅ Limpiar también el buffer temporal para ese alumno
+            archivosProcesadosTemp = archivosProcesadosTemp.filter(
+                d => (d.matricula || d.estudiante) !== matriculaKey
+            );            
             document.getElementById('modalConfirmarEliminar').style.display = 'none';
             mostrarMensaje('Alumno eliminado correctamente', false);
             verificarYMostrarInterfaz();
@@ -652,6 +658,18 @@ async function procesarArchivos(files) {
             mostrarMensaje(
                 `⚠ ${file.name}: los intentos de "${datos.estudiante}" en lección ${datos.idLeccion} ya están guardados`,
                 true, 4000
+            );
+            continue;
+        }
+        // ── 9. Verificar que el context_key del archivo corresponde al contexto actual ──
+        // (defensa secundaria: evita que datos de otra sesión/grupo contaminen este contexto)
+        const claveContexto = `${(datos.grupo || '').trim()}::${(datos.materia || '').trim()}::${parcialEsperadoNum}`;
+        const claveEsperada = `${NOMBRE_GRUPO.trim()}::${NOMBRE_MATERIA.trim()}::${parcialEsperadoNum}`;
+
+        if (datos.grupo && datos.materia && claveContexto !== claveEsperada) {
+            mostrarMensaje(
+                `✗ ${file.name}: el archivo no corresponde a este grupo/materia/parcial`,
+                true, 6000
             );
             continue;
         }
