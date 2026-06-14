@@ -1,28 +1,8 @@
 %
-@506@
-#Materia2#
-*Parcial 1*
-&Progresion1&
-*Parcial 2*
--
-2026001|Juan Carlos|García López
-2026002|Valentina|Morales Torres
-2026003|Luis Fernando|Hernández Ruiz
-2026004|María Fernanda|Cruz Sánchez
-2026005|José Ángel|Ramírez Pérez
-2026006|Ana Sofía|Vargas Castillo
-2026007|Carlos Eduardo|Mendoza Flores
-2026008|Daniela|Ortiz Navarro
-2026009|Miguel Ángel|Salinas Romero
-2026010|Paola Andrea|Reyes Montoya
--
-%
 @104@
-#Ingeniería de software#
+#Ingenieria de Software#
 *Parcial 1*
 *Parcial 2*
-&ejemplo&
-*Parcial 3*
 -
 019283377|shoyo|fuentes
 872748272674|Andrés|Peña Muñóz
@@ -31,9 +11,16 @@
 -
 %
 @A@
-#Matematicas#
+#Ingenieria de software#
 *Parcial 1*
-&Introducción&
+*Parcial 2*
+#matematicas#
+*Parcial 1*
+*Parcial 2*
+#m csnn#
+*Parcial 1*
+*Parcial 2*
+*Parcial 3*
 -
 019283377|shoyo|fuentes
 872748272674|Andrés|Peña Muñóz

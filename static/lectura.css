@@ -86,24 +86,25 @@
 .upload-actions-left  { display: flex; align-items: center; gap: 10px; }
 .upload-actions-right { display: flex; align-items: center; gap: 10px; }
 
-/* Botón cargar — azul claro, izquierda */
+/* Botón cargar — azul sistema */
 .btn-txt {
     display: inline-flex;
     align-items: center;
     gap: 10px;
     padding: 12px 28px;
-    border: 1.5px solid #b0bbce;
+    border: none;
     border-radius: 10px;
-    background: #ddeeff;
+    background: linear-gradient(180deg, #203982 0%, #045FC8 100%);
     font-size: 14px;
-    font-weight: 500;
-    color: #1a2340;
+    font-weight: 600;
+    color: #ffffff;
     cursor: pointer;
-    transition: background 0.15s, border-color 0.15s;
+    transition: opacity 0.15s, box-shadow 0.15s;
+    box-shadow: 0 2px 6px rgba(4,95,200,0.30);
 }
 .btn-txt:hover {
-    background: #c8e0f8;
-    border-color: #8a9abf;
+    opacity: 0.88;
+    box-shadow: 0 4px 12px rgba(4,95,200,0.40);
 }
 
 /* Botón guardar — verde oscuro, derecha */
@@ -627,3 +628,18 @@
     margin-top: 1px;
 }
 .toast-cerrar:hover { opacity: 1; }
+
+
+/* ── Botón "Cargar Archivos" fijo en esquina inferior derecha ── */
+.btn-cargar-flotante {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    z-index: 1000;
+}
+
+.btn-cargar-flotante .btn-txt {
+    box-shadow: 0 4px 16px rgba(4, 95, 200, 0.45);
+    padding: 14px 24px;
+    font-size: 15px;
+}
