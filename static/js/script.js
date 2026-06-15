@@ -346,9 +346,9 @@ async function cargarListaActividades() {
         await obtenerCalificacionesReales();
 
     console.log("Grupo:", grupoSeleccionado);
-console.log("Materia:", materiaSeleccionada);
-console.log("Parcial:", parcialSeleccionado);
-console.log("Registros:", registros);
+    console.log("Materia:", materiaSeleccionada);
+    console.log("Parcial:", parcialSeleccionado);
+    console.log("Registros:", registros);
 
     const actividadesUnicas = {};
 
@@ -366,7 +366,31 @@ console.log("Registros:", registros);
         }
     });
 
-    Object.values(actividadesUnicas).forEach(act => {
+    const actividades = Object.values(actividadesUnicas);
+
+    if (actividades.length === 0) {
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="2">
+                    <div class="estado-vacio-lecciones">
+                        <p>Aún no hay ninguna lección para ver estadísticas.</p>
+                        <p>Suba los archivos de los alumnos para visualizar las calificaciones de las lecciones.</p>
+
+                        <button
+                            class="btn-ir-calificaciones"
+                            onclick="window.location.href='/calificaciones'">
+                            Ir a Calificaciones
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+    actividades.forEach(act => {
 
         const fila = document.createElement('tr');
 
@@ -564,12 +588,14 @@ async function mostrarCanvasFinal(tipo, nombreDato, detalleExtra) {
     // IMPORTANTE, Si ya había un gráfico dibujado antes, lo destruye para no encimarlos
     if (graficoActual) graficoActual.destroy();
 
+    let maximoEjeY = 10; // Valor máximo del eje Y, se ajustará según el tipo de gráfico
     //PREPARACIÓN DE DATOS 
     let datosGrafico, etiquetas, colorBarra, labelDataset;
     let textoEjeX, textoEjeY; // Los títulos de los ejes X e Y
     
     // OPCIÓN A: GRÁFICO DE ALUMNO
     if (tipo === 'alumno') {
+        maximoEjeY = 10;
         const registros =
             await obtenerCalificacionesReales();
 
@@ -588,9 +614,18 @@ async function mostrarCanvasFinal(tipo, nombreDato, detalleExtra) {
             );
 
         datosGrafico =
-            registrosAlumno.map(
-                r => parseFloat(r.promedioFinal || 0)
+        registrosAlumno.map(r => {
+
+            const intentos = r.intentos || [];
+
+            if (intentos.length === 0) {
+                return 0;
+            }
+
+            return parseFloat(
+                intentos[intentos.length - 1].calificacion || 0
             );
+        });
 
         colorBarra = '#3E8E41';
 
@@ -608,20 +643,28 @@ async function mostrarCanvasFinal(tipo, nombreDato, detalleExtra) {
                 r => r.idLeccion === leccionSeleccionada
             );
 
-        const frecuencias =
-            Array(11).fill(0);
+        const totalAlumnos = registrosLeccion.length;
+        maximoEjeY = totalAlumnos;
+
+        const frecuencias = Array(11).fill(0);
 
         registrosLeccion.forEach(registro => {
+            const intentos = registro.intentos || [];
 
-            const promedio =
-                Math.round(
-                    parseFloat(
-                        registro.promedioFinal || 0
-                    )
-                );
+            let calificacion = 0;
 
-            if (promedio >= 0 && promedio <= 10) {
-                frecuencias[promedio]++;
+            if (intentos.length > 0) {
+
+                calificacion =
+                    Math.round(
+                        parseFloat(
+                            intentos[intentos.length - 1].calificacion || 0
+                        )
+                    );
+            }
+
+            if (calificacion >= 0 && calificacion <= 10) {
+                frecuencias[calificacion]++;
             }
         });
 
@@ -643,6 +686,8 @@ async function mostrarCanvasFinal(tipo, nombreDato, detalleExtra) {
 
         const registros =
             await obtenerCalificacionesReales();
+        
+        maximoEjeY = 10;
 
         const promediosPorLeccion = {};
 
@@ -651,10 +696,18 @@ async function mostrarCanvasFinal(tipo, nombreDato, detalleExtra) {
             const idLeccion =
                 registro.idLeccion;
 
-            const promedio =
-                parseFloat(
-                    registro.promedioFinal || 0
-                );
+           const intentos =
+            registro.intentos || [];
+
+            let promedio = 0;
+
+            if (intentos.length > 0) {
+
+                promedio =
+                    parseFloat(
+                        intentos[intentos.length - 1].calificacion || 0
+                    );
+            }
 
             if (!promediosPorLeccion[idLeccion]) {
 
@@ -713,14 +766,22 @@ async function mostrarCanvasFinal(tipo, nombreDato, detalleExtra) {
             maintainAspectRatio: false,
             plugins: { legend: { display: false } }, // Oculta la leyenda de arriba
             scales: {
-                y: { 
-                    beginAtZero: true, // Que empiece en 0
-                    // Si es calificación tope en 10 y si es cantidad de alumnos, que crezca sola
-                    max: (tipo === 'actividad' ? null : 10), 
-                    title: { 
+                y: {
+                    beginAtZero: true,
+
+                    max: maximoEjeY,
+
+                    ticks: {
+                        stepSize: 1
+                    },
+
+                    title: {
                         display: true,
-                        text: textoEjeY, // Pone el título del eje Y
-                        font: { weight: 'bold', size: 14 },
+                        text: textoEjeY,
+                        font: {
+                            weight: 'bold',
+                            size: 14
+                        },
                         color: '#052672'
                     }
                 },
