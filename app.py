@@ -995,10 +995,25 @@ def leer_grupos():
             i += 1
     return grupos
 
+def obtener_numero_parcial(nombre):
+    match = re.search(r'Parcial\s+(\d+)', nombre, re.IGNORECASE)
+    return int(match.group(1)) if match else 999
+
+def ordenar_parciales_grupos(grupos):
+    for grupo in grupos:
+        for materia in grupo.get('materias', []):
+            materia['parciales'].sort(
+                key=lambda parcial: obtener_numero_parcial(parcial.get('nombre', ''))
+            )
+    return grupos
+
 def escribir_grupos(grupos):
     """Escribe la lista de grupos en data/grupos.txt con el formato requerido."""
+    grupos = ordenar_parciales_grupos(grupos)
+
     ruta = os.path.join(app.root_path, 'data', 'grupos.txt')
     os.makedirs(os.path.dirname(ruta), exist_ok=True)
+
     lineas = []
     for grupo in grupos:
         lineas.append('%')
