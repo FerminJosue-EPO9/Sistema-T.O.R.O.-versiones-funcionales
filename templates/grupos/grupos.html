@@ -55,10 +55,12 @@
             <label class="modal-label">Archivo de alumnos (.txt):</label>
             <input type="file" id="archivoAlumnos" accept=".txt">
             <p class="texto-ayuda">El archivo debe tener el formato: Matrícula|Nombre|Apellidos</p>
-            <div id="mensajeModal" class="mensaje-modal"></div>
+            <div id="mensajeModal" class="aviso-archivo"></div>
             <div class="botones-modal">
                 <button type="button" class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
-                <button type="button" class="btn-guardar" onclick="guardarGrupo()">Guardar grupo</button>
+                <button type="button" class="btn-guardar" id="btnGuardarGrupo" onclick="guardarGrupo()" disabled>
+                    Guardar grupo
+                </button>
             </div>
         </div>
     </div>

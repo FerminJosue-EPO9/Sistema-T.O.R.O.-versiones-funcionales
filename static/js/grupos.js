@@ -76,8 +76,11 @@ function cerrarModal() {
 function limpiarModalGrupo() {
     const n = document.getElementById("nombreGrupo");
     const a = document.getElementById("archivoAlumnos");
+    const btn = document.getElementById("btnGuardarGrupo");
+    
     if (n) n.value = "";
     if (a) a.value = "";
+    if (btn) btn.disabled = true;
     archivoValidado = false;
     datosAlumnos    = null;
     mostrarMensajeModal("", "");
@@ -130,15 +133,43 @@ function validarArchivo(event) {
 
 function mostrarMensajeModal(texto, tipo) {
     const div = document.getElementById("mensajeModal");
+    const btn = document.getElementById("btnGuardarGrupo");
+
+    if (btn) btn.disabled = tipo !== "exito";
     if (!div) return;
+
     if (!texto) {
         div.style.display = "none";
-        div.className     = "mensaje-modal";
-        div.textContent   = "";
+        div.className = "aviso-archivo";
+        div.innerHTML = "";
+
+        if (btn) btn.disabled = true;
         return;
     }
-    div.textContent = texto;
-    div.className   = "mensaje-modal " + tipo;
+
+    div.style.display = "flex";
+    div.className = "aviso-archivo " + tipo;
+
+    if (tipo === "exito") {
+        div.innerHTML = `
+            <div class="aviso-icono">✓</div>
+            <div class="aviso-texto">
+                Archivo leído correctamente, oprima guardar grupo.
+            </div>
+        `;
+    }
+
+    if (tipo === "error") {
+        div.innerHTML = `
+            <div class="aviso-icono">⚠</div>
+            <div class="aviso-texto">
+                <strong>Error:</strong><br>
+                El archivo está vacío o no tiene el formato:<br>
+                Matrícula | Nombre | Apellido.<br>
+                Vuelva a cargar el archivo
+            </div>
+        `;
+    }
 }
 
 // ── Guardar grupo → POST /crear_grupo ──
