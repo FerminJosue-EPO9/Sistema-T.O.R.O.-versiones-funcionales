@@ -116,6 +116,22 @@
     </div>
 
     <!-- ══════════════════════════════════
+        MODAL: EDITAR GRUPO
+    ══════════════════════════════════ -->
+    <div id="modalEditarGrupo" class="modal">
+        <div class="modal-overlay" onclick="cerrarModalEditarGrupo()"></div>
+        <div class="contenedor-modal">
+            <h2>EDITAR GRUPO</h2>
+            <label class="modal-label">Nuevo nombre del grupo:</label>
+            <input type="text" id="inputEditarGrupo" placeholder="Nuevo nombre">
+            <div class="botones-modal">
+                <button type="button" class="btn-cancelar" onclick="cerrarModalEditarGrupo()">Cancelar</button>
+                <button type="button" class="btn-guardar" onclick="confirmarEditarGrupo()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════
         MODAL: AGREGAR PARCIAL
     ══════════════════════════════════ -->
     <div id="modalAgregarParcial" class="modal">

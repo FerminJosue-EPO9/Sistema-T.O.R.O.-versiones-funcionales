@@ -657,6 +657,40 @@
     color: #444;
 }
 
+.acciones-grupo {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* Botón editar grupo reutilizando estilo visual de editar materia */
+.btn-editar-grupo {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+    transition: background var(--transicion);
+    flex-shrink: 0;
+}
+
+.btn-editar-grupo:hover {
+    background: rgba(255,255,255,0.30);
+}
+
+.btn-editar-grupo img {
+    width: 18px;
+    height: 18px;
+    pointer-events: none;
+    filter: brightness(0) invert(1);
+}
+
 /* ─── Parcial preview ─── */
 .preview-parcial {
     background: #DEE7EB;

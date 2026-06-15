@@ -1083,6 +1083,8 @@ def crear_grupo():
     except Exception as e:
         print(f"Error al crear grupo: {e}")
         return jsonify({'exito': False, 'mensaje': f'Error interno: {str(e)}'})
+    
+
 
 @app.route('/api/crear_materia', methods=['POST'])
 def api_crear_materia():
@@ -1112,6 +1114,33 @@ def api_editar_materia():
     grupos[data['grupo']]['materias'][data['materia']]['nombre'] = data['nombre']
     escribir_grupos(grupos)
     return jsonify({'exito': True})
+
+@app.route('/api/editar_grupo', methods=['POST'])
+def api_editar_grupo():
+    try:
+        data = request.json
+        grupo_idx = data.get('grupo')
+        nuevo_nombre = data.get('nombre', '').strip()
+
+        if grupo_idx is None or not nuevo_nombre:
+            return jsonify({'exito': False, 'mensaje': 'Faltan datos'})
+
+        grupos = leer_grupos()
+
+        if grupo_idx < 0 or grupo_idx >= len(grupos):
+            return jsonify({'exito': False, 'mensaje': 'Grupo no válido'})
+
+        for i, g in enumerate(grupos):
+            if i != grupo_idx and g['nombre'] == nuevo_nombre:
+                return jsonify({'exito': False, 'mensaje': 'Ya existe un grupo con ese nombre.'})
+
+        grupos[grupo_idx]['nombre'] = nuevo_nombre
+        escribir_grupos(grupos)
+
+        return jsonify({'exito': True})
+
+    except Exception as e:
+        return jsonify({'exito': False, 'mensaje': str(e)})
 
 @app.route('/api/editar_parcial', methods=['POST'])
 def api_editar_parcial():

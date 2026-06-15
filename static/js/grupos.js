@@ -14,6 +14,7 @@ let accionEliminar       = null;  // función a ejecutar al confirmar eliminaci�
 
 let parcialTarget        = null;  // { idxGrupo, idxMateria }
 let editarParcialTarget  = null;  // { idxGrupo, idxMateria, idxParcial }
+let editarGrupoTarget = null;  // { idxGrupo }
 
 // ══════════════════════════════════════════════════════════
 //  INIT
@@ -192,8 +193,15 @@ function renderizarGrupos(grupos) {
         tarjeta.innerHTML = `
             <div class="grupo-header">
                 <span class="nombreGrupo">Grupo ${grupo.nombre}</span>
-                <div style="display:flex;gap:10px;align-items:center;">
+                <div class="acciones-grupo">
                     <button class="btn-materia" onclick="agregarMateria(${idxGrupo})">+ Materia</button>
+
+                    <button class="btn-editar-grupo"
+                        onclick="editarGrupo(${idxGrupo})"
+                        title="Editar grupo">
+                        <img src="/static/img/editar-grupo.svg" alt="Editar">
+                    </button>
+
                     <button class="btn-eliminar-grupo" onclick="abrirModalEliminarGrupo(${idxGrupo})" title="Eliminar grupo">
                         <img src="/static/img/eliminar.svg" alt="Eliminar">
                     </button>
@@ -273,6 +281,64 @@ function renderizarParciales(parciales, idxGrupo, idxMateria) {
             </div>
         `;
         cont.appendChild(chip);
+    });
+}
+
+// ══════════════════════════════════════════════════════════
+//  EDITAR GRUPO
+// ══════════════════════════════════════════════════════════
+function editarGrupo(idxGrupo) {
+    const span = document.querySelector(
+        `#listaGrupos .grupo-card:nth-child(${idxGrupo + 1}) .nombreGrupo`
+    );
+
+    const nombreActual = span
+        ? span.textContent.replace("Grupo", "").trim()
+        : "";
+
+    editarGrupoTarget = { idxGrupo };
+
+    const input = document.getElementById("inputEditarGrupo");
+    input.value = nombreActual;
+
+    actualizarBreadcrumb(["Grupos", "Editar grupo"]);
+    _abrirModal("modalEditarGrupo");
+
+    setTimeout(() => input.focus(), 120);
+}
+
+function cerrarModalEditarGrupo() {
+    actualizarBreadcrumb(["Grupos"]);
+    _cerrarModal("modalEditarGrupo");
+    editarGrupoTarget = null;
+}
+
+function confirmarEditarGrupo() {
+    const nuevoNombre = document.getElementById("inputEditarGrupo").value.trim();
+
+    if (!nuevoNombre || !editarGrupoTarget) return;
+
+    fetch("/api/editar_grupo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            grupo: editarGrupoTarget.idxGrupo,
+            nombre: nuevoNombre
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        cerrarModalEditarGrupo();
+
+        if (data.exito) {
+            cargarYElegirSeccion();
+        } else {
+            alert(data.mensaje || "No se pudo editar el grupo.");
+        }
+    })
+    .catch(() => {
+        cerrarModalEditarGrupo();
+        alert("El endpoint /api/editar_grupo no está implementado aún en app.py.");
     });
 }
 
