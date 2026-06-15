@@ -3,7 +3,8 @@
 #Ingeniería de software#
 *Parcial 1*
 *Parcial 2*
-*Parcial 3*
+#Matematicas#
+*Parcial 1*
 -
 019283377|shoyo|fuentes
 872748272674|Andrés|Peña Muñóz
@@ -12,15 +13,8 @@
 -
 %
 @B@
-#Locura#
--
-019283377|shoyo|fuentes
-872748272674|Andrés|Peña Muñóz
-273627|fer|mendez
-2983|fer|medina
--
-%
-@C@
+#nvd#
+*Parcial 1*
 -
 019283377|shoyo|fuentes
 872748272674|Andrés|Peña Muñóz
