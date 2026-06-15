@@ -27,10 +27,9 @@ body {
 /* 3. BODY */
 body {
     background-color: var(--gris-fondo);
-    height: 100vh;/*Viewport Heigth para que ocupe toda la ltura de la ventana*/
-    overflow: hidden; /*oculta la barra de desplazar si es muy grande el contenido*/
+    min-height: 100vh;/*Viewport Heigth para que ocupe toda la ltura de la ventana*/
+    overflow: auto; /* Permite scroll si el contenido excede la altura de la ventana */
 }
-
 /* 5. MENÚ DE NAVEGACIÓN */
 .menu {
     list-style: none; /* Elimina los puntos de las viñetasd de las listas de <ul> */
@@ -128,7 +127,7 @@ body {
     border: 1px solid #f0f0f0;
     width: 100%;
     max-width: 900px; 
-    height: 70vh; /* 70% de la altura de la ventana */
+    height: auto;
     display: flex;
     flex-direction: column;
     overflow: hidden; /*para que lo elementos de andentro de la tarj respeten el borde curvo*/
@@ -144,7 +143,6 @@ body {
 .lista-scroll {
     padding: 20px;
     overflow-y: auto; /*barra de scroll  cuando es necesario, cuando la lista es larga*/
-    height: 100%; /*ocupa el resto de la tarjeta */
 }
 
 /* 8. GRUPOS DE LA LISTA */
@@ -338,12 +336,6 @@ body {
     background-color: #2c3e66; /*Oscurece el botón al pasar el mouse */
 }
 
-
-
-/*-----------------------------------------------------------------------------------*/
-
-
-
 /* ===== TARJETAS CON IMAGEN DE FONDO ===== */
 .tarjeta-opcion {
     position: relative;
@@ -381,7 +373,6 @@ body {
 }
 
 
-
 .tarjeta-opcion:hover {
     transform: scale(1.03);
 }
@@ -399,4 +390,76 @@ body {
 .mensaje-vacio p:first-child {
     font-weight: bold;
     margin-bottom: 10px;
+}
+
+.cal-empty-state {
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    text-align: center;
+
+    padding-top: 120px;
+}
+
+.cal-empty-state p {
+    margin: 8px 0;
+    font-size: 22px;
+    color: #666;
+}
+
+.btn-redirect {
+    display: inline-block;
+    margin-top: 25px;
+    background: #2e7d32;
+    color: white;
+    text-decoration: none;
+    padding: 14px 35px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.btn-redirect:hover {
+    background: #256428;
+}
+
+.estado-vacio-lecciones{
+    width: 100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+
+    padding:60px 20px;
+    gap:12px;
+}
+
+.estado-vacio-lecciones p{
+    margin:0;
+    font-size:15px;
+    color:#555;
+}
+
+.btn-ir-calificaciones{
+    margin-top:15px;
+
+    background:#3c873c;
+    color:white;
+
+    border:none;
+    border-radius:10px;
+
+    padding:14px 28px;
+    font-size:16px;
+    font-weight:600;
+
+    cursor:pointer;
+}
+
+.btn-ir-calificaciones:hover{
+    opacity:0.9;
 }

@@ -1394,6 +1394,30 @@ def api_limpiar_calificaciones():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/api/calificaciones/eliminar-alumno', methods=['POST'])
+def api_eliminar_alumno_calificaciones():
+    """Elimina todas las calificaciones de un alumno en un context_key específico."""
+    try:
+        data        = request.get_json()
+        context_key = data.get('context_key', '')
+        matricula   = data.get('matricula', '')
+        if not context_key or not matricula:
+            return jsonify({'success': False, 'error': 'context_key y matricula son requeridos'}), 400
+        todas = leer_calificaciones()
+        if context_key not in todas:
+            return jsonify({'success': False, 'error': 'context_key no encontrado'}), 404
+        antes = len(todas[context_key])
+        todas[context_key] = [
+            c for c in todas[context_key]
+            if (c.get('matricula') or c.get('estudiante')) != matricula
+        ]
+        if len(todas[context_key]) == antes:
+            return jsonify({'success': False, 'error': 'Alumno no encontrado'}), 404
+        escribir_calificaciones(todas)
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/estadisticas')
 def vista_estadisticas():
     return render_template('estadisticas/estadisticas.html', active_page='estadisticas')
