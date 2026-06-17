@@ -1,0 +1,81 @@
+{
+  "1|0|0": [
+    {
+      "nombreArchivo": "REP_L-023_098762_Jorge .toro",
+      "idLeccion": "L-023",
+      "grupo": "204",
+      "materia": "M1",
+      "parcial": null,
+      "progresion": "PRO1",
+      "actividad": "SOPA DE LETRAS ACTIVIDAD",
+      "estudiante": "Jorge",
+      "matricula": "098762",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "17/6/2026, 11:30:26 a.m."
+        },
+        {
+          "numero": 2,
+          "calificacion": 4,
+          "fecha": "17/6/2026, 11:30:26 a.m."
+        },
+        {
+          "numero": 3,
+          "calificacion": 8,
+          "fecha": "17/6/2026, 11:30:26 a.m."
+        }
+      ],
+      "promedioFinal": "7.33"
+    }
+  ],
+  "30c638adb99144d35008": [],
+  "f95eda0d5812acbd59e0": [
+    {
+      "nombreArchivo": "REP_L-005_273627 (2).toro",
+      "idLeccion": "L-005",
+      "grupo": "A",
+      "materia": "Ingeniería de software",
+      "parcial": "2",
+      "progresion": "Lenguajes de programación",
+      "actividad": "Sopa de letras de Lenguajes de Programación",
+      "estudiante": "fer",
+      "matricula": "273627",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "17/6/2026, 11:47:23 a.m."
+        }
+      ],
+      "promedioFinal": "10.00"
+    }
+  ],
+  "28120edf0c7d89ba44dc": [
+    {
+      "nombreArchivo": "REP_L-002_2983 (1).toro",
+      "idLeccion": "L-002",
+      "grupo": "A",
+      "materia": "Matemáticas",
+      "parcial": "1",
+      "progresion": "Introducción",
+      "actividad": "Ejemplo funcional 4",
+      "estudiante": "fer",
+      "matricula": "2983",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 9,
+          "fecha": "17/6/2026, 11:48:27 a.m."
+        },
+        {
+          "numero": 2,
+          "calificacion": 9,
+          "fecha": "17/6/2026, 11:48:27 a.m."
+        }
+      ],
+      "promedioFinal": "9.00"
+    }
+  ]
+}

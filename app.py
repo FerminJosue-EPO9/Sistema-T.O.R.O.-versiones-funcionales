@@ -31,6 +31,8 @@ import base64
 import zipfile
 from flask import abort
 import tempfile
+import hashlib
+import unicodedata
 
 app = Flask(__name__)
 app.secret_key = 'toro_secret_key_2026'
@@ -995,25 +997,10 @@ def leer_grupos():
             i += 1
     return grupos
 
-def obtener_numero_parcial(nombre):
-    match = re.search(r'Parcial\s+(\d+)', nombre, re.IGNORECASE)
-    return int(match.group(1)) if match else 999
-
-def ordenar_parciales_grupos(grupos):
-    for grupo in grupos:
-        for materia in grupo.get('materias', []):
-            materia['parciales'].sort(
-                key=lambda parcial: obtener_numero_parcial(parcial.get('nombre', ''))
-            )
-    return grupos
-
 def escribir_grupos(grupos):
     """Escribe la lista de grupos en data/grupos.txt con el formato requerido."""
-    grupos = ordenar_parciales_grupos(grupos)
-
     ruta = os.path.join(app.root_path, 'data', 'grupos.txt')
     os.makedirs(os.path.dirname(ruta), exist_ok=True)
-
     lineas = []
     for grupo in grupos:
         lineas.append('%')
@@ -1098,8 +1085,6 @@ def crear_grupo():
     except Exception as e:
         print(f"Error al crear grupo: {e}")
         return jsonify({'exito': False, 'mensaje': f'Error interno: {str(e)}'})
-    
-
 
 @app.route('/api/crear_materia', methods=['POST'])
 def api_crear_materia():
@@ -1129,33 +1114,6 @@ def api_editar_materia():
     grupos[data['grupo']]['materias'][data['materia']]['nombre'] = data['nombre']
     escribir_grupos(grupos)
     return jsonify({'exito': True})
-
-@app.route('/api/editar_grupo', methods=['POST'])
-def api_editar_grupo():
-    try:
-        data = request.json
-        grupo_idx = data.get('grupo')
-        nuevo_nombre = data.get('nombre', '').strip()
-
-        if grupo_idx is None or not nuevo_nombre:
-            return jsonify({'exito': False, 'mensaje': 'Faltan datos'})
-
-        grupos = leer_grupos()
-
-        if grupo_idx < 0 or grupo_idx >= len(grupos):
-            return jsonify({'exito': False, 'mensaje': 'Grupo no válido'})
-
-        for i, g in enumerate(grupos):
-            if i != grupo_idx and g['nombre'] == nuevo_nombre:
-                return jsonify({'exito': False, 'mensaje': 'Ya existe un grupo con ese nombre.'})
-
-        grupos[grupo_idx]['nombre'] = nuevo_nombre
-        escribir_grupos(grupos)
-
-        return jsonify({'exito': True})
-
-    except Exception as e:
-        return jsonify({'exito': False, 'mensaje': str(e)})
 
 @app.route('/api/editar_parcial', methods=['POST'])
 def api_editar_parcial():
@@ -1231,28 +1189,65 @@ def api_eliminar_elemento():
             return jsonify({'exito': False, 'mensaje': 'Se requiere el índice del grupo'})
         if grupo_idx < 0 or grupo_idx >= len(grupos):
             return jsonify({'exito': False, 'mensaje': 'Grupo no válido'})
-        # Si solo viene grupo: eliminar todo el grupo
+
+        # ── Eliminar grupo completo ───────────────────────────────────────────
         if 'materia' not in data:
+            # Borrar calificaciones de TODAS las materias y parciales del grupo
+            grupo_a_eliminar = grupos[grupo_idx]
+            todas = leer_calificaciones()
+            for materia in grupo_a_eliminar.get('materias', []):
+                for parcial in materia.get('parciales', []):
+                    clave = _generar_context_key(
+                        grupo_a_eliminar['nombre'],
+                        materia['nombre'],
+                        parcial['nombre']
+                    )
+                    todas.pop(clave, None)
+            escribir_calificaciones(todas)
             grupos.pop(grupo_idx)
             escribir_grupos(grupos)
             return jsonify({'exito': True})
-        # Eliminar materia
+
+        # ── Eliminar materia ──────────────────────────────────────────────────
         materia_idx = data.get('materia')
         if materia_idx is None or materia_idx < 0 or materia_idx >= len(grupos[grupo_idx]['materias']):
             return jsonify({'exito': False, 'mensaje': 'Materia no válida'})
         if 'parcial' not in data:
+            # Borrar calificaciones de TODOS los parciales de esta materia
+            materia_a_eliminar = grupos[grupo_idx]['materias'][materia_idx]
+            todas = leer_calificaciones()
+            for parcial in materia_a_eliminar.get('parciales', []):
+                clave = _generar_context_key(
+                    grupos[grupo_idx]['nombre'],
+                    materia_a_eliminar['nombre'],
+                    parcial['nombre']
+                )
+                todas.pop(clave, None)
+            escribir_calificaciones(todas)
             grupos[grupo_idx]['materias'].pop(materia_idx)
             escribir_grupos(grupos)
             return jsonify({'exito': True})
-        # Eliminar parcial
+
+        # ── Eliminar parcial ──────────────────────────────────────────────────
         parcial_idx = data.get('parcial')
         if parcial_idx is None or parcial_idx < 0 or parcial_idx >= len(grupos[grupo_idx]['materias'][materia_idx]['parciales']):
             return jsonify({'exito': False, 'mensaje': 'Parcial no válido'})
         if 'progresion' not in data:
+            # Borrar calificaciones de este parcial específico
+            parcial_a_eliminar = grupos[grupo_idx]['materias'][materia_idx]['parciales'][parcial_idx]
+            todas = leer_calificaciones()
+            clave = _generar_context_key(
+                grupos[grupo_idx]['nombre'],
+                grupos[grupo_idx]['materias'][materia_idx]['nombre'],
+                parcial_a_eliminar['nombre']
+            )
+            todas.pop(clave, None)
+            escribir_calificaciones(todas)
             grupos[grupo_idx]['materias'][materia_idx]['parciales'].pop(parcial_idx)
             escribir_grupos(grupos)
             return jsonify({'exito': True})
-        # Eliminar progresión
+
+        # ── Eliminar progresión ───────────────────────────────────────────────
         prog_idx = data.get('progresion')
         if prog_idx is None:
             return jsonify({'exito': False, 'mensaje': 'Se requiere el índice de la progresión'})
@@ -1295,6 +1290,24 @@ def vista_progresiones():
 # ==========================================
 # RUTAS DE CALIFICACIONES Y ESTADÍSTICAS (adaptadas parcialmente)
 # ==========================================
+
+# ----------------------------------------------------------
+# CLAVE ESTABLE PARA CALIFICACIONES
+# ----------------------------------------------------------
+
+def _normalizar_clave(s):
+    """Elimina acentos y pasa a minúsculas para que tildes/mayúsculas no afecten la clave."""
+    s = unicodedata.normalize('NFD', str(s))
+    s = ''.join(c for c in s if unicodedata.category(c) != 'Mn')
+    return s.strip().lower()
+
+def _generar_context_key(nombre_grupo, nombre_materia, nombre_parcial):
+    """
+    Genera una clave estable basada en los NOMBRES reales (no en índices posicionales).
+    Así, eliminar o reordenar grupos/materias/parciales NO rompe las calificaciones guardadas.
+    """
+    raw = f"{_normalizar_clave(nombre_grupo)}||{_normalizar_clave(nombre_materia)}||{_normalizar_clave(nombre_parcial)}"
+    return hashlib.sha256(raw.encode('utf-8')).hexdigest()[:20]
 
 # ----------------------------------------------------------
 # FUNCIONES DE PERSISTENCIA DE CALIFICACIONES
@@ -1350,7 +1363,7 @@ def vista_tabla_calificaciones(nombre_grupo, nombre_materia, nombre_parcial):
         (i for i, p in enumerate(materia_obj['parciales']) if p['nombre'] == nombre_parcial), 0
     ) if materia_obj else 0
 
-    context_key    = f"{idx_grupo}|{idx_materia}|{idx_parcial}"
+    context_key    = _generar_context_key(nombre_grupo, nombre_materia, nombre_parcial)
     todas          = leer_calificaciones()
     calificaciones = todas.get(context_key, [])
 
