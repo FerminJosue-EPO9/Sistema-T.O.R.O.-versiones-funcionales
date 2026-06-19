@@ -9,11 +9,13 @@ let archivoValidado   = false;
 let datosAlumnos      = null;
 
 let grupoMateriaTarget   = null;  // { idxGrupo }
+let gruposCache = [];
 let editarMateriaTarget  = null;  // { idxGrupo, idxMateria }
 let accionEliminar       = null;  // función a ejecutar al confirmar eliminación
 
 let parcialTarget        = null;  // { idxGrupo, idxMateria }
 let editarParcialTarget  = null;  // { idxGrupo, idxMateria, idxParcial }
+let editarGrupoTarget = null;  // { idxGrupo }
 
 // ══════════════════════════════════════════════════════════
 //  INIT
@@ -33,6 +35,8 @@ function cargarYElegirSeccion() {
     fetch("/api/grupos")
         .then(r => r.json())
         .then(grupos => {
+            gruposCache = grupos || [];
+
             if (!grupos || grupos.length === 0) {
                 mostrarSeccion("seccionDefault");
                 document.getElementById("listaGrupos").innerHTML = "";
@@ -75,8 +79,11 @@ function cerrarModal() {
 function limpiarModalGrupo() {
     const n = document.getElementById("nombreGrupo");
     const a = document.getElementById("archivoAlumnos");
+    const btn = document.getElementById("btnGuardarGrupo");
+    
     if (n) n.value = "";
     if (a) a.value = "";
+    if (btn) btn.disabled = true;
     archivoValidado = false;
     datosAlumnos    = null;
     mostrarMensajeModal("", "");
@@ -129,15 +136,43 @@ function validarArchivo(event) {
 
 function mostrarMensajeModal(texto, tipo) {
     const div = document.getElementById("mensajeModal");
+    const btn = document.getElementById("btnGuardarGrupo");
+
+    if (btn) btn.disabled = tipo !== "exito";
     if (!div) return;
+
     if (!texto) {
         div.style.display = "none";
-        div.className     = "mensaje-modal";
-        div.textContent   = "";
+        div.className = "aviso-archivo";
+        div.innerHTML = "";
+
+        if (btn) btn.disabled = true;
         return;
     }
-    div.textContent = texto;
-    div.className   = "mensaje-modal " + tipo;
+
+    div.style.display = "flex";
+    div.className = "aviso-archivo " + tipo;
+
+    if (tipo === "exito") {
+        div.innerHTML = `
+            <div class="aviso-icono">✓</div>
+            <div class="aviso-texto">
+                Archivo leído correctamente, oprima guardar grupo.
+            </div>
+        `;
+    }
+
+    if (tipo === "error") {
+        div.innerHTML = `
+            <div class="aviso-icono">⚠</div>
+            <div class="aviso-texto">
+                <strong>Error:</strong><br>
+                El archivo está vacío o no tiene el formato:<br>
+                Matrícula | Nombre | Apellido.<br>
+                Vuelva a cargar el archivo
+            </div>
+        `;
+    }
 }
 
 // ── Guardar grupo → POST /crear_grupo ──
@@ -178,6 +213,31 @@ function guardarGrupo() {
         .catch(() => mostrarMensajeModal("Error de conexión con el servidor.", "error"));
 }
 
+function obtenerNumeroParcial(nombreParcial) {
+    const match = String(nombreParcial).match(/Parcial\s+(\d+)/i);
+    return match ? parseInt(match[1]) : null;
+}
+
+function obtenerParcialesMateria(idxGrupo, idxMateria) {
+    return gruposCache?.[idxGrupo]?.materias?.[idxMateria]?.parciales || [];
+}
+
+function obtenerNumerosParcialesExistentes(idxGrupo, idxMateria) {
+    return obtenerParcialesMateria(idxGrupo, idxMateria)
+        .map(p => obtenerNumeroParcial(p.nombre))
+        .filter(num => num !== null);
+}
+
+function obtenerParcialFaltante(idxGrupo, idxMateria) {
+    const existentes = obtenerNumerosParcialesExistentes(idxGrupo, idxMateria);
+
+    for (let i = 1; i <= 3; i++) {
+        if (!existentes.includes(i)) return i;
+    }
+
+    return null;
+}
+
 // ══════════════════════════════════════════════════════════
 //  RENDERIZADO DE GRUPOS
 // ══════════════════════════════════════════════════════════
@@ -192,8 +252,15 @@ function renderizarGrupos(grupos) {
         tarjeta.innerHTML = `
             <div class="grupo-header">
                 <span class="nombreGrupo">Grupo ${grupo.nombre}</span>
-                <div style="display:flex;gap:10px;align-items:center;">
+                <div class="acciones-grupo">
                     <button class="btn-materia" onclick="agregarMateria(${idxGrupo})">+ Materia</button>
+
+                    <button class="btn-editar-grupo"
+                        onclick="editarGrupo(${idxGrupo})"
+                        title="Editar grupo">
+                        <img src="/static/img/editar-grupo.svg" alt="Editar">
+                    </button>
+
                     <button class="btn-eliminar-grupo" onclick="abrirModalEliminarGrupo(${idxGrupo})" title="Eliminar grupo">
                         <img src="/static/img/eliminar.svg" alt="Eliminar">
                     </button>
@@ -248,31 +315,99 @@ function renderizarMaterias(materias, idxGrupo) {
 function renderizarParciales(parciales, idxGrupo, idxMateria) {
     const cont = document.getElementById(`parciales-${idxGrupo}-${idxMateria}`);
     if (!cont) return;
+
     cont.innerHTML = "";
     if (!parciales || parciales.length === 0) return;
 
-    parciales.forEach((parcial, idxParcial) => {
-        const chip = document.createElement("div");
-        chip.classList.add("parciales-container");
-        chip.innerHTML = `
-            <button class="parcial-item"
-                onclick="irAProgresiones(${idxGrupo}, ${idxMateria}, ${idxParcial})">
-                ${parcial.nombre}
-            </button>
-            <div class="acciones-parcial">
-                <button class="btn-eliminarParcial"
-                    onclick="abrirModalEliminarParcial(${idxGrupo}, ${idxMateria}, ${idxParcial})"
-                    title="Eliminar parcial">
-                    <img src="/static/img/eliminar2.png" alt="Eliminar">
+    parciales
+        .map((parcial, idxOriginal) => ({ parcial, idxOriginal }))
+        .sort((a, b) => {
+            const numA = parseInt(a.parcial.nombre.match(/\d+/)?.[0] || "0");
+            const numB = parseInt(b.parcial.nombre.match(/\d+/)?.[0] || "0");
+            return numA - numB;
+        })
+        .forEach(({ parcial, idxOriginal }) => {
+            const chip = document.createElement("div");
+            chip.classList.add("parciales-container");
+
+            chip.innerHTML = `
+                <button class="parcial-item"
+                    onclick="irAProgresiones(${idxGrupo}, ${idxMateria}, ${idxOriginal})">
+                    ${parcial.nombre}
                 </button>
-                <button class="btn-editarParcial"
-                    onclick="editarParcial(${idxGrupo}, ${idxMateria}, ${idxParcial})"
-                    title="Editar parcial">
-                    <img src="/static/img/editar2.png" alt="Editar">
-                </button>
-            </div>
-        `;
-        cont.appendChild(chip);
+                <div class="acciones-parcial">
+                    <button class="btn-eliminarParcial"
+                        onclick="abrirModalEliminarParcial(${idxGrupo}, ${idxMateria}, ${idxOriginal})"
+                        title="Eliminar parcial">
+                        <img src="/static/img/eliminar2.png" alt="Eliminar">
+                    </button>
+                    <button class="btn-editarParcial"
+                        onclick="editarParcial(${idxGrupo}, ${idxMateria}, ${idxOriginal})"
+                        title="Editar parcial">
+                        <img src="/static/img/editar2.png" alt="Editar">
+                    </button>
+                </div>
+            `;
+
+            cont.appendChild(chip);
+        });
+}
+
+// ══════════════════════════════════════════════════════════
+//  EDITAR GRUPO
+// ══════════════════════════════════════════════════════════
+function editarGrupo(idxGrupo) {
+    const span = document.querySelector(
+        `#listaGrupos .grupo-card:nth-child(${idxGrupo + 1}) .nombreGrupo`
+    );
+
+    const nombreActual = span
+        ? span.textContent.replace("Grupo", "").trim()
+        : "";
+
+    editarGrupoTarget = { idxGrupo };
+
+    const input = document.getElementById("inputEditarGrupo");
+    input.value = nombreActual;
+
+    actualizarBreadcrumb(["Grupos", "Editar grupo"]);
+    _abrirModal("modalEditarGrupo");
+
+    setTimeout(() => input.focus(), 120);
+}
+
+function cerrarModalEditarGrupo() {
+    actualizarBreadcrumb(["Grupos"]);
+    _cerrarModal("modalEditarGrupo");
+    editarGrupoTarget = null;
+}
+
+function confirmarEditarGrupo() {
+    const nuevoNombre = document.getElementById("inputEditarGrupo").value.trim();
+
+    if (!nuevoNombre || !editarGrupoTarget) return;
+
+    fetch("/api/editar_grupo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            grupo: editarGrupoTarget.idxGrupo,
+            nombre: nuevoNombre
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        cerrarModalEditarGrupo();
+
+        if (data.exito) {
+            cargarYElegirSeccion();
+        } else {
+            alert(data.mensaje || "No se pudo editar el grupo.");
+        }
+    })
+    .catch(() => {
+        cerrarModalEditarGrupo();
+        alert("El endpoint /api/editar_grupo no está implementado aún en app.py.");
     });
 }
 
@@ -379,21 +514,19 @@ function ejecutarEliminarMateria(idxGrupo, idxMateria) {
 
 // ── Eliminar parcial ──
 function abrirModalEliminarParcial(idxGrupo, idxMateria, idxParcial) {
-    // Necesitamos el nombre del parcial → lo leemos del DOM
-    const chip = document.querySelector(
-        `#parciales-${idxGrupo}-${idxMateria} .parciales-container:nth-child(${idxParcial + 1}) .parcial-item`
-    );
-    const nombreParcial = chip ? chip.textContent.trim() : `Parcial ${idxParcial + 1}`;
-    const nombreMateria = document.querySelector(
-        `#materias-${idxGrupo} .contenedor-materia-parcial:nth-child(${idxMateria + 1}) .nombreMateria`
-    );
-    const materia = nombreMateria ? nombreMateria.textContent.trim() : "";
+    const parcial = obtenerParcialesMateria(idxGrupo, idxMateria)[idxParcial];
+    const nombreParcial = parcial ? parcial.nombre : `Parcial ${idxParcial + 1}`;
+
+    const materiaObj = gruposCache?.[idxGrupo]?.materias?.[idxMateria];
+    const materia = materiaObj ? materiaObj.nombre : "";
 
     const chips = `
         <div class="chip-info">${materia}</div>
         <div class="chip-info">${nombreParcial}</div>
     `;
+
     actualizarBreadcrumb(["Grupos", "Eliminar parcial"]);
+
     _abrirModalEliminar(
         "ELIMINAR PARCIAL",
         "¿Estás seguro que quieres eliminar este parcial?",
@@ -507,27 +640,27 @@ function confirmarEditarMateria() {
 //  PARCIALES
 // ══════════════════════════════════════════════════════════
 function agregarParcial(idxGrupo, idxMateria) {
-    // Contar parciales actuales desde el DOM
-    const cont      = document.getElementById(`parciales-${idxGrupo}-${idxMateria}`);
-    const total     = cont ? cont.querySelectorAll(".parciales-container").length : 0;
-    const siguiente = total + 1;
+    const faltante = obtenerParcialFaltante(idxGrupo, idxMateria);
 
-    parcialTarget = { idxGrupo, idxMateria };
+    parcialTarget = { idxGrupo, idxMateria, numeroParcial: faltante };
 
-    const preview  = document.getElementById("nombreParcialPreview");
-    const limite   = document.getElementById("limiteParcialMsg");
-    const btnConf  = document.getElementById("btnConfirmarParcial");
+    const preview = document.getElementById("nombreParcialPreview");
+    const limite = document.getElementById("limiteParcialMsg");
+    const btnConf = document.getElementById("btnConfirmarParcial");
 
-    if (total >= 3) {
-        preview.style.display   = "none";
-        limite.style.display    = "block";
-        btnConf.disabled        = true;
+    if (faltante === null) {
+        preview.style.display = "none";
+        limite.style.display = "block";
+        limite.textContent = "⚠️ Ya existen los 3 parciales permitidos.";
+        btnConf.disabled = true;
     } else {
-        preview.style.display   = "inline-block";
-        preview.textContent     = `Parcial ${siguiente}`;
-        limite.style.display    = "none";
-        btnConf.disabled        = false;
+        preview.style.display = "inline-block";
+        preview.textContent = `Parcial ${faltante}`;
+        limite.style.display = "none";
+        limite.textContent = "";
+        btnConf.disabled = false;
     }
+
     actualizarBreadcrumb(["Grupos", "Agregar parcial"]);
     _abrirModal("modalAgregarParcial");
 }
@@ -540,35 +673,55 @@ function cerrarModalParcial() {
 
 function confirmarAgregarParcial() {
     if (!parcialTarget) return;
-    const { idxGrupo, idxMateria } = parcialTarget;
-    const cont    = document.getElementById(`parciales-${idxGrupo}-${idxMateria}`);
-    const total   = cont ? cont.querySelectorAll(".parciales-container").length : 0;
-    if (total >= 3) return;
 
-    const nombre  = `Parcial ${total + 1}`;
+    const { idxGrupo, idxMateria, numeroParcial } = parcialTarget;
+
+    if (!numeroParcial) return;
+
+    const nombre = `Parcial ${numeroParcial}`;
 
     fetch("/api/crear_parcial", {
-        method:  "POST",
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ grupo: idxGrupo, materia: idxMateria, nombre })
+        body: JSON.stringify({ grupo: idxGrupo, materia: idxMateria, nombre })
     })
     .then(r => r.json())
     .then(data => {
-        cerrarModalParcial();
-        if (data.exito) cargarYElegirSeccion();
-        else alert(data.mensaje);
+        if (data.exito) {
+            cerrarModalParcial();
+            cargarYElegirSeccion();
+        } else {
+            const limite = document.getElementById("limiteParcialMsg");
+            const btnConf = document.getElementById("btnConfirmarParcial");
+
+            limite.style.display = "block";
+            limite.textContent = "⚠️ " + (data.mensaje || "No se pudo agregar el parcial.");
+            btnConf.disabled = true;
+        }
     });
 }
 
 // ── Editar parcial ──
 function editarParcial(idxGrupo, idxMateria, idxParcial) {
     editarParcialTarget = { idxGrupo, idxMateria, idxParcial };
-    const numero = idxParcial + 1; // valor inicial según posición
-    const input  = document.getElementById("inputEditarParcial");
-    input.value  = numero;
+
+    const parcial = obtenerParcialesMateria(idxGrupo, idxMateria)[idxParcial];
+    const numeroActual = obtenerNumeroParcial(parcial?.nombre) || 1;
+
+    const input = document.getElementById("inputEditarParcial");
+    const aviso = document.getElementById("avisoEditarParcial");
+
+    input.value = numeroActual;
     input.style.border = "";
+
+    if (aviso) {
+        aviso.style.display = "none";
+        aviso.textContent = "";
+    }
+
     actualizarBreadcrumb(["Grupos", "Editar parcial"]);
     _abrirModal("modalEditarParcial");
+
     setTimeout(() => input.focus(), 120);
 }
 
@@ -579,32 +732,62 @@ function cerrarModalEditarParcial() {
 }
 
 function confirmarEditarParcial() {
-    const numero = parseInt(document.getElementById("inputEditarParcial").value);
-    const input  = document.getElementById("inputEditarParcial");
+    const input = document.getElementById("inputEditarParcial");
+    const numero = parseInt(input.value);
+
+    const aviso = document.getElementById("avisoEditarParcial");
 
     if (isNaN(numero) || numero < 1 || numero > 3) {
         input.style.border = "2px solid red";
+        if (aviso) {
+            aviso.style.display = "block";
+            aviso.textContent = "⚠️ El parcial debe estar entre 1 y 3.";
+        }
         return;
     }
-    input.style.border = "";
 
     if (!editarParcialTarget) return;
+
     const { idxGrupo, idxMateria, idxParcial } = editarParcialTarget;
 
+    const existentes = obtenerNumerosParcialesExistentes(idxGrupo, idxMateria);
+    const parcialActual = obtenerParcialesMateria(idxGrupo, idxMateria)[idxParcial];
+    const numeroActual = obtenerNumeroParcial(parcialActual?.nombre);
+
+    if (numero !== numeroActual && existentes.includes(numero)) {
+        input.style.border = "2px solid red";
+
+        if (aviso) {
+            aviso.style.display = "block";
+            aviso.textContent = "⚠️ Ese parcial ya existe. Elige otro número.";
+        }
+
+        return;
+    }
+
+    input.style.border = "";
+
+    if (aviso) {
+        aviso.style.display = "none";
+        aviso.textContent = "";
+    }
+
     fetch("/api/editar_parcial", {
-        method:  "POST",
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ grupo: idxGrupo, materia: idxMateria, parcial: idxParcial, nombre: `Parcial ${numero}` })
+        body: JSON.stringify({
+            grupo: idxGrupo,
+            materia: idxMateria,
+            parcial: idxParcial,
+            nombre: `Parcial ${numero}`
+        })
     })
     .then(r => r.json())
     .then(data => {
         cerrarModalEditarParcial();
+
         if (data.exito) cargarYElegirSeccion();
-        else alert(data.mensaje || "Función pendiente en el servidor.");
-    })
-    .catch(() => {
-        cerrarModalEditarParcial();
-        alert("El endpoint /api/editar_parcial no está implementado aún en app.py.");
+        else alert(data.mensaje || "No se pudo editar el parcial.");
     });
 }
 

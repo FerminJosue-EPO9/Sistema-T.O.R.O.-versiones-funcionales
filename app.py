@@ -31,6 +31,8 @@ import base64
 import zipfile
 from flask import abort
 import tempfile
+import hashlib
+import unicodedata
 
 app = Flask(__name__)
 app.secret_key = 'toro_secret_key_2026'
@@ -1242,65 +1244,110 @@ def api_eliminar_elemento():
         if grupo_idx < 0 or grupo_idx >= len(grupos):
             return jsonify({'exito': False, 'mensaje': 'Grupo no válido'})
         
-        grupo_nombre = grupos[grupo_idx]['nombre']
+        # Guardamos referencias limpias para no repetir código largo
+        grupo_a_eliminar = grupos[grupo_idx]
+        grupo_nombre = grupo_a_eliminar['nombre']
         
-        # 1. Si SOLO viene grupo: eliminar todo el grupo
+        # ── 1. Eliminar grupo completo ───────────────────────────────────────────
         if 'materia' not in data:
+            # A. Eliminar lecciones asociadas
             lecciones_afectadas = buscar_lecciones_por_elemento('grupo', grupo_nombre)
             for carpeta in lecciones_afectadas:
                 eliminar_leccion_por_carpeta(carpeta)
+            
+            # B. Borrar calificaciones de TODAS las materias y parciales
+            todas = leer_calificaciones()
+            for materia in grupo_a_eliminar.get('materias', []):
+                for parcial in materia.get('parciales', []):
+                    clave = _generar_context_key(
+                        grupo_nombre,
+                        materia['nombre'],
+                        parcial['nombre']
+                    )
+                    todas.pop(clave, None)
+            escribir_calificaciones(todas)
+            
+            # C. Actualizar JSON de grupos
             grupos.pop(grupo_idx)
             escribir_grupos(grupos)
             return jsonify({'exito': True, 'lecciones_eliminadas': len(lecciones_afectadas)})
-        
-        # Validar materia
+
+        # ── 2. Eliminar materia ──────────────────────────────────────────────────
         materia_idx = data.get('materia')
-        if materia_idx is None or materia_idx < 0 or materia_idx >= len(grupos[grupo_idx]['materias']):
+        if materia_idx is None or materia_idx < 0 or materia_idx >= len(grupo_a_eliminar['materias']):
             return jsonify({'exito': False, 'mensaje': 'Materia no válida'})
         
-        materia_nombre = grupos[grupo_idx]['materias'][materia_idx]['nombre']
+        materia_a_eliminar = grupo_a_eliminar['materias'][materia_idx]
+        materia_nombre = materia_a_eliminar['nombre']
         
-        # 2. Si SOLO viene materia (y no hay parcial definido): eliminar toda la materia
         if 'parcial' not in data:
+            # A. Eliminar lecciones asociadas
             lecciones_afectadas = buscar_lecciones_por_elemento('materia', materia_nombre)
             for carpeta in lecciones_afectadas:
                 eliminar_leccion_por_carpeta(carpeta)
-            grupos[grupo_idx]['materias'].pop(materia_idx)
+            
+            # B. Borrar calificaciones de TODOS los parciales de esta materia
+            todas = leer_calificaciones()
+            for parcial in materia_a_eliminar.get('parciales', []):
+                clave = _generar_context_key(
+                    grupo_nombre,
+                    materia_nombre,
+                    parcial['nombre']
+                )
+                todas.pop(clave, None)
+            escribir_calificaciones(todas)
+            
+            # C. Actualizar JSON de grupos
+            grupo_a_eliminar['materias'].pop(materia_idx)
             escribir_grupos(grupos)
             return jsonify({'exito': True, 'lecciones_eliminadas': len(lecciones_afectadas)})
-        
-        # Validar parcial
+
+        # ── 3. Eliminar parcial ──────────────────────────────────────────────────
         parcial_idx = data.get('parcial')
-        parciales_list = grupos[grupo_idx]['materias'][materia_idx]['parciales']
+        parciales_list = materia_a_eliminar['parciales']
         
         if parcial_idx is None or parcial_idx < 0 or parcial_idx >= len(parciales_list):
             return jsonify({'exito': False, 'mensaje': 'Parcial no válido'})
         
-        parcial = parciales_list[parcial_idx]
-        parcial_nombre = parcial['nombre']
+        parcial_a_eliminar = parciales_list[parcial_idx]
+        parcial_nombre = parcial_a_eliminar['nombre']
         
-        # 3. Si SOLO viene parcial (y no hay progresión definida): eliminar todo el parcial
         if 'progresion' not in data:
+            # A. Eliminar lecciones asociadas
             lecciones_afectadas = buscar_lecciones_por_elemento('parcial', parcial_nombre)
             for carpeta in lecciones_afectadas:
                 eliminar_leccion_por_carpeta(carpeta)
-            grupos[grupo_idx]['materias'][materia_idx]['parciales'].pop(parcial_idx)
+            
+            # B. Borrar calificaciones de este parcial específico
+            todas = leer_calificaciones()
+            clave = _generar_context_key(
+                grupo_nombre,
+                materia_nombre,
+                parcial_nombre
+            )
+            todas.pop(clave, None)
+            escribir_calificaciones(todas)
+            
+            # C. Actualizar JSON de grupos
+            parciales_list.pop(parcial_idx)
             escribir_grupos(grupos)
             return jsonify({'exito': True, 'lecciones_eliminadas': len(lecciones_afectadas)})
-        
-        # 4. Eliminar progresión
+
+        # ── 4. Eliminar progresión ───────────────────────────────────────────────
         prog_idx = data.get('progresion')
         if prog_idx is None:
             return jsonify({'exito': False, 'mensaje': 'Se requiere el índice de la progresión'})
-        if prog_idx < 0 or prog_idx >= len(parcial['progresiones']):
+        if prog_idx < 0 or prog_idx >= len(parcial_a_eliminar['progresiones']):
             return jsonify({'exito': False, 'mensaje': 'Progresión no válida'})
         
-        prog_nombre = parcial['progresiones'][prog_idx]
+        prog_nombre = parcial_a_eliminar['progresiones'][prog_idx]
+        
+        # Aquí no hay conflicto de calificaciones, solo eliminamos lecciones y actualizamos grupos
         lecciones_afectadas = buscar_lecciones_por_elemento('progresion', prog_nombre)
         for carpeta in lecciones_afectadas:
             eliminar_leccion_por_carpeta(carpeta)
         
-        parcial['progresiones'].pop(prog_idx)
+        parcial_a_eliminar['progresiones'].pop(prog_idx)
         escribir_grupos(grupos)
         return jsonify({'exito': True, 'lecciones_eliminadas': len(lecciones_afectadas)})
     
@@ -1337,6 +1384,24 @@ def vista_progresiones():
 # ==========================================
 # RUTAS DE CALIFICACIONES Y ESTADÍSTICAS (adaptadas parcialmente)
 # ==========================================
+
+# ----------------------------------------------------------
+# CLAVE ESTABLE PARA CALIFICACIONES
+# ----------------------------------------------------------
+
+def _normalizar_clave(s):
+    """Elimina acentos y pasa a minúsculas para que tildes/mayúsculas no afecten la clave."""
+    s = unicodedata.normalize('NFD', str(s))
+    s = ''.join(c for c in s if unicodedata.category(c) != 'Mn')
+    return s.strip().lower()
+
+def _generar_context_key(nombre_grupo, nombre_materia, nombre_parcial):
+    """
+    Genera una clave estable basada en los NOMBRES reales (no en índices posicionales).
+    Así, eliminar o reordenar grupos/materias/parciales NO rompe las calificaciones guardadas.
+    """
+    raw = f"{_normalizar_clave(nombre_grupo)}||{_normalizar_clave(nombre_materia)}||{_normalizar_clave(nombre_parcial)}"
+    return hashlib.sha256(raw.encode('utf-8')).hexdigest()[:20]
 
 # ----------------------------------------------------------
 # FUNCIONES DE PERSISTENCIA DE CALIFICACIONES
@@ -1392,7 +1457,7 @@ def vista_tabla_calificaciones(nombre_grupo, nombre_materia, nombre_parcial):
         (i for i, p in enumerate(materia_obj['parciales']) if p['nombre'] == nombre_parcial), 0
     ) if materia_obj else 0
 
-    context_key    = f"{idx_grupo}|{idx_materia}|{idx_parcial}"
+    context_key    = _generar_context_key(nombre_grupo, nombre_materia, nombre_parcial)
     todas          = leer_calificaciones()
     calificaciones = todas.get(context_key, [])
 

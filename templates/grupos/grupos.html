@@ -55,10 +55,12 @@
             <label class="modal-label">Archivo de alumnos (.txt):</label>
             <input type="file" id="archivoAlumnos" accept=".txt">
             <p class="texto-ayuda">El archivo debe tener el formato: Matrícula|Nombre|Apellidos</p>
-            <div id="mensajeModal" class="mensaje-modal"></div>
+            <div id="mensajeModal" class="aviso-archivo"></div>
             <div class="botones-modal">
                 <button type="button" class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
-                <button type="button" class="btn-guardar" onclick="guardarGrupo()">Guardar grupo</button>
+                <button type="button" class="btn-guardar" id="btnGuardarGrupo" onclick="guardarGrupo()" disabled>
+                    Guardar grupo
+                </button>
             </div>
         </div>
     </div>
@@ -116,6 +118,22 @@
     </div>
 
     <!-- ══════════════════════════════════
+        MODAL: EDITAR GRUPO
+    ══════════════════════════════════ -->
+    <div id="modalEditarGrupo" class="modal">
+        <div class="modal-overlay" onclick="cerrarModalEditarGrupo()"></div>
+        <div class="contenedor-modal">
+            <h2>EDITAR GRUPO</h2>
+            <label class="modal-label">Nuevo nombre del grupo:</label>
+            <input type="text" id="inputEditarGrupo" placeholder="Nuevo nombre">
+            <div class="botones-modal">
+                <button type="button" class="btn-cancelar" onclick="cerrarModalEditarGrupo()">Cancelar</button>
+                <button type="button" class="btn-guardar" onclick="confirmarEditarGrupo()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════
         MODAL: AGREGAR PARCIAL
     ══════════════════════════════════ -->
     <div id="modalAgregarParcial" class="modal">
@@ -147,6 +165,7 @@
                 <span class="prefijo-parcial">Parcial</span>
                 <input type="number" id="inputEditarParcial" min="1" max="3" placeholder="1">
             </div>
+            <div id="avisoEditarParcial" class="alerta-limite" style="display:none;"></div>
             <div class="botones-modal">
                 <button type="button" class="btn-cancelar" onclick="cerrarModalEditarParcial()">Cancelar</button>
                 <button type="button" class="btn-guardar" onclick="confirmarEditarParcial()">Guardar</button>

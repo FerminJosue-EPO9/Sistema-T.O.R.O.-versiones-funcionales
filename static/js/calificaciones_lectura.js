@@ -19,7 +19,7 @@ let archivosProcesadosTemp = [];
 // ==================== INICIALIZACIÓN ====================
 
 window.addEventListener('DOMContentLoaded', () => {
-    // ✅ Limpiar temp al cargar cualquier página nueva
+    // Limpiar temp al cargar cualquier página nueva
     archivosProcesadosTemp = [];
     verificarYMostrarInterfaz();
 });
@@ -206,9 +206,9 @@ function generarTablaCalificaciones(calificaciones) {
             // Alumno sin ninguna lección
             let tr = `<tr>
                 <td class="td-alumno">
-                    <strong>${escapeHtml(alumno.nombre)}</strong>
+                    <strong style="display:block;word-break:break-word;white-space:normal;min-width:120px;max-width:180px;">${escapeHtml(alumno.nombre)}</strong>
                     ${alumno.matricula
-                        ? `<br><span class="matricula-small">${escapeHtml(alumno.matricula)}</span>`
+                        ? `<span class="matricula-small" style="display:block;word-break:break-word;white-space:normal;">${escapeHtml(alumno.matricula)}</span>`
                         : ''}
                 </td>
                 <td class="td-leccion td-vacio">—</td>`;
@@ -234,12 +234,21 @@ function generarTablaCalificaciones(calificaciones) {
             // Celda de nombre — solo en primera fila del alumno
             if (idx === 0) {
                 tr += `
-                    <td rowspan="${numFilas}" class="td-alumno">
-                        <strong>${escapeHtml(alumno.nombre)}</strong>
-                        ${alumno.matricula
-                            ? `<br><span class="matricula-small">${escapeHtml(alumno.matricula)}</span>`
-                            : ''}
-                    </td>`;
+                    <td rowspan="${numFilas}" 
+                        class="td-alumno"
+                        style="width: 200px; min-width: 200px; max-width: 200px;">
+                        <div style="display: flex; flex-direction: column; gap: 4px; width: 100%;">
+                            <strong style="display: block; word-break: break-word; white-space: normal; line-height: 1.3;">
+                                ${escapeHtml(alumno.nombre)}
+                            </strong>
+                            ${alumno.matricula ? `
+                                <span style="display: block; word-break: break-word; white-space: normal; font-size: 0.75rem; color: #666;">
+                                    ${escapeHtml(alumno.matricula)}
+                                </span>
+                            ` : ''}
+                        </div>
+                    </td>
+                `;
             }
 
             tr += `<td class="td-leccion">${escapeHtml(lecActual)}</td>`;
@@ -299,6 +308,66 @@ function generarTablaCalificaciones(calificaciones) {
     `;
 }
 
+    // Función para establecer anchos dinámicamente
+    function establecerAnchosColumnas() {
+        const config = {
+            nombre: 200,    // px
+            leccion: 150,   // px
+            intento: 70,    // px
+            promedio: 100,  // px
+            acciones: 60    // px
+        };
+        
+        // Crear style dinámico
+        const style = document.createElement('style');
+        style.textContent = `
+            .calificaciones-table {
+                table-layout: fixed;
+                width: 100%;
+            }
+            .calificaciones-table th.th-alumno,
+            .calificaciones-table td.td-alumno {
+                width: ${config.nombre}px !important;
+                min-width: ${config.nombre}px !important;
+                max-width: ${config.nombre}px !important;
+            }
+            .calificaciones-table th.th-leccion-fija,
+            .calificaciones-table td.td-leccion {
+                width: ${config.leccion}px !important;
+                min-width: ${config.leccion}px !important;
+                max-width: ${config.leccion}px !important;
+            }
+            .calificaciones-table th.th-intento,
+            .calificaciones-table td.td-intento {
+                width: ${config.intento}px !important;
+                min-width: ${config.intento}px !important;
+                max-width: ${config.intento}px !important;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    // Llamar a la función al cargar
+    establecerAnchosColumnas();
+
+// Función auxiliar para calcular promedio desde Map
+function calcularPromedioGeneralDesdeMap(leccionesMap, todasLasLecciones) {
+    let suma = 0;
+    let count = 0;
+    
+    todasLasLecciones.forEach(lec => {
+        if (leccionesMap.has(lec)) {
+            const leccion = leccionesMap.get(lec);
+            if (leccion.intentos && leccion.intentos.length > 0) {
+                const mejorIntento = Math.max(...leccion.intentos.map(i => i.calificacion));
+                suma += mejorIntento;
+                count++;
+            }
+        }
+    });
+    
+    return count > 0 ? suma / count : null;
+}
 // ==================== CÁLCULO DE PROMEDIO ====================
 
 function calcularPromedioGeneral(leccionesDelAlumno, leccionesOrdenadas) {
@@ -482,27 +551,6 @@ function configurarEventosConDatos() {
     });
 
     saveBtn?.addEventListener('click', guardarCalificaciones);
-
-    btnLimpiar?.addEventListener('click', async () => {
-        if (!confirm('¿Estás seguro de limpiar TODAS las calificaciones de este parcial? Esta acción no se puede deshacer.')) return;
-        try {
-            const resp = await fetch('/api/calificaciones/limpiar', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ context_key: CONTEXT_KEY })
-            });
-            const json = await resp.json();
-            if (json.success) {
-                calificacionesServer  = [];
-                archivosProcesadosTemp = [];
-                verificarYMostrarInterfaz();
-            } else {
-                mostrarMensaje('Error al limpiar: ' + json.error, true);
-            }
-        } catch {
-            mostrarMensaje('Error de conexión al limpiar', true);
-        }
-    });
 }
 
 // ==================== PROCESAMIENTO DE ARCHIVOS ====================
@@ -582,65 +630,117 @@ async function procesarArchivos(files) {
             } else {
                 mostrarMensaje(`✗ ${file.name}: error inesperado al procesar`, true, 5000);
             }
-            continue; // ← nunca llega a archivosParseados
-        }
-
-        // ── 2. Campos obligatorios ────────────────────────────────────────────
-        if (!datos.matricula || !datos.estudiante) {
-            mostrarMensaje(
-                `✗ ${file.name}: faltan datos del alumno (matrícula o nombre)`,
-                true, 5000
-            );
             continue;
         }
 
-        // ── 3. Alumno pertenece al grupo (por matrícula) ──────────────────────
-        const enGrupo = ALUMNOS_GRUPO.some(
-            a => a.matricula.trim() === datos.matricula.trim()
-        );
-        if (!enGrupo) {
+        // ==================== VALIDACIONES DE CAMPOS OBLIGATORIOS ====================
+        
+        // ── 2. Validar que la MATRÍCULA no esté vacía ──────────────────────────
+        if (!datos.matricula || datos.matricula.trim() === '') {
             mostrarMensaje(
-                `✗ ${file.name}: matrícula "${datos.matricula}" no pertenece al grupo "${NOMBRE_GRUPO}"`,
+                `✗ ${file.name}: la matrícula está vacía. El archivo debe contener la matrícula del alumno.`,
                 true, 6000
             );
             continue;
         }
 
-        // ── 4. Grupo del archivo coincide con el contexto ─────────────────────
-        if (datos.grupo) {
-            if (norm(datos.grupo) !== norm(NOMBRE_GRUPO)) {
-                mostrarMensaje(
-                    `✗ ${file.name}: grupo incorrecto — archivo: "${datos.grupo}", esperado: "${NOMBRE_GRUPO}"`,
-                    true, 6000
-                );
-                continue;
-            }
+        // ── 3. Validar que el NOMBRE del ESTUDIANTE no esté vacío ───────────────
+        if (!datos.estudiante || datos.estudiante.trim() === '') {
+            mostrarMensaje(
+                `✗ ${file.name}: el nombre del estudiante está vacío. El archivo debe contener el nombre del alumno.`,
+                true, 6000
+            );
+            continue;
         }
 
-        // ── 5. Materia ────────────────────────────────────────────────────────
-        if (datos.materia) {
-            if (norm(datos.materia) !== norm(NOMBRE_MATERIA)) {
-                mostrarMensaje(
-                    `✗ ${file.name}: materia incorrecta — archivo: "${datos.materia}", esperado: "${NOMBRE_MATERIA}"`,
-                    true, 6000
-                );
-                continue;
-            }
+        // ── 4. Validar que el GRUPO no esté vacío ───────────────────────────────
+        if (!datos.grupo || datos.grupo.trim() === '') {
+            mostrarMensaje(
+                `✗ ${file.name}: el campo GRUPO está vacío. El archivo debe especificar el grupo.`,
+                true, 6000
+            );
+            continue;
         }
 
-        // ── 6. Parcial ────────────────────────────────────────────────────────
-        if (datos.parcial !== null && datos.parcial !== undefined && parcialEsperadoNum !== null) {
-            const parcialArchivo = parseInt(datos.parcial);
-            if (!isNaN(parcialArchivo) && parcialArchivo !== parcialEsperadoNum) {
-                mostrarMensaje(
-                    `✗ ${file.name}: parcial incorrecto — archivo: Parcial ${parcialArchivo}, esperado: ${NOMBRE_PARCIAL}`,
-                    true, 6000
-                );
-                continue;
-            }
+        // ── 5. Validar que la MATERIA no esté vacía ─────────────────────────────
+        if (!datos.materia || datos.materia.trim() === '') {
+            mostrarMensaje(
+                `✗ ${file.name}: el campo MATERIA está vacío. El archivo debe especificar la materia.`,
+                true, 6000
+            );
+            continue;
         }
 
-        // ── 7. No duplicado en la sesión actual ───────────────────────────────
+        // ── 6. Validar que el PARCIAL no esté vacío ─────────────────────────────
+        if (datos.parcial === null || datos.parcial === undefined || datos.parcial.toString().trim() === '') {
+            mostrarMensaje(
+                `✗ ${file.name}: el campo PARCIAL está vacío. El archivo debe especificar el número de parcial.`,
+                true, 6000
+            );
+            continue;
+        }
+
+        // ── 7. Validar que la LECCIÓN/ID no esté vacía ──────────────────────────
+        if (!datos.idLeccion || datos.idLeccion.trim() === '') {
+            mostrarMensaje(
+                `✗ ${file.name}: el campo ID_LECCIÓN está vacío. El archivo debe especificar la lección.`,
+                true, 6000
+            );
+            continue;
+        }
+
+        // ── 8. Validar que hay al menos un INTENTO ──────────────────────────────
+        if (!datos.intentos || datos.intentos.length === 0) {
+            mostrarMensaje(
+                `✗ ${file.name}: no contiene intentos de calificación. El archivo debe tener al menos un intento.`,
+                true, 6000
+            );
+            continue;
+        }
+
+        // ==================== VALIDACIONES DE COINCIDENCIA ====================
+
+        // ── 9. Alumno pertenece al grupo (por matrícula) ──────────────────────
+        const enGrupo = ALUMNOS_GRUPO.some(
+            a => norm(a.matricula) === norm(datos.matricula)
+        );
+        if (!enGrupo) {
+            mostrarMensaje(
+                `✗ ${file.name}: la matrícula "${datos.matricula}" (${datos.estudiante}) no está registrada en el grupo "${NOMBRE_GRUPO}". Verifica que el alumno pertenezca a este grupo.`,
+                true, 7000
+            );
+            continue;
+        }
+
+        // ── 10. Grupo del archivo coincide con el contexto ─────────────────────
+        if (norm(datos.grupo) !== norm(NOMBRE_GRUPO)) {
+            mostrarMensaje(
+                `✗ ${file.name}: el archivo es del grupo "${datos.grupo}" pero estás en el grupo "${NOMBRE_GRUPO}". Sube este archivo en el grupo correcto.`,
+                true, 7000
+            );
+            continue;
+        }
+
+        // ── 11. Materia coincide con el contexto ───────────────────────────────
+        if (norm(datos.materia) !== norm(NOMBRE_MATERIA)) {
+            mostrarMensaje(
+                `✗ ${file.name}: el archivo es de la materia "${datos.materia}" pero estás en "${NOMBRE_MATERIA}". Sube este archivo en la materia correcta.`,
+                true, 7000
+            );
+            continue;
+        }
+
+        // ── 12. Parcial coincide con el contexto ───────────────────────────────
+        const parcialArchivo = parseInt(datos.parcial);
+        if (parcialEsperadoNum !== null && !isNaN(parcialArchivo) && parcialArchivo !== parcialEsperadoNum) {
+            mostrarMensaje(
+                `✗ ${file.name}: el archivo es del Parcial ${parcialArchivo} pero estás en "${NOMBRE_PARCIAL}". Sube este archivo en el parcial correcto.`,
+                true, 7000
+            );
+            continue;
+        }
+
+        // ── 13. No duplicado en la sesión actual ──────────────────────────────
         const claveReg = _claveRegistro(datos.matricula, datos.idLeccion);
         const yaEnTemp = archivosProcesadosTemp.some(
             t => _claveRegistro(t.matricula, t.idLeccion) === claveReg
@@ -653,23 +753,11 @@ async function procesarArchivos(files) {
             continue;
         }
 
-        // ── 8. No duplicado en el servidor (sin intentos nuevos) ─────────────
+        // ── 14. No duplicado en el servidor (sin intentos nuevos) ────────────
         if (!_tieneIntentosNuevos(datos)) {
             mostrarMensaje(
                 `⚠ ${file.name}: los intentos de "${datos.estudiante}" en lección ${datos.idLeccion} ya están guardados`,
                 true, 4000
-            );
-            continue;
-        }
-        // ── 9. Verificar que el context_key del archivo corresponde al contexto actual ──
-        // (defensa secundaria: evita que datos de otra sesión/grupo contaminen este contexto)
-        const claveContexto = `${(datos.grupo || '').trim()}::${(datos.materia || '').trim()}::${parcialEsperadoNum}`;
-        const claveEsperada = `${NOMBRE_GRUPO.trim()}::${NOMBRE_MATERIA.trim()}::${parcialEsperadoNum}`;
-
-        if (datos.grupo && datos.materia && claveContexto !== claveEsperada) {
-            mostrarMensaje(
-                `✗ ${file.name}: el archivo no corresponde a este grupo/materia/parcial`,
-                true, 6000
             );
             continue;
         }
@@ -692,8 +780,19 @@ async function procesarArchivos(files) {
 async function guardarCalificaciones() {
     if (archivosProcesadosTemp.length === 0) return;
 
-    // Re-validación final: descartar cualquier registro sin intentos nuevos
-    // (puede ocurrir si se guardó otra tanda en la misma sesión antes de pulsar Guardar)
+    // Validación final antes de guardar
+    const registrosInvalidos = validarRegistrosAntesDeGuardar(archivosProcesadosTemp);
+    
+    if (registrosInvalidos.length > 0) {
+        let mensajeError = `No se pueden guardar ${registrosInvalidos.length} archivo(s) con campos vacíos:\n`;
+        registrosInvalidos.forEach(ri => {
+            mensajeError += `\n• ${ri.archivo} (${ri.alumno}): faltan [${ri.errores.join(', ')}]`;
+        });
+        mostrarMensaje(mensajeError, true, 10000);
+        return;
+    }
+
+    // Re-validación de intentos nuevos
     const paraEnviar = archivosProcesadosTemp.filter(d => _tieneIntentosNuevos(d));
 
     if (paraEnviar.length === 0) {
@@ -794,7 +893,7 @@ function parsearArchivoOfuscado(contenidoRaw, nombreArchivo) {
     };
 
     const patrones = {
-        idLeccion:     /(?:ID_LECCI[OÓ]N|LECCI[OÓ]N):\s*(\S+)/i,
+        idLeccion:     /(?:ID_LECCI[OÓ]N|LECCI[OÓ]N):\s*([^\n\r]+)/i,
         grupo:         /GRUPO:\s*([^\n\r]+)/i,
         materia:       /MATERIA:\s*([^\n\r]+)/i,
         parcial:       /PARCIAL:\s*(\d+)/i,
@@ -807,7 +906,18 @@ function parsearArchivoOfuscado(contenidoRaw, nombreArchivo) {
 
     for (const [key, patron] of Object.entries(patrones)) {
         const m = contenido.match(patron);
-        if (m) datos[key] = m[1].trim();
+        if (m) {
+            const valor = m[1].trim();
+            datos[key] = valor === '' ? null : valor;
+        }
+    }
+
+    // Validación especial para parcial (puede ser número 0)
+    if (datos.parcial !== null) {
+        const numParcial = parseInt(datos.parcial);
+        if (isNaN(numParcial)) {
+            datos.parcial = null;
+        }
     }
 
     const patronIntento = /Intento\s+(\d+):\s+([\d.]+)\/10/g;
@@ -821,6 +931,41 @@ function parsearArchivoOfuscado(contenidoRaw, nombreArchivo) {
     }
     datos.intentos.sort((a, b) => a.numero - b.numero);
     return datos;
+}
+
+/**
+ * Validación final antes de guardar en el servidor
+ * Asegura que ningún registro tenga campos obligatorios vacíos
+ */
+function validarRegistrosAntesDeGuardar(registros) {
+    const camposObligatorios = ['matricula', 'estudiante', 'grupo', 'materia', 'parcial', 'idLeccion'];
+    const registrosInvalidos = [];
+    
+    for (const registro of registros) {
+        const errores = [];
+        
+        for (const campo of camposObligatorios) {
+            const valor = registro[campo];
+            if (valor === null || valor === undefined || valor.toString().trim() === '') {
+                errores.push(campo);
+            }
+        }
+        
+        // Validar que tenga al menos un intento
+        if (!registro.intentos || registro.intentos.length === 0) {
+            errores.push('intentos');
+        }
+        
+        if (errores.length > 0) {
+            registrosInvalidos.push({
+                archivo: registro.nombreArchivo || 'desconocido',
+                alumno: registro.estudiante || '?',
+                errores: errores
+            });
+        }
+    }
+    
+    return registrosInvalidos;
 }
 
 // ==================== LEER ARCHIVO ====================
