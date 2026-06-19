@@ -199,6 +199,9 @@ function cerrarModalEliminarProgresion() {
     eliminarProgresionIndex = null;
 }
 
+// ==========================================
+// MODAL ELIMINAR PROGRESIÓN
+// ==========================================
 function ejecutarEliminarProgresion() {
     if (eliminarProgresionIndex === null) return;
     const { grupo, materia, parcial } = contexto;
@@ -214,15 +217,45 @@ function ejecutarEliminarProgresion() {
     })
     .then(r => r.json())
     .then(data => {
+        // 1. Cerramos el modal de confirmación
+        cerrarModalEliminarProgresion(); 
+        
         if (data.exito) {
-            cerrarModalEliminarProgresion();
+            // 2. Verificamos si se eliminaron lecciones en cascada
+            if (data.lecciones_eliminadas && data.lecciones_eliminadas > 0) {
+                mostrarModalInfoProg("Lecciones eliminadas", `Se han eliminado ${data.lecciones_eliminadas} lección(es) que dependían de esta progresión.`);
+            }
+            // 3. Recargamos la vista
             cargarProgresiones();
         } else {
-            alert("Error al eliminar: " + data.mensaje);
+            mostrarModalInfoProg("Error", data.mensaje || "No se pudo eliminar la progresión.");
         }
     })
     .catch(error => {
         console.error("Error:", error);
-        alert("Error de conexión con el servidor.");
+        cerrarModalEliminarProgresion();
+        mostrarModalInfoProg("Error", "Error de conexión con el servidor.");
     });
+}
+
+// ==========================================
+// MODAL DE INFORMACIÓN (NUEVO)
+// ==========================================
+function mostrarModalInfoProg(titulo, mensaje) {
+    // Si tienes un modalInfo global en layout.html, puedes usar ese. 
+    // De lo contrario, usamos este local.
+    const modal = document.getElementById("modalInfoProg");
+    if (modal) {
+        document.getElementById("tituloModalInfoProg").textContent = titulo;
+        document.getElementById("textoModalInfoProg").textContent = mensaje;
+        modal.classList.add("activa");
+    } else {
+        // Fallback por si no se ha agregado el HTML
+        alert(`${titulo}\n${mensaje}`);
+    }
+}
+
+function cerrarModalInfoProg() {
+    const modal = document.getElementById("modalInfoProg");
+    if (modal) modal.classList.remove("activa");
 }

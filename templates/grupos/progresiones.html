@@ -8,21 +8,16 @@
 <div class="progresiones-container">
     <h2>PROGRESIONES</h2>
 
-    <!-- Sección cuando no hay progresiones -->
     <section id="seccionVacia" class="seccion-prog activa">
         <p class="mensaje-vacio-prog">
             No existen progresiones disponibles,<br>¡Crea la primera!
         </p>
-        <!-- Botón eliminado de aquí -->
     </section>
 
-    <!-- Sección cuando hay progresiones -->
     <section id="seccionProgresiones" class="seccion-prog">
         <div id="listaProgresiones"></div>
-        <!-- Botón eliminado de aquí -->
     </section>
 
-    <!-- Contenedor de botones inferiores -->
     <div class="botones-inferiores">
         <button class="btn-regresar" onclick="window.location.href='/grupos'">
             ← Regresar a grupos
@@ -33,42 +28,54 @@
     </div>
 </div>
 
-<!-- Modales -->
 <div id="modalCrearProgresion" class="modal">
     <div class="modal-overlay" onclick="cerrarModalProgresion()"></div>
-    <div class="contenedor-modal-prog">
-        <h2>Crear nueva progresión</h2>
-        <p>Tema:</p>
+    <div class="contenedor-modal">
+        <h2>CREAR NUEVA PROGRESIÓN</h2>
+        <label class="modal-label">Tema:</label>
         <input type="text" id="inputNombreProgresion" placeholder="Ej: Introducción a variables" autocomplete="off">
-        <div class="botones">
-            <button type="button" class="btn-back" onclick="cerrarModalProgresion()">Cancelar</button>
-            <button type="button" class="btn-save" onclick="confirmarCrearProgresion()">Guardar</button>
+        <div class="botones-modal">
+            <button type="button" class="btn-cancelar" onclick="cerrarModalProgresion()">Cancelar</button>
+            <button type="button" class="btn-guardar" onclick="confirmarCrearProgresion()">Guardar</button>
         </div>
     </div>
 </div>
 
 <div id="modalEditarProgresion" class="modal">
     <div class="modal-overlay" onclick="cerrarModalEditarProgresion()"></div>
-    <div class="contenedor-modal-prog">
-        <h2>Editar progresión</h2>
-        <p>Tema:</p>
+    <div class="contenedor-modal">
+        <h2>EDITAR PROGRESIÓN</h2>
+        <label class="modal-label">Tema:</label>
         <input type="text" id="inputEditarProgresion" placeholder="Nombre del tema" autocomplete="off">
-        <div class="botones">
-            <button type="button" class="btn-back" onclick="cerrarModalEditarProgresion()">Cancelar</button>
-            <button type="button" class="btn-save" onclick="confirmarEditarProgresion()">Guardar</button>
+        <div class="botones-modal">
+            <button type="button" class="btn-cancelar" onclick="cerrarModalEditarProgresion()">Cancelar</button>
+            <button type="button" class="btn-guardar" onclick="confirmarEditarProgresion()">Guardar</button>
         </div>
     </div>
 </div>
 
 <div id="modalEliminarProgresion" class="modal">
     <div class="modal-overlay" onclick="cerrarModalEliminarProgresion()"></div>
-    <div class="contenedor-eliminar-prog">
-        <h2>⚠ Eliminar</h2>
+    <div class="contenedor-modal contenedor-eliminar">
+        <div class="icono-advertencia">⚠️</div>
+        <h2>ELIMINAR PROGRESIÓN</h2>
         <p>¿Estás seguro de que deseas eliminar esta progresión?</p>
         <p>Se perderán los datos de forma permanente.</p>
-        <div class="botones-eliminar-prog">
-            <button class="btn-cancelar-eliminar-prog" onclick="cerrarModalEliminarProgresion()">Cancelar</button>
-            <button class="btn-confirmar-eliminar-prog" onclick="ejecutarEliminarProgresion()">Eliminar</button>
+        <div class="botones-modal">
+            <button type="button" class="btn-cancelar" onclick="cerrarModalEliminarProgresion()">Cancelar</button>
+            <button type="button" class="btn-eliminar-confirm" onclick="ejecutarEliminarProgresion()">Eliminar</button>
+        </div>
+    </div>
+</div>
+
+<div id="modalInfoProg" class="modal">
+    <div class="modal-overlay" onclick="cerrarModalInfoProg()"></div>
+    <div class="contenedor-modal">
+        <div class="icono-advertencia" style="color: var(--azul);">¿...?</div>
+        <h2 id="tituloModalInfoProg">INFORMACIÓN</h2>
+        <p id="textoModalInfoProg"></p>
+        <div class="botones-modal">
+            <button type="button" class="btn-guardar" onclick="cerrarModalInfoProg()">Aceptar</button>
         </div>
     </div>
 </div>

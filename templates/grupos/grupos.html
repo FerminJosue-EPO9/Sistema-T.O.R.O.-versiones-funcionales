@@ -11,28 +11,28 @@
         SECCIÓN DEFAULT (sin grupos)
     ══════════════════════════════════ -->
     <section id="seccionDefault" class="seccion activa">
-    <h2>GRUPOS</h2>
+        <h2>GRUPOS</h2>
 
-    <p class="subtitulo">Aún no hay ningún grupo registrado.</p>
-    <p class="instruccion">Para crear un grupo necesitará crear un archivo txt y cargarlo después.</p>
-    <p class="instruccion">Formato correcto para subir un txt de alumnos:</p>
-    <p class="instruccion"><strong>Matrícula del alumno | Nombre/s | Apellidos</strong></p>
+        <p class="subtitulo">Aún no hay ningún grupo registrado.</p>
+        <p class="instruccion">Para crear un grupo necesitará crear un archivo txt y cargarlo después.</p>
+        <p class="instruccion">Formato correcto para subir un txt de alumnos:</p>
+        <p class="instruccion"><strong>Matrícula del alumno | Nombre/s | Apellidos</strong></p>
 
-    <div class="ejemplo-txt">
-        <p>2026001|Juan Carlos|García López</p>
-        <p>2026002|Valentina|Morales Torres</p>
-        <p>2026003|Luis Fernando|Hernández Ruiz</p>
-        <p>2026004|María Fernanda|Cruz Sánchez</p>
-        <p>2026005|José Ángel|Ramírez Pérez</p>
-        <p>2026006|Ana Sofía|Vargas Castillo</p>
-        <p>2026007|Carlos Eduardo|Mendoza Flores</p>
-        <p>2026008|Daniela|Ortiz Navarro</p>
-        <p>2026009|Miguel Ángel|Salinas Romero</p>
-        <p>2026010|Paola Andrea|Reyes Montoya</p>
-    </div>
+        <div class="ejemplo-txt">
+            <p>2026001|Juan Carlos|García López</p>
+            <p>2026002|Valentina|Morales Torres</p>
+            <p>2026003|Luis Fernando|Hernández Ruiz</p>
+            <p>2026004|María Fernanda|Cruz Sánchez</p>
+            <p>2026005|José Ángel|Ramírez Pérez</p>
+            <p>2026006|Ana Sofía|Vargas Castillo</p>
+            <p>2026007|Carlos Eduardo|Mendoza Flores</p>
+            <p>2026008|Daniela|Ortiz Navarro</p>
+            <p>2026009|Miguel Ángel|Salinas Romero</p>
+            <p>2026010|Paola Andrea|Reyes Montoya</p>
+        </div>
 
-    <button id="primer-grupo" onclick="abrirModal()">+ Crear mi primer grupo</button>
-</section>
+        <button id="primer-grupo" onclick="abrirModal()">+ Crear mi primer grupo</button>
+    </section>
 
     <!-- ══════════════════════════════════
         SECCIÓN LISTA DE GRUPOS
@@ -129,7 +129,8 @@
             </div>
             <div class="botones-modal">
                 <button type="button" class="btn-cancelar" onclick="cerrarModalParcial()">Cancelar</button>
-                <button type="button" class="btn-guardar" id="btnConfirmarParcial" onclick="confirmarAgregarParcial()">Guardar</button>
+                <button type="button" class="btn-guardar" id="btnConfirmarParcial"
+                    onclick="confirmarAgregarParcial()">Guardar</button>
             </div>
         </div>
     </div>
@@ -149,6 +150,19 @@
             <div class="botones-modal">
                 <button type="button" class="btn-cancelar" onclick="cerrarModalEditarParcial()">Cancelar</button>
                 <button type="button" class="btn-guardar" onclick="confirmarEditarParcial()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Información (simple, un solo botón) -->
+    <div id="modalInfo" class="modal">
+        <div class="modal-overlay" onclick="cerrarModalInfo()"></div>
+        <div class="contenedor-modal">
+            <div class="icono-info">¿...?</div>
+            <h2 id="tituloModalInfo">Información</h2>
+            <p id="textoModalInfo"></p>
+            <div class="botones-modal" style="justify-content: center;">
+                <button type="button" class="btn-guardar" onclick="cerrarModalInfo()">Aceptar</button>
             </div>
         </div>
     </div>

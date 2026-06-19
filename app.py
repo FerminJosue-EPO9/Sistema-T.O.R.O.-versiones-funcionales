@@ -361,6 +361,59 @@ def cargar_actividades():
                 print(f"Error leyendo {archivo}: {e}")
     return lista_actividades
 
+def extraer_campo_leccion(contenido, prefijo):
+    """Extrae el valor de un campo en info_leccion.txt."""
+    for linea in contenido.split('\n'):
+        if linea.startswith(prefijo):
+            return linea.split(':', 1)[1].strip()
+    return None
+
+def buscar_lecciones_por_elemento(tipo, nombre):
+    """
+    Busca lecciones que contengan el elemento eliminado.
+    tipo: 'grupo', 'materia', 'parcial', 'progresion'
+    nombre: nombre del elemento (ej. '204', 'Programación', 'P1', 'Progresión 1')
+    Retorna lista de nombres de carpetas que coinciden.
+    """
+    lecciones_afectadas = []
+    if not os.path.exists(LECCIONES_DIR):
+        return lecciones_afectadas
+    
+    for carpeta in os.listdir(LECCIONES_DIR):
+        ruta_info = os.path.join(LECCIONES_DIR, carpeta, 'info_leccion.txt')
+        if not os.path.exists(ruta_info):
+            continue
+        with open(ruta_info, 'r', encoding='utf-8') as f:
+            contenido = f.read()
+        
+        grupo = extraer_campo_leccion(contenido, 'GRUPO:')
+        materia = extraer_campo_leccion(contenido, 'MATERIA:')
+        parcial = extraer_campo_leccion(contenido, 'PARCIAL:')
+        tema = extraer_campo_leccion(contenido, 'TEMA:')
+        
+        if tipo == 'grupo' and grupo == nombre:
+            lecciones_afectadas.append(carpeta)
+        elif tipo == 'materia' and materia == nombre:
+            lecciones_afectadas.append(carpeta)
+        elif tipo == 'parcial' and parcial == nombre:
+            lecciones_afectadas.append(carpeta)
+        elif tipo == 'progresion' and tema == nombre:
+            lecciones_afectadas.append(carpeta)
+    
+    return lecciones_afectadas
+
+def eliminar_leccion_por_carpeta(carpeta):
+    """Elimina la carpeta de la lección y su ZIP asociado."""
+    ruta_carpeta = os.path.join(LECCIONES_DIR, carpeta)
+    if os.path.exists(ruta_carpeta):
+        shutil.rmtree(ruta_carpeta)
+        print(f"🗑️ Lección eliminada (carpeta): {ruta_carpeta}")
+    
+    ruta_zip = os.path.join(app.root_path, 'data', 'LECCIONES-LISTAS-PARA-ENVIAR', carpeta + '.zip')
+    if os.path.exists(ruta_zip):
+        os.remove(ruta_zip)
+        print(f"🗑️ ZIP eliminado: {ruta_zip}")
+
 def obtener_info_leccion(carpeta):
     """Lee info_leccion.txt y extrae el título, ID_LECCION y la lista de archivos multimedia (excepto los del juego)."""
     ruta_info = os.path.join(LECCIONES_DIR, carpeta, 'info_leccion.txt')
@@ -1183,41 +1236,74 @@ def api_eliminar_elemento():
     try:
         grupos = leer_grupos()
         grupo_idx = data.get('grupo')
+        
         if grupo_idx is None:
             return jsonify({'exito': False, 'mensaje': 'Se requiere el índice del grupo'})
         if grupo_idx < 0 or grupo_idx >= len(grupos):
             return jsonify({'exito': False, 'mensaje': 'Grupo no válido'})
-        # Si solo viene grupo: eliminar todo el grupo
+        
+        grupo_nombre = grupos[grupo_idx]['nombre']
+        
+        # 1. Si SOLO viene grupo: eliminar todo el grupo
         if 'materia' not in data:
+            lecciones_afectadas = buscar_lecciones_por_elemento('grupo', grupo_nombre)
+            for carpeta in lecciones_afectadas:
+                eliminar_leccion_por_carpeta(carpeta)
             grupos.pop(grupo_idx)
             escribir_grupos(grupos)
-            return jsonify({'exito': True})
-        # Eliminar materia
+            return jsonify({'exito': True, 'lecciones_eliminadas': len(lecciones_afectadas)})
+        
+        # Validar materia
         materia_idx = data.get('materia')
         if materia_idx is None or materia_idx < 0 or materia_idx >= len(grupos[grupo_idx]['materias']):
             return jsonify({'exito': False, 'mensaje': 'Materia no válida'})
+        
+        materia_nombre = grupos[grupo_idx]['materias'][materia_idx]['nombre']
+        
+        # 2. Si SOLO viene materia (y no hay parcial definido): eliminar toda la materia
         if 'parcial' not in data:
+            lecciones_afectadas = buscar_lecciones_por_elemento('materia', materia_nombre)
+            for carpeta in lecciones_afectadas:
+                eliminar_leccion_por_carpeta(carpeta)
             grupos[grupo_idx]['materias'].pop(materia_idx)
             escribir_grupos(grupos)
-            return jsonify({'exito': True})
-        # Eliminar parcial
+            return jsonify({'exito': True, 'lecciones_eliminadas': len(lecciones_afectadas)})
+        
+        # Validar parcial
         parcial_idx = data.get('parcial')
-        if parcial_idx is None or parcial_idx < 0 or parcial_idx >= len(grupos[grupo_idx]['materias'][materia_idx]['parciales']):
+        parciales_list = grupos[grupo_idx]['materias'][materia_idx]['parciales']
+        
+        if parcial_idx is None or parcial_idx < 0 or parcial_idx >= len(parciales_list):
             return jsonify({'exito': False, 'mensaje': 'Parcial no válido'})
+        
+        parcial = parciales_list[parcial_idx]
+        parcial_nombre = parcial['nombre']
+        
+        # 3. Si SOLO viene parcial (y no hay progresión definida): eliminar todo el parcial
         if 'progresion' not in data:
+            lecciones_afectadas = buscar_lecciones_por_elemento('parcial', parcial_nombre)
+            for carpeta in lecciones_afectadas:
+                eliminar_leccion_por_carpeta(carpeta)
             grupos[grupo_idx]['materias'][materia_idx]['parciales'].pop(parcial_idx)
             escribir_grupos(grupos)
-            return jsonify({'exito': True})
-        # Eliminar progresión
+            return jsonify({'exito': True, 'lecciones_eliminadas': len(lecciones_afectadas)})
+        
+        # 4. Eliminar progresión
         prog_idx = data.get('progresion')
         if prog_idx is None:
             return jsonify({'exito': False, 'mensaje': 'Se requiere el índice de la progresión'})
-        parcial = grupos[grupo_idx]['materias'][materia_idx]['parciales'][parcial_idx]
         if prog_idx < 0 or prog_idx >= len(parcial['progresiones']):
             return jsonify({'exito': False, 'mensaje': 'Progresión no válida'})
+        
+        prog_nombre = parcial['progresiones'][prog_idx]
+        lecciones_afectadas = buscar_lecciones_por_elemento('progresion', prog_nombre)
+        for carpeta in lecciones_afectadas:
+            eliminar_leccion_por_carpeta(carpeta)
+        
         parcial['progresiones'].pop(prog_idx)
         escribir_grupos(grupos)
-        return jsonify({'exito': True})
+        return jsonify({'exito': True, 'lecciones_eliminadas': len(lecciones_afectadas)})
+    
     except Exception as e:
         return jsonify({'exito': False, 'mensaje': str(e)})
 

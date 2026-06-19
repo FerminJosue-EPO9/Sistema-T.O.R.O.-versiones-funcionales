@@ -331,8 +331,15 @@ function ejecutarEliminarGrupo(idxGrupo) {
     .then(r => r.json())
     .then(data => {
         cerrarModalEliminar();
-        if (data.exito) cargarYElegirSeccion();
-        else console.error(data.mensaje);
+        if (data.exito) {
+            if (data.lecciones_eliminadas && data.lecciones_eliminadas > 0) {
+                mostrarModalInfo("Lecciones eliminadas", `Se han eliminado ${data.lecciones_eliminadas} lección(es) que dependían de este grupo.`);
+            }
+            cargarYElegirSeccion();
+        } else {
+            console.error(data.mensaje);
+            mostrarModalInfo("Error", data.mensaje || "No se pudo eliminar el grupo.");
+        }
     });
 }
 
@@ -358,8 +365,15 @@ function ejecutarEliminarMateria(idxGrupo, idxMateria) {
     .then(r => r.json())
     .then(data => {
         cerrarModalEliminar();
-        if (data.exito) cargarYElegirSeccion();
-        else console.error(data.mensaje);
+        if (data.exito) {
+            if (data.lecciones_eliminadas && data.lecciones_eliminadas > 0) {
+                mostrarModalInfo("Lecciones eliminadas", `Se han eliminado ${data.lecciones_eliminadas} lección(es) que dependían de esta materia.`);
+            }
+            cargarYElegirSeccion();
+        } else {
+            console.error(data.mensaje);
+            mostrarModalInfo("Error", data.mensaje || "No se pudo eliminar la materia.");
+        }
     });
 }
 
@@ -399,8 +413,15 @@ function ejecutarEliminarParcial(idxGrupo, idxMateria, idxParcial) {
     .then(r => r.json())
     .then(data => {
         cerrarModalEliminar();
-        if (data.exito) cargarYElegirSeccion();
-        else console.error(data.mensaje);
+        if (data.exito) {
+            if (data.lecciones_eliminadas && data.lecciones_eliminadas > 0) {
+                mostrarModalInfo("Lecciones eliminadas", `Se han eliminado ${data.lecciones_eliminadas} lección(es) que dependían de este parcial.`);
+            }
+            cargarYElegirSeccion();
+        } else {
+            console.error(data.mensaje);
+            mostrarModalInfo("Error", data.mensaje || "No se pudo eliminar el parcial.");
+        }
     });
 }
 
@@ -612,4 +633,17 @@ function _cerrarModal(id) {
     setTimeout(() => {
         modal.classList.remove("activa", "cerrando");
     }, 250);
+}
+
+// ══════════════════════════════════════════════════════════
+//  MODAL DE INFORMACIÓN
+// ══════════════════════════════════════════════════════════
+function mostrarModalInfo(titulo, mensaje) {
+    document.getElementById("tituloModalInfo").textContent = titulo;
+    document.getElementById("textoModalInfo").textContent = mensaje;
+    _abrirModal("modalInfo");
+}
+
+function cerrarModalInfo() {
+    _cerrarModal("modalInfo");
 }
