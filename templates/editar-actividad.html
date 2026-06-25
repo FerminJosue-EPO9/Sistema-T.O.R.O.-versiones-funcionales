@@ -163,7 +163,7 @@
                         <input type="date" name="fecha_vencimiento" class="input-toro" required>
                     </div>
                     <div class="form-group">
-                        <label>Tiempo límite (minutos):</label>
+                        <label>Tiempo estimado (minutos):</label>
                         <input type="number" name="tiempo_limite" class="input-toro" min="1" max="120"
                             placeholder="Ej: 60">
                     </div>
@@ -174,8 +174,8 @@
                     </div>
                     <div class="form-group">
                         <label>Ponderación en puntos:</label>
-                        <input type="number" name="ponderacion" class="input-toro" min="1" max="100"
-                            placeholder="Ej: 10" required>
+                        <input type="number" name="ponderacion" class="input-toro disabled-input" value="10" readonly>
+                        <small style="color: #888; font-size: 0.8rem;">Valor fijo de 10 puntos (no modificable)</small>
                     </div>
                     <input type="hidden" name="instrucciones" value="Sin instrucciones adicionales.">
                 </div>
@@ -216,18 +216,31 @@
     </form>
 
     <!-- Modal de Confirmación (estilo información, dos botones) -->
-<div id="modalConfirmacion" class="modal">
-    <div class="modal-overlay" onclick="cerrarModalConfirmacion()"></div>
-    <div class="contenedor-modal">
-        <div class="icono-info">¿...?</div>
-        <h2 id="tituloConfirmacion">Confirmar acción</h2>
-        <p id="textoConfirmacion">¿Estás seguro de que deseas continuar?</p>
-        <div class="botones-modal">
-            <button type="button" class="btn-cancelar" onclick="cerrarModalConfirmacion()">Cancelar</button>
-            <button type="button" class="btn-guardar" id="btnConfirmarAccion">Aceptar</button>
+    <div id="modalConfirmacion" class="modal">
+        <div class="modal-overlay" onclick="cerrarModalConfirmacion()"></div>
+        <div class="contenedor-modal">
+            <div class="icono-info">¿...?</div>
+            <h2 id="tituloConfirmacion">Confirmar acción</h2>
+            <p id="textoConfirmacion">¿Estás seguro de que deseas continuar?</p>
+            <div class="botones-modal">
+                <button type="button" class="btn-cancelar" onclick="cerrarModalConfirmacion()">Cancelar</button>
+                <button type="button" class="btn-guardar" id="btnConfirmarAccion">Aceptar</button>
+            </div>
         </div>
     </div>
-</div>
+
+    <!-- Modal de Información (azul, un solo botón) -->
+    <div id="modalInfo" class="modal">
+        <div class="modal-overlay" onclick="cerrarModalInfo()"></div>
+        <div class="contenedor-modal">
+            <div class="icono-info">¡ ... !</div>
+            <h2 id="tituloModalInfo">Información</h2>
+            <p id="textoModalInfo"></p>
+            <div class="botones-modal">
+                <button type="button" class="btn-guardar" onclick="cerrarModalInfo()">Aceptar</button>
+            </div>
+        </div>
+    </div>
 
 </div>
 
@@ -1779,12 +1792,12 @@
             const fecha = document.querySelector('input[name="fecha_vencimiento"]').value;
             const intentos = document.querySelector('input[name="intentos"]').value;
             const ponderacion = document.querySelector('input[name="ponderacion"]').value;
-            if (!titulo) { alert("Escribe un título para la actividad."); return; }
-            if (!fecha) { alert("Selecciona una fecha de vencimiento."); return; }
-            if (!intentos || intentos < 1 || intentos > 5) { alert("Los intentos máximos deben ser un número entre 1 y 5."); return; }
-            if (!ponderacion || ponderacion < 1 || ponderacion > 100) { alert("La ponderación debe ser un número entre 1 y 100 puntos."); return; }
+            if (!titulo) { mostrarModalInfo("Campo requerido", "Escribe un título para la actividad."); return; }
+            if (!fecha) { mostrarModalInfo("Campo requerido", "Selecciona una fecha de vencimiento."); return; }
+            if (!intentos || intentos < 1 || intentos > 5) { mostrarModalInfo("Valor no válido", "Los intentos máximos deben ser de 1 a 3."); return; }
+            if (!ponderacion || ponderacion < 1 || ponderacion > 100) { mostrarModalInfo("Valor no válido", "La ponderación debe ser un número entre 1 y 100 puntos."); return; }
             const tiempo = document.querySelector('input[name="tiempo_limite"]').value;
-            if (tiempo && (tiempo < 1 || tiempo > 120)) { alert("El tiempo límite, si se ingresa, debe estar entre 1 y 120 minutos."); return; }
+            if (tiempo && (tiempo < 1 || tiempo > 120)) { mostrarModalInfo("Valor no válido", "El tiempo límite debe estar entre 1 y 120 minutos."); return; }
         }
         if (currentStep < totalSteps) {
             currentStep++;
@@ -1794,36 +1807,49 @@
 
     // Versión final de prevStep (sin duplicados)
     function prevStep() {
-    // Solo mostramos el modal si estamos en el paso de edición (paso 2) o superior?
-    // Según la lógica actual, al estar en paso 2 se sale directamente.
-    // Vamos a mostrar el modal para cualquier paso que implique salir de la edición.
-    // En este caso, cuando currentStep === 2 se sale de la página. Para pasos > 2 solo retrocedemos.
-    if (currentStep === 2) {
-        // Abrir modal de confirmación personalizado
-        abrirModalConfirmacion(
-            "Salir sin guardar",
-            "Si decides Aceptar, no se harán las ediciones hechas hasta que guardes la configuración completa. ¿Estás seguro de que quieres salir?",
-            function() {
-                // Si el usuario acepta, redirigir a la lista de actividades
-                window.location.href = "{{ url_for('vista_contenido') }}";
-            }
-        );
-        return;
-    }
-    // Para pasos 3 y 4, retroceder un paso normalmente
-    if (currentStep > 2) {
-        currentStep--;
-        updateUI();
+        // Solo mostramos el modal si estamos en el paso de edición (paso 2) o superior?
+        // Según la lógica actual, al estar en paso 2 se sale directamente.
+        // Vamos a mostrar el modal para cualquier paso que implique salir de la edición.
+        // En este caso, cuando currentStep === 2 se sale de la página. Para pasos > 2 solo retrocedemos.
         if (currentStep === 2) {
-            if (inputPlantilla.value === 'FV01') actualizarBotonSiguienteFV();
-            else if (inputPlantilla.value === 'P003') actualizarBotonSiguienteMC();
-            else if (inputPlantilla.value === 'P004') actualizarBotonSiguienteSopa();
-            else restablecerBotonSiguiente();
-        } else {
-            restablecerBotonSiguiente();
+            // Abrir modal de confirmación personalizado
+            abrirModalConfirmacion(
+                "Salir sin guardar",
+                "Si decides Aceptar, no se harán las ediciones hechas hasta que guardes la configuración completa. ¿Estás seguro de que quieres salir?",
+                function () {
+                    // Si el usuario acepta, redirigir a la lista de actividades
+                    window.location.href = "{{ url_for('vista_contenido') }}";
+                }
+            );
+            return;
+        }
+        // Para pasos 3 y 4, retroceder un paso normalmente
+        if (currentStep > 2) {
+            currentStep--;
+            updateUI();
+            if (currentStep === 2) {
+                if (inputPlantilla.value === 'FV01') actualizarBotonSiguienteFV();
+                else if (inputPlantilla.value === 'P003') actualizarBotonSiguienteMC();
+                else if (inputPlantilla.value === 'P004') actualizarBotonSiguienteSopa();
+                else restablecerBotonSiguiente();
+            } else {
+                restablecerBotonSiguiente();
+            }
         }
     }
-}
+
+    // ==========================================
+    // MODAL DE INFORMACIÓN
+    // ==========================================
+    function mostrarModalInfo(titulo, mensaje) {
+        document.getElementById('tituloModalInfo').textContent = titulo;
+        document.getElementById('textoModalInfo').textContent = mensaje;
+        _abrirModal('modalInfo');
+    }
+
+    function cerrarModalInfo() {
+        _cerrarModal('modalInfo');
+    }
 
     // ==========================================
     // INICIALIZACIÓN
@@ -1844,7 +1870,7 @@
                 e.preventDefault();
                 abrirModalConfirmacion(
                     "Guardar cambios",
-                    "¿Estás seguro de que deseas guardar los cambios en esta actividad?",
+                    "¿Estás seguro de que deseas guardar los cambios en esta actividad? Por favor, si ya creó una Lección con una versión anterior de la actividad, actualice la Lección seleccionando otra vez la actividad antes de compartirla.",
                     guardarEdicion
                 );
             }
@@ -1894,7 +1920,7 @@
         document.querySelector('input[name="fecha_vencimiento"]').value = actividadData.fecha_vencimiento || '';
         document.querySelector('input[name="tiempo_limite"]').value = actividadData.tiempo || '';
         document.querySelector('input[name="intentos"]').value = actividadData.intentos || 3;
-        document.querySelector('input[name="ponderacion"]').value = actividadData.ponderacion || '';
+        document.querySelector('input[name="ponderacion"]').value = 10;
     }
 </script>
 

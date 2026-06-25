@@ -31,14 +31,14 @@
                         </a>
                         <a href="javascript:void(0);" class="action-icon-btn" title="Borrar"
                            onclick="eliminarActividad('{{ act['ARCHIVO'] }}', '{{ act['NOMBRE'] }}')">
-                            <img src="{{ url_for('static', filename='img/cerrar_boton.png') }}" class="icon-small delete-tint">
+                            <img src="{{ url_for('static', filename='img/eliminar2.png') }}" class="icon-small">
                         </a>
                     </div>
                 </div>
                 {% endfor %}
             {% else %}
                 <div class="empty-state">
-                    <p>No hay actividades creadas aún.</p>
+                    <p>No hay actividades creadas aún. Por favor, crea una nueva actividad.</p>
                     <a href="{{ url_for('crear_actividad') }}" class="btn-toro-outline">+ Crear actividad</a>
                 </div>
             {% endif %}
@@ -65,14 +65,14 @@
                         </a>
                         <a href="javascript:void(0);" class="action-icon-btn" title="Borrar"
                            onclick="eliminarLeccion('{{ leccion }}')">
-                            <img src="{{ url_for('static', filename='img/cerrar_boton.png') }}" class="icon-small delete-tint">
+                            <img src="{{ url_for('static', filename='img/eliminar2.png') }}" class="icon-small">
                         </a>
                     </div>
                 </div>
                 {% endfor %}
             {% else %}
                 <div class="empty-state">
-                    <p>No hay lecciones registradas aún.</p>
+                    <p>No hay lecciones registradas aún. Por favor, crea una nueva lección.</p>
                 </div>
             {% endif %}
         </div>

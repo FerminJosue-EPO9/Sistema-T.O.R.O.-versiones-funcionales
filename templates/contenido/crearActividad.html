@@ -105,9 +105,11 @@
                     <div class="contenido-panel">
                         <div id="fv-questions-container"></div>
                         <div class="estado-vacio" id="estado-vacio-fv">
-                            <p class="mensaje-vacio">Aún no has agregado ninguna pregunta. ¡Comienza creando la primera!</p>
+                            <p class="mensaje-vacio">Aún no has agregado ninguna pregunta. ¡Comienza creando la primera!
+                            </p>
                         </div>
-                        <button type="button" class="boton-agregar" id="botonAgregarPreguntaFV">+ Agregar pregunta</button>
+                        <button type="button" class="boton-agregar" id="botonAgregarPreguntaFV">+ Agregar
+                            pregunta</button>
                     </div>
                 </div>
 
@@ -119,9 +121,11 @@
                     <div class="contenido-panel">
                         <div id="mc-questions-container"></div>
                         <div class="estado-vacio" id="estado-vacio-mc">
-                            <p class="mensaje-vacio">Aún no has agregado ninguna pregunta. ¡Comienza creando la primera!</p>
+                            <p class="mensaje-vacio">Aún no has agregado ninguna pregunta. ¡Comienza creando la primera!
+                            </p>
                         </div>
-                        <button type="button" class="boton-agregar" id="botonAgregarPreguntaMC">+ Agregar pregunta</button>
+                        <button type="button" class="boton-agregar" id="botonAgregarPreguntaMC">+ Agregar
+                            pregunta</button>
                     </div>
                 </div>
 
@@ -158,19 +162,19 @@
                         <input type="date" name="fecha_vencimiento" class="input-toro" required>
                     </div>
                     <div class="form-group">
-                        <label>Tiempo límite (minutos):</label>
+                        <label>Tiempo estimado (minutos):</label>
                         <input type="number" name="tiempo_limite" class="input-toro" min="1" max="120"
                             placeholder="Ej: 60">
                     </div>
                     <div class="form-group">
                         <label>Intentos máximos:</label>
-                        <input type="number" name="intentos" id="intentos-input" class="input-toro" min="1" max="5"
+                        <input type="number" name="intentos" id="intentos-input" class="input-toro" min="1" max="3"
                             value="3" placeholder="Ej: 3" required>
                     </div>
                     <div class="form-group">
                         <label>Ponderación en puntos:</label>
-                        <input type="number" name="ponderacion" class="input-toro" min="1" max="100"
-                            placeholder="Ej: 10" required>
+                        <input type="number" name="ponderacion" class="input-toro disabled-input" value="10" readonly>
+                        <small style="color: #888; font-size: 0.8rem;">Valor fijo de 10 puntos (no modificable)</small>
                     </div>
                     <input type="hidden" name="instrucciones" value="Sin instrucciones adicionales.">
                 </div>
@@ -211,18 +215,31 @@
     </form>
 
     <!-- Modal de Confirmación (estilo información, dos botones) -->
-<div id="modalConfirmacion" class="modal">
-    <div class="modal-overlay" onclick="cerrarModalConfirmacion()"></div>
-    <div class="contenedor-modal">
-        <div class="icono-info">¿...?</div>
-        <h2 id="tituloConfirmacion">Confirmar acción</h2>
-        <p id="textoConfirmacion">¿Estás seguro de que deseas continuar?</p>
-        <div class="botones-modal">
-            <button type="button" class="btn-cancelar" onclick="cerrarModalConfirmacion()">Cancelar</button>
-            <button type="button" class="btn-guardar" id="btnConfirmarAccion">Aceptar</button>
+    <div id="modalConfirmacion" class="modal">
+        <div class="modal-overlay" onclick="cerrarModalConfirmacion()"></div>
+        <div class="contenedor-modal">
+            <div class="icono-info">¿...?</div>
+            <h2 id="tituloConfirmacion">Confirmar acción</h2>
+            <p id="textoConfirmacion">¿Estás seguro de que deseas continuar?</p>
+            <div class="botones-modal">
+                <button type="button" class="btn-cancelar" onclick="cerrarModalConfirmacion()">Cancelar</button>
+                <button type="button" class="btn-guardar" id="btnConfirmarAccion">Aceptar</button>
+            </div>
         </div>
     </div>
-</div>
+
+    <!-- Modal de Información (azul, un solo botón) -->
+    <div id="modalInfo" class="modal">
+        <div class="modal-overlay" onclick="cerrarModalInfo()"></div>
+        <div class="contenedor-modal">
+            <div class="icono-info">¡ ... !</div>
+            <h2 id="tituloModalInfo">Información</h2>
+            <p id="textoModalInfo"></p>
+            <div class="botones-modal">
+                <button type="button" class="btn-guardar" onclick="cerrarModalInfo()">Aceptar</button>
+            </div>
+        </div>
+    </div>
 
 </div>
 
@@ -1523,12 +1540,12 @@
             const fecha = document.querySelector('input[name="fecha_vencimiento"]').value;
             const intentos = document.querySelector('input[name="intentos"]').value;
             const ponderacion = document.querySelector('input[name="ponderacion"]').value;
-            if (!titulo) { alert("Escribe un título para la actividad."); return; }
-            if (!fecha) { alert("Selecciona una fecha de vencimiento."); return; }
-            if (!intentos || intentos < 1 || intentos > 5) { alert("Los intentos máximos deben ser un número entre 1 y 5."); return; }
-            if (!ponderacion || ponderacion < 1 || ponderacion > 100) { alert("La ponderación debe ser un número entre 1 y 100 puntos."); return; }
+            if (!titulo) { mostrarModalInfo("Campo requerido", "Escribe un título para la actividad."); return; }
+            if (!fecha) { mostrarModalInfo("Campo requerido", "Selecciona una fecha de vencimiento."); return; }
+            if (!intentos || intentos < 1 || intentos > 5) { mostrarModalInfo("Valor no válido", "Los intentos máximos deben ser de 1 a 3."); return; }
+            if (!ponderacion || ponderacion < 1 || ponderacion > 100) { mostrarModalInfo("Valor no válido", "La ponderación debe ser un número entre 1 y 100 puntos."); return; }
             const tiempo = document.querySelector('input[name="tiempo_limite"]').value;
-            if (tiempo && (tiempo < 1 || tiempo > 120)) { alert("El tiempo límite, si se ingresa, debe estar entre 1 y 120 minutos."); return; }
+            if (tiempo && (tiempo < 1 || tiempo > 120)) { mostrarModalInfo("Valor no válido", "El tiempo límite debe estar entre 1 y 120 minutos."); return; }
         }
         if (currentStep < totalSteps) {
             currentStep++;
@@ -1616,6 +1633,19 @@
             btnConfirmar.onclick = ejecutarConfirmacion;
         }
     });
+
+    // ==========================================
+    // MODAL DE INFORMACIÓN
+    // ==========================================
+    function mostrarModalInfo(titulo, mensaje) {
+        document.getElementById('tituloModalInfo').textContent = titulo;
+        document.getElementById('textoModalInfo').textContent = mensaje;
+        _abrirModal('modalInfo');
+    }
+
+    function cerrarModalInfo() {
+        _cerrarModal('modalInfo');
+    }
 </script>
 
 {% endblock %}
