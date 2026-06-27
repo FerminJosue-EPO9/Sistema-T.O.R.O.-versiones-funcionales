@@ -1,0 +1,28 @@
+{
+  "30c638adb99144d35008": [
+    {
+      "nombreArchivo": "REP_L-023_12306472_David.toro",
+      "idLeccion": "L-023",
+      "grupo": "204",
+      "materia": "M1",
+      "parcial": "P1",
+      "progresion": "PRO1",
+      "actividad": "SOPA DE LETRAS ACTIVIDAD",
+      "estudiante": "David",
+      "matricula": "12306472",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 6,
+          "fecha": "27/6/2026, 7:33:58 a.m."
+        },
+        {
+          "numero": 2,
+          "calificacion": 8,
+          "fecha": "27/6/2026, 7:33:58 a.m."
+        }
+      ],
+      "promedioFinal": "7.00"
+    }
+  ]
+}
