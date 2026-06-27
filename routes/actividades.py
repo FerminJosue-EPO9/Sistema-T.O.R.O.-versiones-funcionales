@@ -1,11 +1,31 @@
 import os
 import json
+import base64
 from datetime import datetime
 from flask import Blueprint, request, jsonify, current_app
 from werkzeug.utils import secure_filename
 
 actividades_bp = Blueprint('actividades', __name__)
 
+# ==========================================
+# FUNCIONES DE OFUSCACIÓN
+# ==========================================
+def ofuscar_texto(texto: str) -> str:
+    """Ofusca un texto con desplazamiento + base64."""
+    texto_modificado = "".join(chr(ord(c) + 3) for c in texto)
+    return base64.b64encode(texto_modificado.encode("utf-8")).decode("ascii")
+
+def desofuscar_texto(texto_ofuscado: str) -> str:
+    """Desofusca un texto ofuscado con ofuscar_texto. Si falla, devuelve el original."""
+    try:
+        texto_modificado = base64.b64decode(texto_ofuscado).decode("utf-8")
+        return "".join(chr(ord(c) - 3) for c in texto_modificado)
+    except Exception:
+        return texto_ofuscado
+
+# ==========================================
+# FUNCIONES AUXILIARES
+# ==========================================
 def ensure_actividades_folder():
     base_dir = current_app.root_path
     actividades_dir = os.path.join(base_dir, 'data', 'actividades')
@@ -27,6 +47,9 @@ def obtener_siguiente_id_actividad():
         json.dump({'ultimo_id': nuevo_num}, f)
     return f"ACT-{nuevo_num:03d}"
 
+# ==========================================
+# RUTA PARA GUARDAR ACTIVIDAD (CREACIÓN)
+# ==========================================
 @actividades_bp.route('/guardar_actividad_txt', methods=['POST'])
 def guardar_actividad_txt():
     try:
@@ -183,7 +206,7 @@ def guardar_actividad_txt():
         else:
             return jsonify({'success': False, 'error': 'Tipo de actividad no soportado'}), 400
 
-        # Guardar archivo (común para todos los tipos)
+        # Guardar archivo (con ofuscación)
         nombre_archivo = secure_filename(f"{nombre}.txt".replace(' ', '_'))
         actividades_dir = ensure_actividades_folder()
         ruta_completa = os.path.join(actividades_dir, nombre_archivo)
@@ -197,8 +220,10 @@ def guardar_actividad_txt():
             nombre_archivo = f"{base}_{contador}{ext}"
             ruta_completa = os.path.join(actividades_dir, nombre_archivo)
 
+        # 🔐 OFUSCAR antes de guardar
+        contenido_ofuscado = ofuscar_texto(contenido)
         with open(ruta_completa, 'w', encoding='utf-8') as f:
-            f.write(contenido)
+            f.write(contenido_ofuscado)
 
         print(f"✅ Actividad guardada con ID {id_actividad} en: {ruta_completa}")
 

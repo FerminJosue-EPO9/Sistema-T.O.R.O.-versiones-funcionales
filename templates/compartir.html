@@ -1,0 +1,165 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='contenido.css') }}">
+
+<div class="container-compartir">
+    <h1>Compartir Lecciones</h1>
+
+    <!-- Sección 1: Subir ZIP -->
+    <div class="section">
+        <h2>1. Publicar una lección (ZIP)</h2>
+        <div class="form-group">
+            <form id="formActividad">
+                <input type="file" id="archivoZip" accept=".zip" required>
+                <br>
+                <button type="submit" class="btn btn-primary">Publicar en la Red</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sección 2: Calificaciones -->
+    <div class="section clearfix">
+        <h2>2. Calificaciones entregadas (Buzón)</h2>
+        <div class="mb-15 mt-15 clearfix">
+            <button onclick="cargarCalificaciones()" class="btn btn-blue">🔄 Actualizar Buzón</button>
+            <button onclick="limpiarBuzon()" class="btn btn-red float-right">🗑️ Vaciar Buzón</button>
+        </div>
+        <div id="contenedorCalificaciones">
+            <p class="mensaje-vacio">Presiona "Actualizar Buzón" para cargar los datos...</p>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/jszip.min.js') }}"></script>
+<script>
+    // ==========================================
+    // VARIABLES Y URLS
+    // ==========================================
+    const URL_SUBIR = "{{ url_for('subir_actividad') }}";
+    const URL_LISTA = "{{ url_for('lista_calificaciones') }}";
+    const URL_DESCARGAR = "{{ url_for('descargar_calificacion', nombre='') }}";
+    const URL_LIMPIAR = "{{ url_for('limpiar_buzon') }}";
+
+    let calificacionesGlobal = [];
+
+    // ==========================================
+    // SUBIR ZIP
+    // ==========================================
+    document.getElementById('formActividad').onsubmit = async (e) => {
+        e.preventDefault();
+        const fileInput = document.getElementById('archivoZip');
+        if (!fileInput.files.length) return alert('Selecciona un archivo ZIP.');
+
+        const formData = new FormData();
+        formData.append('archivoZip', fileInput.files[0]);
+
+        try {
+            const response = await fetch(URL_SUBIR, { method: 'POST', body: formData });
+            const data = await response.json();
+            if (response.ok) {
+                alert(data.mensaje);
+                fileInput.value = '';
+            } else {
+                alert(data.error);
+            }
+        } catch {
+            alert('Error de conexión con el servidor.');
+        }
+    };
+
+    // ==========================================
+    // CARGAR CALIFICACIONES
+    // ==========================================
+    async function cargarCalificaciones() {
+        const contenedor = document.getElementById('contenedorCalificaciones');
+        try {
+            const res = await fetch(URL_LISTA);
+            const archivos = await res.json();
+
+            if (archivos.length === 0) {
+                contenedor.innerHTML = '<p class="mensaje-vacio">No han llegado calificaciones aún.</p>';
+                return;
+            }
+
+            calificacionesGlobal = archivos;
+
+            // Agrupar por fecha
+            const gruposPorDia = {};
+            archivos.forEach(a => {
+                if (!gruposPorDia[a.fecha]) gruposPorDia[a.fecha] = [];
+                gruposPorDia[a.fecha].push(a.nombre);
+            });
+
+            let html = '';
+            for (const fecha in gruposPorDia) {
+                const archivosDia = gruposPorDia[fecha];
+                html += `
+                    <div class="bloque-dia">
+                        <div class="header-dia">
+                            <h3>📅 Entregas del: ${fecha}</h3>
+                            <button onclick="descargarZipDia('${fecha}')" class="btn btn-orange">📦 Descargar ZIP del día</button>
+                        </div>
+                        <table class="tabla-calificaciones">
+                            <tbody>
+                                ${archivosDia.map(nombre => `
+                                    <tr>
+                                        <td>📂 ${nombre}</td>
+                                        <td style="width:130px;">
+                                            <a href="${URL_DESCARGAR}/${nombre}" class="btn btn-green">Individual</a>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+            contenedor.innerHTML = html;
+        } catch {
+            contenedor.innerHTML = '<p class="mensaje-vacio">Error al conectar con el servidor.</p>';
+        }
+    }
+
+    // ==========================================
+    // DESCARGAR ZIP POR DÍA
+    // ==========================================
+    async function descargarZipDia(fecha) {
+        if (typeof JSZip === 'undefined') {
+            alert('JSZip no está cargado. Verifica el script.');
+            return;
+        }
+        const zip = new JSZip();
+        const archivosDia = calificacionesGlobal.filter(a => a.fecha === fecha).map(a => a.nombre);
+
+        for (const nombre of archivosDia) {
+            const res = await fetch(`${URL_DESCARGAR}/${nombre}`);
+            const blob = await res.blob();
+            zip.file(nombre, blob);
+        }
+
+        const contenido = await zip.generateAsync({ type: 'blob' });
+        const url = URL.createObjectURL(contenido);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Reportes_Clase_${fecha}.zip`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    // ==========================================
+    // LIMPIAR BUZÓN
+    // ==========================================
+    async function limpiarBuzon() {
+        if (!confirm('¿Eliminar TODOS los reportes? Esta acción no se puede deshacer.')) return;
+        try {
+            const res = await fetch(URL_LIMPIAR, { method: 'POST' });
+            const data = await res.json();
+            alert(data.mensaje || data.error);
+            cargarCalificaciones();
+        } catch {
+            alert('Error al vaciar el buzón.');
+        }
+    }
+</script>
+{% endblock %}

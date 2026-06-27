@@ -487,3 +487,210 @@ body {
 .btn-aceptar:hover {
     background: var(--azul-dark);
 }
+
+/* =========================================
+   BOTÓN COMPARTIR (estilo similar a pestaña)
+   ========================================= */
+.btn-share {
+    display: inline-block;
+    background: #D9D9D9;
+    color: #000000;
+    padding: 12px 32px;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 1rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    cursor: pointer;
+    font-family: 'Inder', sans-serif;
+}
+
+.btn-share:hover {
+    background: #161C5F;
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(22, 28, 95, 0.3);
+}
+
+.btn-share:active {
+    transform: scale(0.98);
+}
+
+/* === ESTILOS PARA LA PESTAÑA DE COMPARTIR ===*/
+
+/* =========================================
+   COMPARTIR — Página de publicación de lecciones
+   ========================================= */
+
+.container-compartir {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.container-compartir h1 {
+    color: #1b5e20;
+    border-bottom: 2px solid #2e7d32;
+    padding-bottom: 10px;
+    margin-bottom: 30px;
+}
+
+.section {
+    margin-bottom: 40px;
+    background: white;
+    padding: 20px 25px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.section h2 {
+    color: #2e7d32;
+    margin-top: 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+/* --- Formulario de subida --- */
+.form-group {
+    background: #f1f8e9;
+    padding: 25px;
+    border-radius: 8px;
+    border: 2px dashed #2e7d32;
+    text-align: center;
+}
+
+.form-group input[type="file"] {
+    display: block;
+    margin: 15px auto;
+    padding: 10px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 80%;
+    max-width: 400px;
+}
+
+/* --- Botones genéricos (SOLO dentro de contenedores específicos) --- */
+.container-compartir .btn, 
+.contenido-container .btn {
+    border: none;
+    padding: 10px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    color: white !important;
+    font-size: 0.95rem;
+    transition: background 0.2s;
+    display: inline-block;
+    text-decoration: none;
+}
+
+.container-compartir .btn-primary, 
+.contenido-container .btn-primary { 
+    background: #2e7d32 !important; 
+}
+.container-compartir .btn-primary:hover, 
+.contenido-container .btn-primary:hover { 
+    background: #1b5e20 !important; 
+}
+
+.container-compartir .btn-blue, 
+.contenido-container .btn-blue { 
+    background: #0288d1 !important; 
+}
+.container-compartir .btn-blue:hover, 
+.contenido-container .btn-blue:hover { 
+    background: #01579b !important; 
+}
+
+.container-compartir .btn-red, 
+.contenido-container .btn-red { 
+    background: #d32f2f !important; 
+}
+.container-compartir .btn-red:hover, 
+.contenido-container .btn-red:hover { 
+    background: #b71c1c !important; 
+}
+
+.container-compartir .btn-orange, 
+.contenido-container .btn-orange { 
+    background: #f57c00 !important; 
+}
+.container-compartir .btn-orange:hover, 
+.contenido-container .btn-orange:hover { 
+    background: #e65100 !important; 
+}
+
+.container-compartir .btn-green, 
+.contenido-container .btn-green { 
+    background: #558b2f !important; 
+}
+.container-compartir .btn-green:hover, 
+.contenido-container .btn-green:hover { 
+    background: #33691e !important; 
+}
+
+/* --- Tabla de calificaciones --- */
+.tabla-calificaciones {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.tabla-calificaciones th,
+.tabla-calificaciones td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.tabla-calificaciones th {
+    background: #2e7d32;
+    color: white;
+    font-weight: 600;
+}
+
+.tabla-calificaciones tr:hover {
+    background: #f5f5f5;
+}
+
+/* --- Bloques de día --- */
+.bloque-dia {
+    background: #fff;
+    border: 1px solid #ccc;
+    margin-bottom: 25px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.bloque-dia .header-dia {
+    background: #e0e0e0;
+    padding: 12px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.bloque-dia .header-dia h3 {
+    margin: 0;
+    border: none;
+    padding: 0;
+    color: #333;
+    font-size: 1.1rem;
+}
+
+/* --- Espaciado y utilidades --- */
+.mt-15 { margin-top: 15px; }
+.mb-15 { margin-bottom: 15px; }
+.text-center { text-align: center; }
+.float-right { float: right; }
+.clearfix::after { content: ""; display: table; clear: both; }
+
+/* --- Mensaje vacío --- */
+.mensaje-vacio {
+    color: #888;
+    font-style: italic;
+    padding: 20px 0;
+    text-align: center;
+}
