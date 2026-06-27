@@ -1,0 +1,32 @@
+%
+@604@
+#Desarrollo de Software#
+*Parcial 1*
+*Parcial 2*
+*Parcial 3*
+#Ingenieria de Software#
+*Parcial 1*
+*Parcial 2*
+*Parcial 3*
+-
+273627|Fer|Méndez
+2983|Fer|Medina
+872748272674|Andrés|Peña Muñóz
+-
+%
+@204@
+#M1#
+*Parcial 1*
+*Parcial 2*
+*Parcial 3*
+-
+019283377|shoyo|fuentes
+872748272674|Andrés|Peña Muñóz
+273627|fer|mendez
+2983|fer|medina
+12263|Cristal Maria|Hernández Antonio
+098762|Jorge Luis|Rodríguez Antoni
+1624352|Carlos Torres|Gallegos Flores
+12306472|David Jacinto|Martines Gomez
+-
+%

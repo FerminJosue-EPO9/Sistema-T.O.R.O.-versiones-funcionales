@@ -19,7 +19,6 @@ let archivosProcesadosTemp = [];
 // ==================== INICIALIZACIÓN ====================
 
 window.addEventListener('DOMContentLoaded', () => {
-    // Limpiar temp al cargar cualquier página nueva
     archivosProcesadosTemp = [];
     verificarYMostrarInterfaz();
 });
@@ -45,7 +44,6 @@ function verificarYMostrarInterfaz() {
         </button>`;
 
     if (!calificaciones || calificaciones.length === 0) {
-        // ── Vista sin archivos ──────────────────────────────────────────────
         main.innerHTML = `
             ${breadcrumb}
             <div class="header-row">
@@ -80,7 +78,6 @@ function verificarYMostrarInterfaz() {
         configurarEventosSubida();
 
     } else {
-        // ── Vista con datos ─────────────────────────────────────────────────
         main.innerHTML = `
             ${breadcrumb}
             <div class="header-row">
@@ -99,7 +96,6 @@ function verificarYMostrarInterfaz() {
                 <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
                     <button class="btn-save" id="saveBtn" style="display:none;">Guardar</button>
                 </div>
-
             </div>
 
             <div class="btn-cargar-flotante">
@@ -125,7 +121,6 @@ function generarTablaCalificaciones(calificaciones) {
         return `<p class="empty-message">No hay datos que mostrar.</p>`;
     }
 
-    // 1. Descubrir estructura: progresiones → lecciones
     const progMap     = new Map();
     const leccionMeta = new Map();
 
@@ -133,10 +128,7 @@ function generarTablaCalificaciones(calificaciones) {
         const prog = c.progresion?.trim() || '(Sin progresión)';
         const lec  = c.idLeccion;
         if (!leccionMeta.has(lec)) {
-            leccionMeta.set(lec, {
-                progresion: prog,
-                actividad:  c.actividad?.trim() || lec
-            });
+            leccionMeta.set(lec, { progresion: prog, actividad: c.actividad?.trim() || lec });
         }
         if (!progMap.has(prog)) progMap.set(prog, []);
         if (!progMap.get(prog).includes(lec)) progMap.get(prog).push(lec);
@@ -145,29 +137,21 @@ function generarTablaCalificaciones(calificaciones) {
     const leccionesOrdenadas = [];
     progMap.forEach(lecs => lecs.forEach(l => leccionesOrdenadas.push(l)));
 
-    // 2. Agrupar por alumno
     const alumnosMap = new Map();
     calificaciones.forEach(c => {
         const key = c.matricula || c.estudiante;
         if (!alumnosMap.has(key)) {
-            alumnosMap.set(key, {
-                nombre:    c.estudiante,
-                matricula: c.matricula,
-                lecciones: {}
-            });
+            alumnosMap.set(key, { nombre: c.estudiante, matricula: c.matricula, lecciones: {} });
         }
         alumnosMap.get(key).lecciones[c.idLeccion] = c;
     });
 
-    // 3. Encabezado fila 1
     let tr1 = `
         <th rowspan="2" class="th-alumno">Nombre del Alumno</th>
         <th rowspan="2" class="th-leccion-fija">Lección</th>
     `;
     progMap.forEach((lecs, prog) => {
-        tr1 += `<th colspan="${lecs.length * 3}" class="th-leccion-header">
-                    ${escapeHtml(prog)}
-                </th>`;
+        tr1 += `<th colspan="${lecs.length * 3}" class="th-leccion-header">${escapeHtml(prog)}</th>`;
     });
     tr1 += `
         <th rowspan="2" class="th-promedio-general">
@@ -180,10 +164,9 @@ function generarTablaCalificaciones(calificaciones) {
         <th rowspan="2" class="th-acciones"></th>
     `;
 
-    // Fila 2 — intentos por lección
     let tr2 = '';
     leccionesOrdenadas.forEach(lec => {
-        const meta = leccionMeta.get(lec);
+        const meta  = leccionMeta.get(lec);
         const titulo = escapeHtml(meta?.actividad || lec);
         tr2 += `
             <th class="th-sub th-intento" title="${titulo}">Int. 1</th>
@@ -192,7 +175,6 @@ function generarTablaCalificaciones(calificaciones) {
         `;
     });
 
-    // 4. Filas de datos
     let tbody = '';
     alumnosMap.forEach(alumno => {
         const leccionesAlumno = leccionesOrdenadas.filter(lec => alumno.lecciones[lec]);
@@ -203,7 +185,6 @@ function generarTablaCalificaciones(calificaciones) {
         const matKey      = escapeHtml(alumno.matricula || alumno.nombre);
 
         if (leccionesAlumno.length === 0) {
-            // Alumno sin ninguna lección
             let tr = `<tr>
                 <td class="td-alumno">
                     <strong style="display:block;word-break:break-word;white-space:normal;min-width:120px;max-width:180px;">${escapeHtml(alumno.nombre)}</strong>
@@ -222,38 +203,31 @@ function generarTablaCalificaciones(calificaciones) {
                        <button class="btn-eliminar-alumno"
                                onclick="confirmarEliminarAlumno('${matKey}','${escapeHtml(alumno.nombre)}')"
                                title="Eliminar alumno">&#x1F5D1;</button>
-                   </td>
-                   </tr>`;
+                   </td></tr>`;
             tbody += tr;
             return;
         }
 
         leccionesAlumno.forEach((lecActual, idx) => {
             let tr = '<tr>';
-
-            // Celda de nombre — solo en primera fila del alumno
             if (idx === 0) {
                 tr += `
-                    <td rowspan="${numFilas}" 
-                        class="td-alumno"
-                        style="width: 200px; min-width: 200px; max-width: 200px;">
-                        <div style="display: flex; flex-direction: column; gap: 4px; width: 100%;">
-                            <strong style="display: block; word-break: break-word; white-space: normal; line-height: 1.3;">
+                    <td rowspan="${numFilas}" class="td-alumno"
+                        style="width:200px;min-width:200px;max-width:200px;">
+                        <div style="display:flex;flex-direction:column;gap:4px;width:100%;">
+                            <strong style="display:block;word-break:break-word;white-space:normal;line-height:1.3;">
                                 ${escapeHtml(alumno.nombre)}
                             </strong>
                             ${alumno.matricula ? `
-                                <span style="display: block; word-break: break-word; white-space: normal; font-size: 0.75rem; color: #666;">
+                                <span style="display:block;word-break:break-word;white-space:normal;font-size:0.75rem;color:#666;">
                                     ${escapeHtml(alumno.matricula)}
-                                </span>
-                            ` : ''}
+                                </span>` : ''}
                         </div>
-                    </td>
-                `;
+                    </td>`;
             }
 
             tr += `<td class="td-leccion">${escapeHtml(lecActual)}</td>`;
 
-            // Celdas de intentos
             leccionesOrdenadas.forEach(lec => {
                 const reg = lec === lecActual ? alumno.lecciones[lec] : null;
                 if (!reg) {
@@ -277,7 +251,6 @@ function generarTablaCalificaciones(calificaciones) {
                     </td>`;
             });
 
-            // Promedio general y botón eliminar — solo en primera fila del alumno
             if (idx === 0) {
                 tr += `
                     <td rowspan="${numFilas}" class="td-promedio-general ${promClase}">
@@ -308,66 +281,21 @@ function generarTablaCalificaciones(calificaciones) {
     `;
 }
 
-    // Función para establecer anchos dinámicamente
-    function establecerAnchosColumnas() {
-        const config = {
-            nombre: 200,    // px
-            leccion: 150,   // px
-            intento: 70,    // px
-            promedio: 100,  // px
-            acciones: 60    // px
-        };
-        
-        // Crear style dinámico
-        const style = document.createElement('style');
-        style.textContent = `
-            .calificaciones-table {
-                table-layout: fixed;
-                width: 100%;
-            }
-            .calificaciones-table th.th-alumno,
-            .calificaciones-table td.td-alumno {
-                width: ${config.nombre}px !important;
-                min-width: ${config.nombre}px !important;
-                max-width: ${config.nombre}px !important;
-            }
-            .calificaciones-table th.th-leccion-fija,
-            .calificaciones-table td.td-leccion {
-                width: ${config.leccion}px !important;
-                min-width: ${config.leccion}px !important;
-                max-width: ${config.leccion}px !important;
-            }
-            .calificaciones-table th.th-intento,
-            .calificaciones-table td.td-intento {
-                width: ${config.intento}px !important;
-                min-width: ${config.intento}px !important;
-                max-width: ${config.intento}px !important;
-            }
-        `;
-        document.head.appendChild(style);
-    }
-
-    // Llamar a la función al cargar
-    establecerAnchosColumnas();
-
-// Función auxiliar para calcular promedio desde Map
-function calcularPromedioGeneralDesdeMap(leccionesMap, todasLasLecciones) {
-    let suma = 0;
-    let count = 0;
-    
-    todasLasLecciones.forEach(lec => {
-        if (leccionesMap.has(lec)) {
-            const leccion = leccionesMap.get(lec);
-            if (leccion.intentos && leccion.intentos.length > 0) {
-                const mejorIntento = Math.max(...leccion.intentos.map(i => i.calificacion));
-                suma += mejorIntento;
-                count++;
-            }
-        }
-    });
-    
-    return count > 0 ? suma / count : null;
+function establecerAnchosColumnas() {
+    const style = document.createElement('style');
+    style.textContent = `
+        .calificaciones-table { table-layout:fixed; width:100%; }
+        .calificaciones-table th.th-alumno,
+        .calificaciones-table td.td-alumno   { width:200px !important; min-width:200px !important; max-width:200px !important; }
+        .calificaciones-table th.th-leccion-fija,
+        .calificaciones-table td.td-leccion  { width:150px !important; min-width:150px !important; max-width:150px !important; }
+        .calificaciones-table th.th-intento,
+        .calificaciones-table td.td-intento  { width:70px  !important; min-width:70px  !important; max-width:70px  !important; }
+    `;
+    document.head.appendChild(style);
 }
+establecerAnchosColumnas();
+
 // ==================== CÁLCULO DE PROMEDIO ====================
 
 function calcularPromedioGeneral(leccionesDelAlumno, leccionesOrdenadas) {
@@ -405,15 +333,9 @@ function toggleTooltipPromedio(e) {
         box.textContent = 'El promedio se calcula con la calificación del último intento de cada actividad.';
         document.body.appendChild(box);
     }
-    if (box.classList.contains('visible')) {
-        box.classList.remove('visible');
-        return;
-    }
+    if (box.classList.contains('visible')) { box.classList.remove('visible'); return; }
     const rect = btn.getBoundingClientRect();
-    box.style.cssText = `position:fixed;z-index:9999;
-        top:${rect.top - 8}px;
-        left:${Math.max(8, rect.right - 220)}px;
-        transform:translateY(-100%);`;
+    box.style.cssText = `position:fixed;z-index:9999;top:${rect.top-8}px;left:${Math.max(8,rect.right-220)}px;transform:translateY(-100%);`;
     box.classList.add('visible');
 }
 document.addEventListener('click', () => {
@@ -431,16 +353,13 @@ function confirmarEliminarAlumno(matriculaKey, nombreAlumno) {
         modal.style.display = 'none';
         document.body.appendChild(modal);
     }
-
     modal.innerHTML = `
         <div class="modal-toro-box">
             <div class="modal-toro-body">
                 <div class="modal-toro-icon" style="color:#d97706;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                         stroke-linecap="round" stroke-linejoin="round"
-                         style="width:100%;height:100%;">
-                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94
-                                 a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                         stroke-linecap="round" stroke-linejoin="round" style="width:100%;height:100%;">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
                         <line x1="12" y1="9"  x2="12"    y2="13"/>
                         <line x1="12" y1="17" x2="12.01" y2="17"/>
                     </svg>
@@ -448,13 +367,10 @@ function confirmarEliminarAlumno(matriculaKey, nombreAlumno) {
                 <div class="modal-toro-text">
                     <strong>¿Eliminar alumno?</strong>
                     <p style="margin-top:8px;">
-                        Estás a punto de eliminar a
-                        <strong>${escapeHtml(nombreAlumno)}</strong>
+                        Estás a punto de eliminar a <strong>${escapeHtml(nombreAlumno)}</strong>
                         y <em>todas</em> sus calificaciones de este parcial.
                     </p>
-                    <p class="sub-alert" style="margin-top:6px;">
-                        Esta acción no se puede deshacer.
-                    </p>
+                    <p class="sub-alert" style="margin-top:6px;">Esta acción no se puede deshacer.</p>
                 </div>
             </div>
             <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:4px;">
@@ -467,8 +383,7 @@ function confirmarEliminarAlumno(matriculaKey, nombreAlumno) {
                     Eliminar
                 </button>
             </div>
-        </div>
-    `;
+        </div>`;
     modal.style.display = 'flex';
 }
 
@@ -481,14 +396,12 @@ async function ejecutarEliminarAlumno(matriculaKey) {
         });
         const json = await resp.json();
         if (json.success) {
-            // Actualizar calificacionesServer localmente para no recargar toda la página
             calificacionesServer = (calificacionesServer || []).filter(
                 c => (c.matricula || c.estudiante) !== matriculaKey
             );
-            // ✅ Limpiar también el buffer temporal para ese alumno
             archivosProcesadosTemp = archivosProcesadosTemp.filter(
                 d => (d.matricula || d.estudiante) !== matriculaKey
-            );            
+            );
             document.getElementById('modalConfirmarEliminar').style.display = 'none';
             mostrarMensaje('Alumno eliminado correctamente', false);
             verificarYMostrarInterfaz();
@@ -531,11 +444,9 @@ function configurarEventosSubida() {
 
 function configurarEventosConDatos() {
     const btnAgregar = document.getElementById('btnAgregarArchivos');
-//    const btnLimpiar = document.getElementById('btnLimpiarContexto');
     const saveBtn    = document.getElementById('saveBtn');
     let   fileInput  = document.getElementById('fileInput');
 
-    // Clonar para limpiar listeners previos
     const nuevoInput = fileInput.cloneNode(true);
     fileInput.parentNode.replaceChild(nuevoInput, fileInput);
     fileInput = nuevoInput;
@@ -555,19 +466,10 @@ function configurarEventosConDatos() {
 
 // ==================== PROCESAMIENTO DE ARCHIVOS ====================
 
-/**
- * Clave única para un registro: matrícula + lección.
- * Se usa en todas las comprobaciones de duplicados.
- */
 function _claveRegistro(matricula, idLeccion) {
     return `${(matricula || '').trim()}::${(idLeccion || '').trim()}`;
 }
 
-/**
- * Comprueba si el nuevo archivo trae al menos un intento que NO está
- * todavía en calificacionesServer para ese alumno + lección.
- * Si el registro ni siquiera existe en el servidor, devuelve true.
- */
 function _tieneIntentosNuevos(nuevoDatos) {
     const existente = (calificacionesServer || []).find(
         c => c.matricula?.trim() === nuevoDatos.matricula?.trim() &&
@@ -579,30 +481,42 @@ function _tieneIntentosNuevos(nuevoDatos) {
     );
 }
 
+/**
+ * Extrae el número de parcial de un string que puede venir como:
+ *   "3"         → 3
+ *   "Parcial 3" → 3   (formato nuevo de los archivos .TORO)
+ *   "Parcial: 3"→ 3   (formato antiguo)
+ * Devuelve el número entero, o null si no se puede extraer.
+ */
+function _extraerNumeroParcial(valor) {
+    if (valor === null || valor === undefined) return null;
+    const str = valor.toString().trim();
+    // Buscar el primer número en el string (cubre "3", "Parcial 3", "Parcial: 3", etc.)
+    const m = str.match(/\d+/);
+    return m ? parseInt(m[0]) : null;
+}
+
 async function procesarArchivos(files) {
     const archivosParseados = [];
 
-    // Normalizador: elimina acentos y pasa a minúsculas para comparar
     const norm = str => str
         ? str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase()
         : '';
 
-    // Número de parcial esperado (1-based)
-    const parcialEsperadoNum = (() => {
-        const m = NOMBRE_PARCIAL.match(/\d+/);
-        return m ? parseInt(m[0]) : null;
-    })();
+    // ── FIX: usar _extraerNumeroParcial en lugar de .match(/\d+/) directo ──
+    // NOMBRE_PARCIAL viene del servidor (ej: "Parcial 3" o "Parcial 1")
+    const parcialEsperadoNum = _extraerNumeroParcial(NOMBRE_PARCIAL);
 
     for (const file of files) {
 
-        // ── 0. Extensión ─────────────────────────────────────────────────────
+        // 0. Extensión
         const ext = file.name.split('.').pop().toLowerCase();
         if (ext !== 'toro') {
             mostrarMensaje(`✗ ${file.name}: extensión inválida (se esperaba .TORO)`, true, 5000);
             continue;
         }
 
-        // ── 1. Leer y desofuscar ──────────────────────────────────────────────
+        // 1. Leer y desofuscar
         let datos;
         try {
             const contenidoRaw = await readFileAsText(file);
@@ -613,139 +527,103 @@ async function procesarArchivos(files) {
             datos = parsearArchivoOfuscado(contenidoRaw, file.name);
         } catch (err) {
             if (err.message?.startsWith('MANIPULADO')) {
-                mostrarMensaje(
-                    `⚠ ${file.name}: archivo MANIPULADO — calificaciones no confiables`,
-                    true, 7000
-                );
+                mostrarMensaje(`⚠ ${file.name}: archivo MANIPULADO — calificaciones no confiables`, true, 7000);
             } else if (err.message?.startsWith('CORRUPTO')) {
-                mostrarMensaje(
-                    `✗ ${file.name}: archivo corrupto o Base64 inválido`,
-                    true, 5000
-                );
+                mostrarMensaje(`✗ ${file.name}: archivo corrupto o Base64 inválido`, true, 5000);
             } else if (err.message?.startsWith('INVALIDO')) {
-                mostrarMensaje(
-                    `✗ ${file.name}: formato no reconocido (no es un archivo .TORO válido)`,
-                    true, 5000
-                );
+                mostrarMensaje(`✗ ${file.name}: formato no reconocido (no es un archivo .TORO válido)`, true, 5000);
             } else {
                 mostrarMensaje(`✗ ${file.name}: error inesperado al procesar`, true, 5000);
             }
             continue;
         }
 
-        // ==================== VALIDACIONES DE CAMPOS OBLIGATORIOS ====================
-        
-        // ── 2. Validar que la MATRÍCULA no esté vacía ──────────────────────────
-        if (!datos.matricula || datos.matricula.trim() === '') {
+        // 2. Matrícula obligatoria
+        if (!datos.matricula?.trim()) {
+            mostrarMensaje(`✗ ${file.name}: la matrícula está vacía.`, true, 6000);
+            continue;
+        }
+
+        // 3. Nombre obligatorio
+        if (!datos.estudiante?.trim()) {
+            mostrarMensaje(`✗ ${file.name}: el nombre del estudiante está vacío.`, true, 6000);
+            continue;
+        }
+
+        // 4. Grupo obligatorio
+        if (!datos.grupo?.trim()) {
+            mostrarMensaje(`✗ ${file.name}: el campo GRUPO está vacío.`, true, 6000);
+            continue;
+        }
+
+        // 5. Materia obligatoria
+        if (!datos.materia?.trim()) {
+            mostrarMensaje(`✗ ${file.name}: el campo MATERIA está vacío.`, true, 6000);
+            continue;
+        }
+
+        // 6. Parcial obligatorio — ahora usa _extraerNumeroParcial
+        const parcialArchivoNum = _extraerNumeroParcial(datos.parcial);
+        if (parcialArchivoNum === null) {
             mostrarMensaje(
-                `✗ ${file.name}: la matrícula está vacía. El archivo debe contener la matrícula del alumno.`,
+                `✗ ${file.name}: el campo PARCIAL está vacío o no contiene un número válido.`,
                 true, 6000
             );
             continue;
         }
 
-        // ── 3. Validar que el NOMBRE del ESTUDIANTE no esté vacío ───────────────
-        if (!datos.estudiante || datos.estudiante.trim() === '') {
-            mostrarMensaje(
-                `✗ ${file.name}: el nombre del estudiante está vacío. El archivo debe contener el nombre del alumno.`,
-                true, 6000
-            );
+        // 7. Lección obligatoria
+        if (!datos.idLeccion?.trim()) {
+            mostrarMensaje(`✗ ${file.name}: el campo ID_LECCIÓN está vacío.`, true, 6000);
             continue;
         }
 
-        // ── 4. Validar que el GRUPO no esté vacío ───────────────────────────────
-        if (!datos.grupo || datos.grupo.trim() === '') {
-            mostrarMensaje(
-                `✗ ${file.name}: el campo GRUPO está vacío. El archivo debe especificar el grupo.`,
-                true, 6000
-            );
+        // 8. Al menos un intento
+        if (!datos.intentos?.length) {
+            mostrarMensaje(`✗ ${file.name}: no contiene intentos de calificación.`, true, 6000);
             continue;
         }
 
-        // ── 5. Validar que la MATERIA no esté vacía ─────────────────────────────
-        if (!datos.materia || datos.materia.trim() === '') {
-            mostrarMensaje(
-                `✗ ${file.name}: el campo MATERIA está vacío. El archivo debe especificar la materia.`,
-                true, 6000
-            );
-            continue;
-        }
-
-        // ── 6. Validar que el PARCIAL no esté vacío ─────────────────────────────
-        if (datos.parcial === null || datos.parcial === undefined || datos.parcial.toString().trim() === '') {
-            mostrarMensaje(
-                `✗ ${file.name}: el campo PARCIAL está vacío. El archivo debe especificar el número de parcial.`,
-                true, 6000
-            );
-            continue;
-        }
-
-        // ── 7. Validar que la LECCIÓN/ID no esté vacía ──────────────────────────
-        if (!datos.idLeccion || datos.idLeccion.trim() === '') {
-            mostrarMensaje(
-                `✗ ${file.name}: el campo ID_LECCIÓN está vacío. El archivo debe especificar la lección.`,
-                true, 6000
-            );
-            continue;
-        }
-
-        // ── 8. Validar que hay al menos un INTENTO ──────────────────────────────
-        if (!datos.intentos || datos.intentos.length === 0) {
-            mostrarMensaje(
-                `✗ ${file.name}: no contiene intentos de calificación. El archivo debe tener al menos un intento.`,
-                true, 6000
-            );
-            continue;
-        }
-
-        // ==================== VALIDACIONES DE COINCIDENCIA ====================
-
-        // ── 9. Alumno pertenece al grupo (por matrícula) ──────────────────────
-        const enGrupo = ALUMNOS_GRUPO.some(
-            a => norm(a.matricula) === norm(datos.matricula)
-        );
+        // 9. Alumno pertenece al grupo
+        const enGrupo = ALUMNOS_GRUPO.some(a => norm(a.matricula) === norm(datos.matricula));
         if (!enGrupo) {
             mostrarMensaje(
-                `✗ ${file.name}: la matrícula "${datos.matricula}" (${datos.estudiante}) no está registrada en el grupo "${NOMBRE_GRUPO}". Verifica que el alumno pertenezca a este grupo.`,
+                `✗ ${file.name}: la matrícula "${datos.matricula}" (${datos.estudiante}) no está registrada en el grupo "${NOMBRE_GRUPO}".`,
                 true, 7000
             );
             continue;
         }
 
-        // ── 10. Grupo del archivo coincide con el contexto ─────────────────────
+        // 10. Grupo coincide
         if (norm(datos.grupo) !== norm(NOMBRE_GRUPO)) {
             mostrarMensaje(
-                `✗ ${file.name}: el archivo es del grupo "${datos.grupo}" pero estás en el grupo "${NOMBRE_GRUPO}". Sube este archivo en el grupo correcto.`,
+                `✗ ${file.name}: el archivo es del grupo "${datos.grupo}" pero estás en "${NOMBRE_GRUPO}".`,
                 true, 7000
             );
             continue;
         }
 
-        // ── 11. Materia coincide con el contexto ───────────────────────────────
+        // 11. Materia coincide
         if (norm(datos.materia) !== norm(NOMBRE_MATERIA)) {
             mostrarMensaje(
-                `✗ ${file.name}: el archivo es de la materia "${datos.materia}" pero estás en "${NOMBRE_MATERIA}". Sube este archivo en la materia correcta.`,
+                `✗ ${file.name}: materia incorrecta — archivo: "${datos.materia}", esperado: "${NOMBRE_MATERIA}".`,
                 true, 7000
             );
             continue;
         }
 
-        // ── 12. Parcial coincide con el contexto ───────────────────────────────
-        const parcialArchivo = parseInt(datos.parcial);
-        if (parcialEsperadoNum !== null && !isNaN(parcialArchivo) && parcialArchivo !== parcialEsperadoNum) {
+        // 12. Parcial coincide — FIX: compara números extraídos de ambos lados
+        if (parcialEsperadoNum !== null && parcialArchivoNum !== parcialEsperadoNum) {
             mostrarMensaje(
-                `✗ ${file.name}: el archivo es del Parcial ${parcialArchivo} pero estás en "${NOMBRE_PARCIAL}". Sube este archivo en el parcial correcto.`,
+                `✗ ${file.name}: parcial incorrecto — archivo: Parcial ${parcialArchivoNum}, esperado: ${NOMBRE_PARCIAL}.`,
                 true, 7000
             );
             continue;
         }
 
-        // ── 13. No duplicado en la sesión actual ──────────────────────────────
+        // 13. No duplicado en sesión actual
         const claveReg = _claveRegistro(datos.matricula, datos.idLeccion);
-        const yaEnTemp = archivosProcesadosTemp.some(
-            t => _claveRegistro(t.matricula, t.idLeccion) === claveReg
-        );
-        if (yaEnTemp) {
+        if (archivosProcesadosTemp.some(t => _claveRegistro(t.matricula, t.idLeccion) === claveReg)) {
             mostrarMensaje(
                 `⚠ ${file.name}: "${datos.estudiante}" / lección ${datos.idLeccion} ya fue agregado en esta sesión`,
                 true, 4000
@@ -753,7 +631,7 @@ async function procesarArchivos(files) {
             continue;
         }
 
-        // ── 14. No duplicado en el servidor (sin intentos nuevos) ────────────
+        // 14. No duplicado en servidor
         if (!_tieneIntentosNuevos(datos)) {
             mostrarMensaje(
                 `⚠ ${file.name}: los intentos de "${datos.estudiante}" en lección ${datos.idLeccion} ya están guardados`,
@@ -762,7 +640,6 @@ async function procesarArchivos(files) {
             continue;
         }
 
-        // ── ✅ Todos los filtros superados ────────────────────────────────────
         archivosParseados.push(datos);
     }
 
@@ -780,21 +657,17 @@ async function procesarArchivos(files) {
 async function guardarCalificaciones() {
     if (archivosProcesadosTemp.length === 0) return;
 
-    // Validación final antes de guardar
     const registrosInvalidos = validarRegistrosAntesDeGuardar(archivosProcesadosTemp);
-    
     if (registrosInvalidos.length > 0) {
-        let mensajeError = `No se pueden guardar ${registrosInvalidos.length} archivo(s) con campos vacíos:\n`;
+        let msg = `No se pueden guardar ${registrosInvalidos.length} archivo(s) con campos vacíos:`;
         registrosInvalidos.forEach(ri => {
-            mensajeError += `\n• ${ri.archivo} (${ri.alumno}): faltan [${ri.errores.join(', ')}]`;
+            msg += `\n• ${ri.archivo} (${ri.alumno}): faltan [${ri.errores.join(', ')}]`;
         });
-        mostrarMensaje(mensajeError, true, 10000);
+        mostrarMensaje(msg, true, 10000);
         return;
     }
 
-    // Re-validación de intentos nuevos
     const paraEnviar = archivosProcesadosTemp.filter(d => _tieneIntentosNuevos(d));
-
     if (paraEnviar.length === 0) {
         mostrarMensaje('No hay calificaciones nuevas para guardar', true, 4000);
         archivosProcesadosTemp = [];
@@ -841,7 +714,6 @@ function mostrarPreview(archivos) {
 // ==================== DESOFUSCADO ====================
 
 function desofuscarReporte(base64) {
-    // Paso 1: Base64 → bytes (compatible con Python base64.b64encode)
     let bytes;
     try {
         const binStr = atob(base64.trim());
@@ -849,35 +721,26 @@ function desofuscarReporte(base64) {
     } catch {
         throw new Error('CORRUPTO: el archivo no es Base64 válido.');
     }
-
-    // Paso 2: bytes UTF-8 → string (compatible con Python .encode("utf-8"))
     let textoDesplazado;
     try {
         textoDesplazado = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
     } catch {
         throw new Error('CORRUPTO: los bytes no son UTF-8 válido.');
     }
-
-    // Paso 3: Revertir César −3
     const textoOriginal = textoDesplazado
         .split('')
         .map(char => String.fromCharCode(char.charCodeAt(0) - 3))
         .join('');
-
-    // Paso 4: Separar contenido de firma y verificar integridad
     const partes = textoOriginal.split('||');
     if (partes.length < 2) {
         throw new Error('INVALIDO: formato de archivo no reconocido (falta separador ||).');
     }
-
     const contenido      = partes[0];
     const firmaRecibida  = partes[1].trim();
     const firmaCalculada = (contenido.length * 77).toString();
-
     if (firmaRecibida !== firmaCalculada) {
         throw new Error('MANIPULADO: las firmas no coinciden. Las calificaciones no son confiables.');
     }
-
     return contenido;
 }
 
@@ -893,10 +756,13 @@ function parsearArchivoOfuscado(contenidoRaw, nombreArchivo) {
     };
 
     const patrones = {
+        // ── FIX: captura todo después de ID_LECCION: o LECCIÓN: (incluyendo "L-083")
         idLeccion:     /(?:ID_LECCI[OÓ]N|LECCI[OÓ]N):\s*([^\n\r]+)/i,
         grupo:         /GRUPO:\s*([^\n\r]+)/i,
         materia:       /MATERIA:\s*([^\n\r]+)/i,
-        parcial:       /PARCIAL:\s*(\d+)/i,
+        // ── FIX PRINCIPAL: captura "Parcial 3", "3", "Parcial: 3", etc.
+        //    Ya no usamos \d+ — capturamos todo el texto y extraemos el número después
+        parcial:       /PARCIAL:\s*([^\n\r]+)/i,
         progresion:    /PROGRESI[OÓ]N:\s*([^\n\r]+)/i,
         actividad:     /ACTIVIDAD:\s*([^\n\r]+)/i,
         estudiante:    /ESTUDIANTE:\s*([^\n\r]+)/i,
@@ -912,13 +778,8 @@ function parsearArchivoOfuscado(contenidoRaw, nombreArchivo) {
         }
     }
 
-    // Validación especial para parcial (puede ser número 0)
-    if (datos.parcial !== null) {
-        const numParcial = parseInt(datos.parcial);
-        if (isNaN(numParcial)) {
-            datos.parcial = null;
-        }
-    }
+    // datos.parcial ahora puede ser "Parcial 3", "3", "Parcial: 1", etc.
+    // _extraerNumeroParcial se encarga de convertirlo a número en la validación
 
     const patronIntento = /Intento\s+(\d+):\s+([\d.]+)\/10/g;
     let m;
@@ -933,46 +794,34 @@ function parsearArchivoOfuscado(contenidoRaw, nombreArchivo) {
     return datos;
 }
 
-/**
- * Validación final antes de guardar en el servidor
- * Asegura que ningún registro tenga campos obligatorios vacíos
- */
+// ==================== VALIDACIÓN FINAL ANTES DE GUARDAR ====================
+
 function validarRegistrosAntesDeGuardar(registros) {
     const camposObligatorios = ['matricula', 'estudiante', 'grupo', 'materia', 'parcial', 'idLeccion'];
     const registrosInvalidos = [];
-    
     for (const registro of registros) {
         const errores = [];
-        
         for (const campo of camposObligatorios) {
             const valor = registro[campo];
             if (valor === null || valor === undefined || valor.toString().trim() === '') {
                 errores.push(campo);
             }
         }
-        
-        // Validar que tenga al menos un intento
-        if (!registro.intentos || registro.intentos.length === 0) {
-            errores.push('intentos');
-        }
-        
+        if (!registro.intentos?.length) errores.push('intentos');
         if (errores.length > 0) {
             registrosInvalidos.push({
                 archivo: registro.nombreArchivo || 'desconocido',
-                alumno: registro.estudiante || '?',
-                errores: errores
+                alumno:  registro.estudiante || '?',
+                errores
             });
         }
     }
-    
     return registrosInvalidos;
 }
 
 // ==================== LEER ARCHIVO ====================
 
 function readFileAsText(file) {
-    // Leemos como ArrayBuffer para evitar que el navegador normalice los \r
-    // del archivo .TORO antes de que llegue a desofuscarReporte().
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = e => {
@@ -995,10 +844,8 @@ function mostrarMensaje(texto, esError = false, duracion = 3800) {
         contenedor.id = 'toast-contenedor';
         document.body.appendChild(contenedor);
     }
-
-    const toast  = document.createElement('div');
+    const toast = document.createElement('div');
     toast.className = 'toast-card ' + (esError ? 'toast-error' : 'toast-exito');
-
     const icono = esError
         ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                <circle cx="12" cy="12" r="10"/>
@@ -1009,17 +856,13 @@ function mostrarMensaje(texto, esError = false, duracion = 3800) {
                <circle cx="12" cy="12" r="10"/>
                <polyline points="9 12 11 14 15 10"/>
            </svg>`;
-
     toast.innerHTML = `
         <div class="toast-icono">${icono}</div>
         <span class="toast-texto">${escapeHtml(texto)}</span>
-        <button class="toast-cerrar"
-                onclick="this.closest('.toast-card').remove()">&#x2715;</button>
+        <button class="toast-cerrar" onclick="this.closest('.toast-card').remove()">&#x2715;</button>
     `;
-
     contenedor.appendChild(toast);
     requestAnimationFrame(() => toast.classList.add('toast-visible'));
-
     setTimeout(() => {
         toast.classList.remove('toast-visible');
         toast.classList.add('toast-saliendo');
