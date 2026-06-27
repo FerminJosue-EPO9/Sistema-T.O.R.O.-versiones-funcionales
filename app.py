@@ -1,7 +1,3 @@
-import subprocess
-import sys
-import os
-
 def install_requirements():
     """Instala automáticamente las dependencias desde requirements.txt si no están."""
     req_file = os.path.join(os.path.dirname(__file__), 'requirements.txt')
@@ -12,28 +8,38 @@ def install_requirements():
     subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", req_file])
     print("✅ Dependencias instaladas correctamente.")
 
-# Intentar importar Flask (la primera dependencia crítica)
+# ==========================================
+# IMPORTS ESTÁNDAR
+# ==========================================
+import os
+import sys
+import subprocess
+import re
+import shutil
+import json
+import tempfile
+import hashlib
+import unicodedata
+import base64
+import zipfile
+
+# ==========================================
+# IMPORTS DE TERCEROS (Flask y sus extensiones)
+# ==========================================
 try:
-    from flask import Flask, jsonify, current_app, render_template, request, redirect, url_for, session
+    from flask import Flask, jsonify, current_app, render_template, request, redirect, url_for, session, abort, send_file
 except ImportError:
     print("Flask no está instalado. Procediendo a instalar todas las dependencias...")
     install_requirements()
     # Después de instalar, reintentamos el import
-    from flask import Flask, jsonify, current_app, render_template, request, redirect, url_for, session
+    from flask import Flask, jsonify, current_app, render_template, request, redirect, url_for, session, abort, send_file
 
-from routes.actividades import actividades_bp
-import os
-import re
-import shutil
-import json
 from werkzeug.utils import secure_filename
-import base64
-import zipfile
-from flask import abort
-import tempfile
-import hashlib
-import unicodedata
+from routes.actividades import actividades_bp
 
+# ==========================================
+# CREACIÓN DE LA APLICACIÓN FLASK
+# ==========================================
 app = Flask(__name__)
 app.secret_key = 'toro_secret_key_2026'
 app.register_blueprint(actividades_bp)
@@ -85,8 +91,9 @@ def obtener_siguiente_id_leccion():
 # ==========================================
 def extraer_datos_actividad(ruta_archivo_actividad):
     with open(ruta_archivo_actividad, 'r', encoding='utf-8') as f:
-        contenido = f.read().strip()
-    
+        contenido_ofuscado = f.read().strip()
+    contenido = desofuscar_texto(contenido_ofuscado)
+
     # Intentar como JSON primero
     if contenido.startswith('{'):
         try:
@@ -124,7 +131,8 @@ def extraer_datos_actividad(ruta_archivo_actividad):
 
 def parsear_actividad_general(ruta_archivo_actividad):
     with open(ruta_archivo_actividad, 'r', encoding='utf-8') as f:
-        contenido = f.read().strip()
+        contenido_ofuscado = f.read().strip()
+    contenido = desofuscar_texto(contenido_ofuscado)
 
     # --- Intento 1: Parsear como JSON (nuevo formato) ---
     if contenido.startswith('{'):
@@ -327,21 +335,21 @@ def cargar_actividades():
             datos = {}
             try:
                 with open(ruta_completa, 'r', encoding='utf-8') as f:
-                    contenido = f.read().strip()
+                    contenido_raw = f.read().strip()
+                # 🔓 DESOFUSCAR el contenido
+                contenido = desofuscar_texto(contenido_raw)
+
                 # Intentar parsear como JSON primero (nuevo formato)
                 if contenido.startswith('{'):
-                    import json
                     data_json = json.loads(contenido)
-                    # Dentro de cargar_actividades, en el bloque JSON:
                     datos['ID_PLANTILLA'] = {
-                        'falso-verdadero': 'P002',      # ← antes 'FV01'
+                        'falso-verdadero': 'P002',
                         'opcion-multiple': 'P003',
                         'completar-camino': 'C001',
                         'sopa-letras': 'P004'
                     }.get(data_json.get('tipo'), 'P000')
                     datos['NOMBRE'] = data_json.get('nombre', 'Sin título')
                     datos['FECHA'] = ''  # No se guarda fecha en JSON, poner vacío o extraer si existe
-                    # Si quieres mantener la fecha, podrías agregarla al JSON al guardar.
                 else:
                     # Formato antiguo (texto plano)
                     for linea in contenido.split('\n'):
@@ -385,14 +393,26 @@ def buscar_lecciones_por_elemento(tipo, nombre):
         ruta_info = os.path.join(LECCIONES_DIR, carpeta, 'info_leccion.txt')
         if not os.path.exists(ruta_info):
             continue
+        
+        # Leer y DESOFUSCAR el contenido
         with open(ruta_info, 'r', encoding='utf-8') as f:
-            contenido = f.read()
+            contenido_ofuscado = f.read()
+        contenido = desofuscar_texto(contenido_ofuscado)
         
-        grupo = extraer_campo_leccion(contenido, 'GRUPO:')
-        materia = extraer_campo_leccion(contenido, 'MATERIA:')
-        parcial = extraer_campo_leccion(contenido, 'PARCIAL:')
-        tema = extraer_campo_leccion(contenido, 'TEMA:')
+        # Extraer campos del contenido desofuscado
+        def extraer(prefijo):
+            for linea in contenido.split('\n'):
+                linea = linea.strip()
+                if linea.startswith(prefijo):
+                    return linea.split(':', 1)[1].strip()
+            return None
         
+        grupo = extraer('GRUPO:')
+        materia = extraer('MATERIA:')
+        parcial = extraer('PARCIAL:')
+        tema = extraer('TEMA:')
+        
+        # Comparar con el nombre buscado
         if tipo == 'grupo' and grupo == nombre:
             lecciones_afectadas.append(carpeta)
         elif tipo == 'materia' and materia == nombre:
@@ -417,13 +437,16 @@ def eliminar_leccion_por_carpeta(carpeta):
         print(f"🗑️ ZIP eliminado: {ruta_zip}")
 
 def obtener_info_leccion(carpeta):
-    """Lee info_leccion.txt y extrae el título, ID_LECCION y la lista de archivos multimedia (excepto los del juego)."""
+    """Lee info_leccion.txt (ofuscado) y extrae el título, ID_LECCION y la lista de archivos multimedia."""
     ruta_info = os.path.join(LECCIONES_DIR, carpeta, 'info_leccion.txt')
     if not os.path.exists(ruta_info):
         return None
     
     with open(ruta_info, 'r', encoding='utf-8') as f:
-        contenido = f.read()
+        contenido_ofuscado = f.read()
+    
+    # Desofuscar
+    contenido = desofuscar_texto(contenido_ofuscado)
     
     titulo = ""
     id_leccion = ""
@@ -434,15 +457,13 @@ def obtener_info_leccion(carpeta):
         elif linea.startswith('ID_LECCION:'):
             id_leccion = linea.split(':', 1)[1].strip()
     
-    # Si por alguna razón no se encontró el ID, usamos el nombre de carpeta como fallback
     if not id_leccion:
         id_leccion = carpeta
     
-    # Listar archivos multimedia (excluir info_leccion.txt, index.html y las imágenes del juego)
+    # Listar archivos multimedia
     ruta_carpeta = os.path.join(LECCIONES_DIR, carpeta)
     excluir = {'info_leccion.txt', 'index.html', 'oak2.jpg', 'rana_quieto.png', 'rana_salto.gif'}
     archivos = []
-    
     for f in os.listdir(ruta_carpeta):
         ruta_completa = os.path.join(ruta_carpeta, f)
         if f not in excluir and os.path.isfile(ruta_completa):
@@ -686,8 +707,10 @@ def subir_leccion():
                 metadatos.append("--- [RELACIÓN: GENERA <- PLANTILLA: DESCONOCIDA] ---\n")
 
             ruta_metadatos = os.path.join(ruta_destino, 'info_leccion.txt')
+            contenido_legible = '\n'.join(metadatos)
+            contenido_ofuscado = ofuscar_texto(contenido_legible)
             with open(ruta_metadatos, 'w', encoding='utf-8') as f:
-                f.write('\n'.join(metadatos))
+                f.write(contenido_ofuscado)
             print(f"✅ Metadatos guardados en {ruta_metadatos}")
 
             # === GENERAR HTML ===
@@ -769,9 +792,9 @@ def subir_leccion():
                     encoded_bytes = texto_modificado.encode("utf-8")
                     return base64.b64encode(encoded_bytes).decode("ascii")
                 
+                # Leer el info_leccion.txt ya ofuscado (está en disco)
                 with open(ruta_metadatos, 'r', encoding='utf-8') as f:
-                    texto_original = f.read()
-                texto_ofuscado = ofuscar_reporte(texto_original)
+                    texto_ofuscado = f.read()
                 
                 ruta_actividades_formateadas = os.path.join(app.root_path, 'data', 'LECCIONES-LISTAS-PARA-ENVIAR')
                 os.makedirs(ruta_actividades_formateadas, exist_ok=True)
@@ -927,8 +950,10 @@ def crear_actividad():
                 os.makedirs(ruta_carpeta)
             nombre_archivo = f"{nombre_actividad.replace(' ', '_')}.txt"
             ruta_completa = os.path.join(ruta_carpeta, nombre_archivo)
+            # Ofuscar el contenido antes de guardar
+            contenido_ofuscado = ofuscar_texto(contenido_archivo)
             with open(ruta_completa, 'w', encoding='utf-8') as f:
-                f.write(contenido_archivo)
+                f.write(contenido_ofuscado)
             print(f"Actividad guardada con ID {id_actividad}: {ruta_completa}")
             return redirect(url_for('vista_contenido'))
         except Exception as e:
@@ -1595,8 +1620,8 @@ def leer_actividad(nombre_archivo):
     if not os.path.exists(ruta):
         return None
     with open(ruta, 'r', encoding='utf-8') as f:
-        contenido = f.read().strip()
-
+        contenido_ofuscado = f.read().strip()
+    contenido = desofuscar_texto(contenido_ofuscado)
     # ========== 1. INTENTAR COMO JSON ==========
     if contenido.startswith('{'):
         try:
@@ -1742,8 +1767,10 @@ def editar_actividad_json(nombre_archivo):
     if request.method == 'POST':
         data = request.get_json()
         ruta = os.path.join(ACTIVIDADES_DIR, nombre_archivo)
+        contenido_legible = json.dumps(data, indent=2, ensure_ascii=False)
+        contenido_ofuscado = ofuscar_texto(contenido_legible)
         with open(ruta, 'w', encoding='utf-8') as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
+            f.write(contenido_ofuscado)
         return jsonify({'success': True, 'ruta': ruta})
     else:
         data = leer_actividad(nombre_archivo)
@@ -1753,9 +1780,8 @@ def editar_actividad_json(nombre_archivo):
 
 @app.route('/editar_leccion/<carpeta>', methods=['GET', 'POST'])
 def editar_leccion(carpeta):
-    original_carpeta = carpeta   # antes de cualquier modificación
+    original_carpeta = carpeta
     if request.method == 'POST':
-        # Recibir datos del formulario
         grupo = request.form.get('grupo')
         materia = request.form.get('materia')
         parcial = request.form.get('parcial')
@@ -1766,7 +1792,6 @@ def editar_leccion(carpeta):
         archivos_conservar = [a.strip() for a in archivos_conservar_str.split(',') if a.strip()]
         nuevos_archivos = request.files.getlist('archivos')
 
-        # Validaciones básicas
         if not nombre_leccion or not actividad_seleccionada:
             return "Faltan datos obligatorios (nombre o actividad)", 400
         if not grupo or not materia or not parcial or not tema:
@@ -1776,36 +1801,28 @@ def editar_leccion(carpeta):
         if not os.path.exists(ruta_antigua):
             return f"Error: La lección original '{carpeta}' no existe", 400
 
-        # Ruta de la actividad seleccionada
         ruta_actividad = os.path.join(app.root_path, 'data', 'actividades', actividad_seleccionada)
         if not os.path.exists(ruta_actividad):
             return f"El archivo de actividad {actividad_seleccionada} no existe", 400
 
-        # Parsear la actividad
         actividad_data = parsear_actividad_general(ruta_actividad)
         tipo_plantilla = actividad_data['tipo_plantilla']
 
-        # Obtener el ID original de la lección (enviado desde el formulario)
         id_leccion_original = request.form.get('id_leccion_original', carpeta)
         id_leccion = id_leccion_original
         nombre_profesor = session.get('profesor', 'Profesor no especificado')
 
-        # 1. Crear un directorio temporal para guardar los archivos que se conservan
+        # --- 1. Crear temporal, copiar conservados, borrar y recrear carpeta ---
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
-            # Copiar los archivos conservados (los que el usuario no eliminó) al temporal
             for nombre in archivos_conservar:
                 origen = os.path.join(ruta_antigua, nombre)
                 if os.path.exists(origen):
                     shutil.copy2(origen, os.path.join(tmpdir, nombre))
 
-            # 2. Borrar la carpeta antigua por completo
             shutil.rmtree(ruta_antigua)
-
-            # 3. Crear la nueva carpeta con el mismo nombre (por ahora)
             os.makedirs(ruta_antigua)
 
-            # 4. Copiar las imágenes del juego (siempre las mismas)
             imagenes_juego = ['oak2.jpg', 'rana_quieto.png', 'rana_salto.gif']
             ruta_origen_imagenes = os.path.join(app.root_path, 'static', 'img', 'imagenesActividades')
             for img in imagenes_juego:
@@ -1813,18 +1830,41 @@ def editar_leccion(carpeta):
                 if os.path.exists(origen):
                     shutil.copy2(origen, os.path.join(ruta_antigua, img))
 
-            # 5. Copiar de vuelta los archivos conservados desde el temporal
             for nombre in archivos_conservar:
                 shutil.copy2(os.path.join(tmpdir, nombre), os.path.join(ruta_antigua, nombre))
 
-            # 6. Guardar los nuevos archivos subidos
             for archivo in nuevos_archivos:
                 if archivo and archivo.filename:
                     nombre_seguro = secure_filename(archivo.filename)
                     ruta_archivo = os.path.join(ruta_antigua, nombre_seguro)
                     archivo.save(ruta_archivo)
 
-        # 7. Generar info_leccion.txt (similar a subir_leccion)
+        # --- 2. Renombrar carpeta si es necesario ---
+        nuevo_nombre_carpeta = f"{grupo}_{materia}_{parcial}_{tema}_{nombre_leccion}"
+        nuevo_nombre_carpeta = nuevo_nombre_carpeta.replace(' ', '_')
+        if nuevo_nombre_carpeta != carpeta:
+            ruta_nueva = os.path.join(LECCIONES_DIR, nuevo_nombre_carpeta)
+            if os.path.exists(ruta_nueva):
+                print(f"⚠️ No se renombró la carpeta porque '{nuevo_nombre_carpeta}' ya existe.")
+                # Nos quedamos con la antigua
+            else:
+                os.rename(ruta_antigua, ruta_nueva)
+                ruta_antigua = ruta_nueva
+                carpeta = nuevo_nombre_carpeta
+                print(f"✅ Carpeta renombrada a: {carpeta}")
+
+        # --- 3. Ahora generar los archivos en la carpeta definitiva (ruta_antigua) ---
+        # Listar archivos finales (excluyendo los del juego y los que generaremos)
+        archivos_finales = []
+        for f in os.listdir(ruta_antigua):
+            ruta_completa = os.path.join(ruta_antigua, f)
+            if (f not in imagenes_juego and
+                f not in ('info_leccion.txt', 'index.html') and
+                os.path.isfile(ruta_completa) and
+                os.path.exists(ruta_completa)):
+                archivos_finales.append(f)
+
+        # Construir metadatos
         metadatos = []
         metadatos.append("=== [ENTIDAD: PROFESOR] ===")
         metadatos.append(f"NOMBRE_COMPLETO: {nombre_profesor}\n")
@@ -1837,15 +1877,6 @@ def editar_leccion(carpeta):
         metadatos.append(f"GRUPO: {grupo}\n")
         metadatos.append("--- [RELACIÓN: INCORPORA -> CONTENIDO MULTIMEDIA] ---")
 
-        # Listar todos los archivos multimedia en la carpeta (excluyendo las imágenes del juego y los archivos del sistema)
-        archivos_finales = []
-        for f in os.listdir(ruta_antigua):
-            ruta_completa = os.path.join(ruta_antigua, f)
-            if (f not in imagenes_juego and 
-                f not in ('info_leccion.txt', 'index.html') and 
-                os.path.isfile(ruta_completa) and 
-                os.path.exists(ruta_completa)):
-                archivos_finales.append(f)
         for idx, arch in enumerate(archivos_finales, start=1):
             ext = os.path.splitext(arch)[1].lower()
             tipo = "Imagen"
@@ -1864,7 +1895,6 @@ def editar_leccion(carpeta):
         metadatos.append(f"TIEMPO_ESTIMADO: {actividad_data['tiempo_estimado']}")
         metadatos.append(f"FECHA_VENCIMIENTO: {actividad_data['fecha_vencimiento']}\n")
 
-        # Escribir las preguntas según el tipo de plantilla
         if tipo_plantilla == 'C001':
             metadatos.append("--- [RELACIÓN: GENERA <- PLANTILLA: Completar Camino] ---\n")
             for i, p in enumerate(actividad_data['preguntas'], start=1):
@@ -1892,11 +1922,14 @@ def editar_leccion(carpeta):
         else:
             metadatos.append("--- [RELACIÓN: GENERA <- PLANTILLA: DESCONOCIDA] ---\n")
 
+        # Escribir info_leccion.txt ofuscado
         ruta_metadatos = os.path.join(ruta_antigua, 'info_leccion.txt')
+        contenido_legible = '\n'.join(metadatos)
+        contenido_ofuscado = ofuscar_texto(contenido_legible)
         with open(ruta_metadatos, 'w', encoding='utf-8') as f:
-            f.write('\n'.join(metadatos))
+            f.write(contenido_ofuscado)
 
-        # 8. Generar index.html
+        # Generar index.html
         if tipo_plantilla == 'C001':
             plantilla_path = os.path.join(app.root_path, 'templates', 'plantilla_leccion.html')
             datos_act = extraer_datos_actividad(ruta_actividad)
@@ -1962,39 +1995,7 @@ def editar_leccion(carpeta):
         with open(ruta_html, 'w', encoding='utf-8') as f:
             f.write(html_final)
 
-        nuevo_nombre_carpeta = f"{grupo}_{materia}_{parcial}_{tema}_{nombre_leccion}"
-        nuevo_nombre_carpeta = nuevo_nombre_carpeta.replace(' ', '_')
-        if nuevo_nombre_carpeta != carpeta:
-            ruta_nueva = os.path.join(LECCIONES_DIR, nuevo_nombre_carpeta)
-            if os.path.exists(ruta_nueva):
-                # Si ya existe, no renombramos (podría sobrescribir datos)
-                print(f"⚠️ No se renombró la carpeta porque '{nuevo_nombre_carpeta}' ya existe.")
-                ruta_nueva = ruta_antigua  # nos quedamos con la antigua
-            else:
-                os.rename(ruta_antigua, ruta_nueva)
-                ruta_antigua = ruta_nueva
-                carpeta = nuevo_nombre_carpeta
-                print(f"✅ Carpeta renombrada a: {carpeta}")
-        else:
-            ruta_nueva = ruta_antigua
-
-        # Ahora escribimos los archivos en la carpeta definitiva (ruta_antigua)
-        ruta_metadatos = os.path.join(ruta_antigua, 'info_leccion.txt')
-        with open(ruta_metadatos, 'w', encoding='utf-8') as f:
-            f.write('\n'.join(metadatos))
-
-        ruta_html = os.path.join(ruta_antigua, 'index.html')
-        with open(ruta_html, 'w', encoding='utf-8') as f:
-            f.write(html_final)
-
-        # 9. Eliminar el ZIP antiguo (si existe) y generar uno nuevo
-        def ofuscar_reporte(texto: str) -> str:
-            firma = str(len(texto) * 77)
-            texto_con_firma = texto + "||" + firma
-            texto_modificado = "".join(chr(ord(c) + 3) for c in texto_con_firma)
-            encoded_bytes = texto_modificado.encode("utf-8")
-            return base64.b64encode(encoded_bytes).decode("ascii")
-
+        # --- 4. Generar ZIP usando el info_leccion.txt ofuscado que ya está en disco ---
         ruta_zip_destino = os.path.join(app.root_path, 'data', 'LECCIONES-LISTAS-PARA-ENVIAR')
         os.makedirs(ruta_zip_destino, exist_ok=True)
         old_zip = os.path.join(ruta_zip_destino, original_carpeta + ".zip")
@@ -2002,13 +2003,13 @@ def editar_leccion(carpeta):
             os.remove(old_zip)
             print(f"🗑️ ZIP antiguo eliminado: {old_zip}")
 
-        nombre_zip = carpeta + ".zip"   # 'carpeta' ya se actualizó si hubo renombrado
+        nombre_zip = carpeta + ".zip"
         ruta_zip = os.path.join(ruta_zip_destino, nombre_zip)
 
         with zipfile.ZipFile(ruta_zip, "w", zipfile.ZIP_DEFLATED) as zf:
+            # Leer el archivo ofuscado desde la ruta definitiva
             with open(ruta_metadatos, 'r', encoding='utf-8') as f:
-                texto_original = f.read()
-            texto_ofuscado = ofuscar_reporte(texto_original)
+                texto_ofuscado = f.read()
             zf.writestr("info_leccion.txt", texto_ofuscado)
             zf.write(ruta_html, "index.html")
             for archivo in archivos_finales:
@@ -2018,7 +2019,7 @@ def editar_leccion(carpeta):
 
         return redirect(url_for('vista_contenido'))
 
-    else:   # GET
+    else:  # GET
         info = obtener_info_leccion(carpeta)
         if not info:
             abort(404, "Lección no encontrada")
@@ -2046,6 +2047,93 @@ def eliminar_leccion(carpeta):
     return redirect(url_for('vista_contenido'))
 # NOTA: Las rutas de progresiones, api/lecciones_disponibles, api/asignar_leccion no se incluyen aquí.
 # Si las necesitas, deberás adaptarlas al nuevo sistema.
+
+@app.route('/compartir')
+def compartir():
+    return render_template('compartir.html', active_page='compartir')
+
+from werkzeug.utils import secure_filename
+import zipfile
+
+UPLOAD_FOLDER_ZIP = os.path.join(app.root_path, 'data', 'lecciones_compartidas')
+os.makedirs(UPLOAD_FOLDER_ZIP, exist_ok=True)
+
+@app.route('/api/subir-actividad', methods=['POST'])
+def subir_actividad():
+    if 'archivoZip' not in request.files:
+        return jsonify({'error': 'No hay archivo.'}), 400
+    archivo = request.files['archivoZip']
+    if archivo.filename == '':
+        return jsonify({'error': 'Nombre de archivo vacío.'}), 400
+    if not archivo.filename.endswith('.zip'):
+        return jsonify({'error': 'Solo se permiten archivos ZIP.'}), 400
+
+    nombre_seguro = secure_filename(archivo.filename)
+    ruta_destino = os.path.join(UPLOAD_FOLDER_ZIP, nombre_seguro)
+    archivo.save(ruta_destino)
+
+    # Opcional: extraer el ZIP o simplemente guardarlo
+    return jsonify({'mensaje': '¡Actividad publicada con éxito!'}), 200
+
+CALIFICACIONES_DIR = os.path.join(app.root_path, 'data', 'calificaciones')
+os.makedirs(CALIFICACIONES_DIR, exist_ok=True)
+
+@app.route('/api/lista-calificaciones', methods=['GET'])
+def lista_calificaciones():
+    try:
+        archivos = os.listdir(CALIFICACIONES_DIR)
+        # Filtrar archivos .txt o .toro
+        filtrados = [f for f in archivos if f.endswith(('.txt', '.toro'))]
+        datos = []
+        for nombre in filtrados:
+            ruta = os.path.join(CALIFICACIONES_DIR, nombre)
+            stats = os.stat(ruta)
+            fecha = time.strftime('%Y-%m-%d', time.gmtime(stats.st_mtime))
+            datos.append({'nombre': nombre, 'fecha': fecha})
+        return jsonify(datos)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+@app.route('/api/descargar-calificacion/<nombre>', methods=['GET'])
+def descargar_calificacion(nombre):
+    ruta = os.path.join(CALIFICACIONES_DIR, nombre)
+    if not os.path.exists(ruta):
+        return jsonify({'error': 'Archivo no encontrado'}), 404
+    return send_file(ruta, as_attachment=True)
+
+@app.route('/api/limpiar-buzon', methods=['POST'])
+def limpiar_buzon():
+    try:
+        for archivo in os.listdir(CALIFICACIONES_DIR):
+            ruta = os.path.join(CALIFICACIONES_DIR, archivo)
+            if os.path.isfile(ruta):
+                os.remove(ruta)
+        return jsonify({'mensaje': 'Buzón vaciado correctamente.'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+def ofuscar_texto(texto: str) -> str:
+    """
+    Ofusca un texto usando desplazamiento de caracteres + base64.
+    Similar a ofuscar_reporte pero sin añadir firma (opcional).
+    """
+    # Desplazamos cada caracter +3
+    texto_modificado = "".join(chr(ord(c) + 3) for c in texto)
+    # Codificamos en base64 para que sea seguro para archivos de texto
+    return base64.b64encode(texto_modificado.encode("utf-8")).decode("ascii")
+
+def desofuscar_texto(texto_ofuscado: str) -> str:
+    """
+    Desofusca un texto que fue ofuscado con ofuscar_texto.
+    Si falla (por ejemplo, si no está ofuscado), devuelve el texto original.
+    """
+    try:
+        texto_modificado = base64.b64decode(texto_ofuscado).decode("utf-8")
+        texto_original = "".join(chr(ord(c) - 3) for c in texto_modificado)
+        return texto_original
+    except Exception:
+        # Si no es base64 válido o hay error, asumimos que no está ofuscado
+        return texto_ofuscado
 
 # ==========================================
 # PUNTO DE ENTRADA
