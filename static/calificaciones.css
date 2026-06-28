@@ -123,22 +123,24 @@
     }
 
     /* --- PRIMERA COLUMNA FIJA (Sticky) --- */
-    th:first-child, td:first-child {
+/* --- PRIMERA COLUMNA FIJA (Sticky Básica - Modificada para evitar invasión) --- */
+    /* Eliminamos las propiedades genéricas que afectaban a los intentos de la segunda fila */
+    thead tr:first-child th:first-child, 
+    tbody tr td.td-alumno {
         position: sticky;
         left: 0;
         background-color: white;
-        z-index: 20; /* Encima del resto */
-        border-right: 2px solid #eee; /* Sombra separadora */
+        z-index: 20;
+        border-right: 2px solid #eee;
         text-align: left;
         padding-left: 25px;
-        min-width: 250px;
         font-weight: 600;
         color: #333;
     }
 
-    thead th:first-child {
-        background-color: #f8f9fa; /* Mismo color que el header */
-        z-index: 30; /* La esquina superior izquierda siempre visible */
+    thead tr:first-child th:first-child {
+        background-color: #f8f9fa;
+        z-index: 30;
     }
 
     /* --- Celdas --- */
@@ -196,4 +198,155 @@
     margin-bottom: 14px;
     font-size: 14px;
     font-weight: 500;
+}
+
+/* ===================================== */
+/* SCROLL HORIZONTAL PARA TABLA CON MUCHAS COLUMNAS */
+/* ===================================== */
+
+/* Contenedor principal de la tabla */
+.table-container {
+    overflow: hidden;
+    border-radius: 10px;
+    border: 1px solid #e0e0e0;
+    background: white;
+}
+
+/* Contenedor con scroll horizontal */
+.table-scroll {
+    overflow-x: auto;
+    overflow-y: visible;
+    width: 100%;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+}
+
+/* Tabla con ancho mínimo para que el scroll funcione */
+.table-scroll table {
+    min-width: 800px;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: auto;
+}
+
+/* --- COLUMNAS FIJAS (STICKY) --- */
+
+/* Columna de Nombre del Alumno */
+/* --- COLUMNAS FIJAS (STICKY CALIFICACIONES) --- */
+
+/* Columna de Nombre del Alumno: Fijamos un ancho idéntico en min, max y width */
+.calificaciones-table th.th-alumno,
+.calificaciones-table td.td-alumno {
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 20 !important;
+    background: white !important;
+    min-width: 220px !important;
+    max-width: 220px !important;
+    width: 220px !important;
+    box-sizing: border-box !important;
+}
+
+.calificaciones-table thead th.th-alumno {
+    background: #f8f9fa !important;
+    z-index: 35 !important;
+}
+
+/* Columna de Lección: Su 'left' debe ser exactamente igual al width de la columna alumno (220px) */
+.calificaciones-table th.th-leccion-fija,
+.calificaciones-table td.td-leccion {
+    position: sticky !important;
+    left: 220px !important; /* Perfectamente alineado con el final de la columna alumno */
+    z-index: 15 !important;
+    background: white !important;
+    min-width: 90px !important;
+    max-width: 90px !important;
+    width: 90px !important;
+    box-sizing: border-box !important;
+}
+
+.calificaciones-table thead th.th-leccion-fija {
+    background: #f8f9fa !important;
+    z-index: 30 !important;
+}
+
+/* Forzar que la tabla respete los anchos de columna fijos en las celdas sticky */
+.calificaciones-table {
+    table-layout: fixed !important;
+}
+
+
+
+
+
+
+
+
+.calificaciones-table thead th.th-leccion-fija {
+    background: #f8f9fa !important;
+    z-index: 25 !important;
+}
+
+/* Columnas de intentos con tamaño fijo */
+.calificaciones-table th.th-intento,
+.calificaciones-table td.td-intento {
+    min-width: 55px !important;
+    max-width: 70px !important;
+    width: 60px !important;
+    text-align: center !important;
+}
+
+/* Columna de Promedio */
+.calificaciones-table th.th-promedio-general,
+.calificaciones-table td.td-promedio-general {
+    min-width: 80px !important;
+    max-width: 100px !important;
+    width: 90px !important;
+    text-align: center !important;
+}
+
+/* Columna de Acciones */
+.calificaciones-table th.th-acciones,
+.calificaciones-table td.td-accion {
+    min-width: 50px !important;
+    max-width: 60px !important;
+    width: 55px !important;
+    text-align: center !important;
+}
+
+/* Sombra entre columnas fijas y el resto */
+.calificaciones-table td.td-alumno {
+    border-right: 2px solid #e0e0e0 !important;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+}
+
+.calificaciones-table td.td-leccion {
+    border-right: 2px solid #e0e0e0 !important;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+}
+
+/* Hover en filas - mantener fondo blanco en columnas fijas */
+.calificaciones-table tbody tr:hover td.td-alumno,
+.calificaciones-table tbody tr:hover td.td-leccion {
+    background: white !important;
+}
+
+.calificaciones-table tbody tr:hover td:not(.td-alumno):not(.td-leccion) {
+    background: #fafafa;
+}
+
+/* Ajuste para el sticky en la cabecera */
+.calificaciones-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.calificaciones-table thead th.th-alumno {
+    z-index: 30 !important;
+}
+
+.calificaciones-table thead th.th-leccion-fija {
+    z-index: 25 !important;
 }

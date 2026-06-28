@@ -11,10 +11,38 @@ const CONTEXT_KEY      = _datosServidor.context_key;
 const NOMBRE_GRUPO     = _datosServidor.nombre_grupo;
 const NOMBRE_MATERIA   = _datosServidor.nombre_materia;
 const NOMBRE_PARCIAL   = _datosServidor.nombre_parcial;
-const ALUMNOS_GRUPO    = _datosServidor.alumnos;       // [{matricula, nombres, apellidos}, ...]
+const ALUMNOS_GRUPO    = _datosServidor.alumnos;       // [{matricula, nombres, apellidos, nombre_completo}, ...]
 let   calificacionesServer = _datosServidor.calificaciones; // array persistido en JSON del servidor
 
 let archivosProcesadosTemp = [];
+
+// ==================== FUNCIÓN PARA OBTENER NOMBRE COMPLETO ====================
+
+function obtenerNombreCompleto(alumno) {
+    if (!alumno) return 'Sin nombre';
+    
+    // Si es un string
+    if (typeof alumno === 'string') return alumno;
+    
+    // PRIORIDAD 1: Usar nombre_completo (desde el backend)
+    if (alumno.nombre_completo) return alumno.nombre_completo;
+    
+    // Si tiene nombres y apellidos separados
+    if (alumno.nombres && alumno.apellidos) {
+        return `${alumno.nombres} ${alumno.apellidos}`.trim();
+    }
+    
+    // Si tiene nombre
+    if (alumno.nombre) return alumno.nombre;
+    
+    // Si tiene estudiante
+    if (alumno.estudiante) return alumno.estudiante;
+    
+    // Último recurso: matrícula
+    if (alumno.matricula) return alumno.matricula;
+    
+    return 'Sin nombre';
+}
 
 // ==================== INICIALIZACIÓN ====================
 
@@ -116,12 +144,14 @@ function verificarYMostrarInterfaz() {
 
 // ==================== TABLA DINÁMICA POR LECCIONES ====================
 
+// ==================== TABLA DINÁMICA POR LECCIONES (CORREGIDA) ====================
+
 function generarTablaCalificaciones(calificaciones) {
     if (!calificaciones || calificaciones.length === 0) {
         return `<p class="empty-message">No hay datos que mostrar.</p>`;
     }
 
-    const progMap     = new Map();
+    const progMap = new Map();
     const leccionMeta = new Map();
 
     calificaciones.forEach(c => {
@@ -134,24 +164,49 @@ function generarTablaCalificaciones(calificaciones) {
         if (!progMap.get(prog).includes(lec)) progMap.get(prog).push(lec);
     });
 
+    // Ordenar progresiones por número (Progresión 1, Progresión 2, Progresión 3)
+    const progKeys = Array.from(progMap.keys()).sort((a, b) => {
+        const numA = parseInt(a.match(/\d+/)?.[0] || 0);
+        const numB = parseInt(b.match(/\d+/)?.[0] || 0);
+        return numA - numB;
+    });
+
     const leccionesOrdenadas = [];
-    progMap.forEach(lecs => lecs.forEach(l => leccionesOrdenadas.push(l)));
+    progKeys.forEach(prog => {
+        const lecs = progMap.get(prog).sort((a, b) => {
+            const numA = parseInt(a.match(/\d+/)?.[0] || 0);
+            const numB = parseInt(b.match(/\d+/)?.[0] || 0);
+            return numA - numB;
+        });
+        lecs.forEach(l => leccionesOrdenadas.push(l));
+    });
 
     const alumnosMap = new Map();
     calificaciones.forEach(c => {
         const key = c.matricula || c.estudiante;
         if (!alumnosMap.has(key)) {
-            alumnosMap.set(key, { nombre: c.estudiante, matricula: c.matricula, lecciones: {} });
+            const alumnoData = ALUMNOS_GRUPO.find(a => 
+                a.matricula === c.matricula || 
+                a.nombres === c.estudiante
+            );
+            alumnosMap.set(key, { 
+                nombre: c.estudiante, 
+                matricula: c.matricula, 
+                lecciones: {},
+                alumnoData: alumnoData
+            });
         }
         alumnosMap.get(key).lecciones[c.idLeccion] = c;
     });
 
+    // --- ENCABEZADOS DE LA TABLA (CORREGIDO) ---
+    // Cada progresión ahora tiene un colspan fijo de 3 (Int 1, Int 2, Int 3) en vez de multiplicarse por sus lecciones
     let tr1 = `
         <th rowspan="2" class="th-alumno">Nombre del Alumno</th>
         <th rowspan="2" class="th-leccion-fija">Lección</th>
     `;
-    progMap.forEach((lecs, prog) => {
-        tr1 += `<th colspan="${lecs.length * 3}" class="th-leccion-header">${escapeHtml(prog)}</th>`;
+    progKeys.forEach(prog => {
+        tr1 += `<th colspan="3" class="th-leccion-header">${escapeHtml(prog)}</th>`;
     });
     tr1 += `
         <th rowspan="2" class="th-promedio-general">
@@ -164,19 +219,20 @@ function generarTablaCalificaciones(calificaciones) {
         <th rowspan="2" class="th-acciones"></th>
     `;
 
+    // Subencabezados fijos de intentos por cada progresión
     let tr2 = '';
-    leccionesOrdenadas.forEach(lec => {
-        const meta  = leccionMeta.get(lec);
-        const titulo = escapeHtml(meta?.actividad || lec);
+    progKeys.forEach(() => {
         tr2 += `
-            <th class="th-sub th-intento" title="${titulo}">Int. 1</th>
-            <th class="th-sub th-intento" title="${titulo}">Int. 2</th>
-            <th class="th-sub th-intento" title="${titulo}">Int. 3</th>
+            <th class="th-sub th-intento">Int. 1</th>
+            <th class="th-sub th-intento">Int. 2</th>
+            <th class="th-sub th-intento">Int. 3</th>
         `;
     });
 
+    // --- CUERPO DE LA TABLA (CORREGIDO) ---
     let tbody = '';
     alumnosMap.forEach(alumno => {
+        const nombreCompleto = obtenerNombreCompleto(alumno.alumnoData || alumno);
         const leccionesAlumno = leccionesOrdenadas.filter(lec => alumno.lecciones[lec]);
         const numFilas    = leccionesAlumno.length || 1;
         const promGeneral = calcularPromedioGeneral(alumno.lecciones, leccionesOrdenadas);
@@ -187,13 +243,13 @@ function generarTablaCalificaciones(calificaciones) {
         if (leccionesAlumno.length === 0) {
             let tr = `<tr>
                 <td class="td-alumno">
-                    <strong style="display:block;word-break:break-word;white-space:normal;min-width:120px;max-width:180px;">${escapeHtml(alumno.nombre)}</strong>
+                    <strong style="display:block;word-break:break-word;white-space:normal;min-width:120px;max-width:180px;">${escapeHtml(nombreCompleto)}</strong>
                     ${alumno.matricula
                         ? `<span class="matricula-small" style="display:block;word-break:break-word;white-space:normal;">${escapeHtml(alumno.matricula)}</span>`
                         : ''}
                 </td>
                 <td class="td-leccion td-vacio">—</td>`;
-            leccionesOrdenadas.forEach(() => {
+            progKeys.forEach(() => {
                 tr += `<td class="td-intento td-vacio">—</td>
                        <td class="td-intento td-vacio">—</td>
                        <td class="td-intento td-vacio">—</td>`;
@@ -201,7 +257,7 @@ function generarTablaCalificaciones(calificaciones) {
             tr += `<td class="td-promedio-general">—</td>
                    <td class="td-accion">
                        <button class="btn-eliminar-alumno"
-                               onclick="confirmarEliminarAlumno('${matKey}','${escapeHtml(alumno.nombre)}')"
+                               onclick="confirmarEliminarAlumno('${matKey}','${escapeHtml(nombreCompleto)}')"
                                title="Eliminar alumno">&#x1F5D1;</button>
                    </td></tr>`;
             tbody += tr;
@@ -216,7 +272,7 @@ function generarTablaCalificaciones(calificaciones) {
                         style="width:200px;min-width:200px;max-width:200px;">
                         <div style="display:flex;flex-direction:column;gap:4px;width:100%;">
                             <strong style="display:block;word-break:break-word;white-space:normal;line-height:1.3;">
-                                ${escapeHtml(alumno.nombre)}
+                                ${escapeHtml(nombreCompleto)}
                             </strong>
                             ${alumno.matricula ? `
                                 <span style="display:block;word-break:break-word;white-space:normal;font-size:0.75rem;color:#666;">
@@ -228,14 +284,19 @@ function generarTablaCalificaciones(calificaciones) {
 
             tr += `<td class="td-leccion">${escapeHtml(lecActual)}</td>`;
 
-            leccionesOrdenadas.forEach(lec => {
-                const reg = lec === lecActual ? alumno.lecciones[lec] : null;
+            // Iteramos sobre las progresiones (columnas) en lugar de las lecciones globales
+            progKeys.forEach(prog => {
+                const meta = leccionMeta.get(lecActual);
+                // Si la lección de la fila actual corresponde a la progresión de la columna actual
+                const reg = (meta && meta.progresion === prog) ? alumno.lecciones[lecActual] : null;
+
                 if (!reg) {
                     tr += `<td class="td-intento td-vacio">—</td>
                            <td class="td-intento td-vacio">—</td>
                            <td class="td-intento td-vacio">—</td>`;
                     return;
                 }
+
                 const i1 = reg.intentos.find(i => i.numero === 1);
                 const i2 = reg.intentos.find(i => i.numero === 2);
                 const i3 = reg.intentos.find(i => i.numero === 3);
@@ -258,7 +319,7 @@ function generarTablaCalificaciones(calificaciones) {
                     </td>
                     <td rowspan="${numFilas}" class="td-accion">
                         <button class="btn-eliminar-alumno"
-                                onclick="confirmarEliminarAlumno('${matKey}','${escapeHtml(alumno.nombre)}')"
+                                onclick="confirmarEliminarAlumno('${matKey}','${escapeHtml(nombreCompleto)}')"
                                 title="Eliminar alumno">&#x1F5D1;</button>
                     </td>`;
             }

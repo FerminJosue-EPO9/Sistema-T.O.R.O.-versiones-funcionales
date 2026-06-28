@@ -1,1 +1,199 @@
-
+{
+  "4a2c6d8d732287f277b3": [
+    {
+      "nombreArchivo": "REP_L-084_12345678_Juan CarlosPérez Gómez.toro",
+      "idLeccion": "L-084",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 3",
+      "actividad": "Cuestionario de falso y verdadero acerca de la normativa del internet",
+      "estudiante": "Juan CarlosPérez Gómez",
+      "matricula": "12345678",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "28/6/2026, 12:22:17 p.m."
+        },
+        {
+          "numero": 2,
+          "calificacion": 10,
+          "fecha": "28/6/2026, 12:22:17 p.m."
+        }
+      ],
+      "promedioFinal": "10.00"
+    },
+    {
+      "nombreArchivo": "REP_L-085_12345678_Juan CarlosPérez Gómez.toro",
+      "idLeccion": "L-085",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 3",
+      "actividad": "Actividad de completar el camino acerca de la normativa del internet",
+      "estudiante": "Juan CarlosPérez Gómez",
+      "matricula": "12345678",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 8.5,
+          "fecha": "28/6/2026, 12:22:17 p.m."
+        }
+      ],
+      "promedioFinal": "8.50"
+    },
+    {
+      "nombreArchivo": "REP_L-086_12345678_Juan CarlosPérez Gómez.toro",
+      "idLeccion": "L-086",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 3",
+      "actividad": "Actividad de completar el camino acerca de la normativa del internet",
+      "estudiante": "Juan CarlosPérez Gómez",
+      "matricula": "12345678",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 9,
+          "fecha": "28/6/2026, 12:22:17 p.m."
+        }
+      ],
+      "promedioFinal": "9.00"
+    },
+    {
+      "nombreArchivo": "REP_L-087_12345678_Juan CarlosPérez Gómez.toro",
+      "idLeccion": "L-087",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 2",
+      "actividad": "Cuestionario de falso y verdadero acerca de la normativa del internet",
+      "estudiante": "Juan CarlosPérez Gómez",
+      "matricula": "12345678",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "28/6/2026, 12:22:17 p.m."
+        }
+      ],
+      "promedioFinal": "10.00"
+    },
+    {
+      "nombreArchivo": "REP_L-088_12345678_Juan CarlosPérez Gómez.toro",
+      "idLeccion": "L-088",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 2",
+      "actividad": "Actividad de completar el camino acerca de la normativa del internet",
+      "estudiante": "Juan CarlosPérez Gómez",
+      "matricula": "12345678",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 8.5,
+          "fecha": "28/6/2026, 12:22:17 p.m."
+        }
+      ],
+      "promedioFinal": "8.50"
+    },
+    {
+      "nombreArchivo": "REP_L-089_12345678_Juan CarlosPérez Gómez.toro",
+      "idLeccion": "L-089",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 2",
+      "actividad": "Cuestionario de falso y verdadero acerca de la normativa del internet",
+      "estudiante": "Juan CarlosPérez Gómez",
+      "matricula": "12345678",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "28/6/2026, 12:22:17 p.m."
+        }
+      ],
+      "promedioFinal": "10.00"
+    },
+    {
+      "nombreArchivo": "REP_L-090_12345678_Juan CarlosPérez Gómez.toro",
+      "idLeccion": "L-090",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 1",
+      "actividad": "Cuestionario de opciÀ³n mÀºltiple acerca de la normativa del internet",
+      "estudiante": "Juan CarlosPérez Gómez",
+      "matricula": "12345678",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "28/6/2026, 12:22:17 p.m."
+        }
+      ],
+      "promedioFinal": "10.00"
+    },
+    {
+      "nombreArchivo": "REP_L-091_12345678_Juan CarlosPérez Gómez.toro",
+      "idLeccion": "L-091",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 1",
+      "actividad": "Cuestionario de opciÀ³n mÀºltiple acerca de la normativa del internet",
+      "estudiante": "Juan CarlosPérez Gómez",
+      "matricula": "12345678",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "28/6/2026, 12:22:17 p.m."
+        }
+      ],
+      "promedioFinal": "10.00"
+    },
+    {
+      "nombreArchivo": "REP_L-092_12345678_Juan CarlosPérez Gómez.toro",
+      "idLeccion": "L-092",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 1",
+      "actividad": "Cuestionario de opciÀ³n mÀºltiple acerca de la normativa del internet",
+      "estudiante": "Juan CarlosPérez Gómez",
+      "matricula": "12345678",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "28/6/2026, 12:22:17 p.m."
+        }
+      ],
+      "promedioFinal": "10.00"
+    },
+    {
+      "nombreArchivo": "REP_L-093_12345678_Juan CarlosPérez Gómez.toro",
+      "idLeccion": "L-093",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 1",
+      "actividad": "Sopa de letras acerca de la normativa del internet",
+      "estudiante": "Juan CarlosPérez Gómez",
+      "matricula": "12345678",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 2.7,
+          "fecha": "28/6/2026, 12:22:17 p.m."
+        }
+      ],
+      "promedioFinal": "2.67"
+    }
+  ]
+}
