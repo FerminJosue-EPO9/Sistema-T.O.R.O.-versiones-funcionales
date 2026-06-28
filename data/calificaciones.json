@@ -1,1 +1,499 @@
-
+{
+  "4a2c6d8d732287f277b3": [
+    {
+      "nombreArchivo": "REP_L-084_12345678_Juan CarlosPérez Gómez.toro",
+      "idLeccion": "L-084",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 3",
+      "actividad": "Cuestionario de falso y verdadero acerca de la normativa del internet",
+      "estudiante": "Juan CarlosPérez Gómez",
+      "matricula": "12345678",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "28/6/2026, 2:59:25 p.m."
+        }
+      ],
+      "promedioFinal": "10.00"
+    },
+    {
+      "nombreArchivo": "REP_L-084_19876543_Leonardo DanielSerrano Calderón.toro",
+      "idLeccion": "L-084",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 3",
+      "actividad": "Cuestionario de falso y verdadero acerca de la normativa del internet",
+      "estudiante": "Leonardo DanielSerrano Calderón",
+      "matricula": "19876543",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "28/6/2026, 2:59:25 p.m."
+        }
+      ],
+      "promedioFinal": "10.00"
+    },
+    {
+      "nombreArchivo": "REP_L-084_21098765_Camila FernandaVega Luna.toro",
+      "idLeccion": "L-084",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 3",
+      "actividad": "Cuestionario de falso y verdadero acerca de la normativa del internet",
+      "estudiante": "Camila FernandaVega Luna",
+      "matricula": "21098765",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 2,
+          "fecha": "28/6/2026, 2:59:25 p.m."
+        }
+      ],
+      "promedioFinal": "2.00"
+    },
+    {
+      "nombreArchivo": "REP_L-084_21987654_Regina IsabelSalas Guzmán.toro",
+      "idLeccion": "L-084",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 3",
+      "actividad": "Cuestionario de falso y verdadero acerca de la normativa del internet",
+      "estudiante": "Regina IsabelSalas Guzmán",
+      "matricula": "21987654",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "28/6/2026, 2:59:25 p.m."
+        }
+      ],
+      "promedioFinal": "10.00"
+    },
+    {
+      "nombreArchivo": "REP_L-084_23456789_Carlos AndrésRodríguez Díaz.toro",
+      "idLeccion": "L-084",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 3",
+      "actividad": "Cuestionario de falso y verdadero acerca de la normativa del internet",
+      "estudiante": "Carlos AndrésRodríguez Díaz",
+      "matricula": "23456789",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "28/6/2026, 2:59:25 p.m."
+        }
+      ],
+      "promedioFinal": "10.00"
+    },
+    {
+      "nombreArchivo": "REP_L-084_32109876_Sofía IsabelMedina Herrera.toro",
+      "idLeccion": "L-084",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 3",
+      "actividad": "Cuestionario de falso y verdadero acerca de la normativa del internet",
+      "estudiante": "Sofía IsabelMedina Herrera",
+      "matricula": "32109876",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "28/6/2026, 2:59:25 p.m."
+        }
+      ],
+      "promedioFinal": "10.00"
+    },
+    {
+      "nombreArchivo": "REP_L-084_32198765_Emilio AbrahamNava Paredes.toro",
+      "idLeccion": "L-084",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 3",
+      "actividad": "Cuestionario de falso y verdadero acerca de la normativa del internet",
+      "estudiante": "Emilio AbrahamNava Paredes",
+      "matricula": "32198765",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "28/6/2026, 2:59:25 p.m."
+        }
+      ],
+      "promedioFinal": "10.00"
+    },
+    {
+      "nombreArchivo": "REP_L-084_34567890_Laura FernandaMorales Ortiz.toro",
+      "idLeccion": "L-084",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 3",
+      "actividad": "Cuestionario de falso y verdadero acerca de la normativa del internet",
+      "estudiante": "Laura FernandaMorales Ortiz",
+      "matricula": "34567890",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "28/6/2026, 2:59:25 p.m."
+        }
+      ],
+      "promedioFinal": "10.00"
+    },
+    {
+      "nombreArchivo": "REP_L-084_43210987_Alejandro GabrielGutiérrez Ponce.toro",
+      "idLeccion": "L-084",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 3",
+      "actividad": "Cuestionario de falso y verdadero acerca de la normativa del internet",
+      "estudiante": "Alejandro GabrielGutiérrez Ponce",
+      "matricula": "43210987",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 0,
+          "fecha": "28/6/2026, 2:59:25 p.m."
+        }
+      ],
+      "promedioFinal": "0.00"
+    },
+    {
+      "nombreArchivo": "REP_L-084_43219876_Ximena AraceliRivas Rangel.toro",
+      "idLeccion": "L-084",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 3",
+      "actividad": "Cuestionario de falso y verdadero acerca de la normativa del internet",
+      "estudiante": "Ximena AraceliRivas Rangel",
+      "matricula": "43219876",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "28/6/2026, 2:59:25 p.m."
+        }
+      ],
+      "promedioFinal": "10.00"
+    },
+    {
+      "nombreArchivo": "REP_L-084_45678901_Luis EduardoMartínez Ruiz.toro",
+      "idLeccion": "L-084",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 3",
+      "actividad": "Cuestionario de falso y verdadero acerca de la normativa del internet",
+      "estudiante": "Luis EduardoMartínez Ruiz",
+      "matricula": "45678901",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "28/6/2026, 2:59:25 p.m."
+        }
+      ],
+      "promedioFinal": "10.00"
+    },
+    {
+      "nombreArchivo": "REP_L-084_54321098_Claudia ElizabethDomínguez Sosa.toro",
+      "idLeccion": "L-084",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 3",
+      "actividad": "Cuestionario de falso y verdadero acerca de la normativa del internet",
+      "estudiante": "Claudia ElizabethDomínguez Sosa",
+      "matricula": "54321098",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 8,
+          "fecha": "28/6/2026, 2:59:25 p.m."
+        },
+        {
+          "numero": 2,
+          "calificacion": 8,
+          "fecha": "28/6/2026, 2:59:25 p.m."
+        }
+      ],
+      "promedioFinal": "8.00"
+    },
+    {
+      "nombreArchivo": "REP_L-084_54321987_Hugo CésarRuiz Franco.toro",
+      "idLeccion": "L-084",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 3",
+      "actividad": "Cuestionario de falso y verdadero acerca de la normativa del internet",
+      "estudiante": "Hugo CésarRuiz Franco",
+      "matricula": "54321987",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "28/6/2026, 2:59:25 p.m."
+        }
+      ],
+      "promedioFinal": "10.00"
+    },
+    {
+      "nombreArchivo": "REP_L-084_56789012_José LuisSánchez Rivera.toro",
+      "idLeccion": "L-084",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 3",
+      "actividad": "Cuestionario de falso y verdadero acerca de la normativa del internet",
+      "estudiante": "José LuisSánchez Rivera",
+      "matricula": "56789012",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "28/6/2026, 2:59:25 p.m."
+        }
+      ],
+      "promedioFinal": "10.00"
+    },
+    {
+      "nombreArchivo": "REP_L-084_65432109_Héctor RaúlBautista Rosales.toro",
+      "idLeccion": "L-084",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 3",
+      "actividad": "Cuestionario de falso y verdadero acerca de la normativa del internet",
+      "estudiante": "Héctor RaúlBautista Rosales",
+      "matricula": "65432109",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "28/6/2026, 2:59:25 p.m."
+        },
+        {
+          "numero": 2,
+          "calificacion": 10,
+          "fecha": "28/6/2026, 2:59:25 p.m."
+        }
+      ],
+      "promedioFinal": "10.00"
+    },
+    {
+      "nombreArchivo": "REP_L-084_65432198_Andrea MarisolRamos Peña.toro",
+      "idLeccion": "L-084",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 3",
+      "actividad": "Cuestionario de falso y verdadero acerca de la normativa del internet",
+      "estudiante": "Andrea MarisolRamos Peña",
+      "matricula": "65432198",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "28/6/2026, 2:59:25 p.m."
+        }
+      ],
+      "promedioFinal": "10.00"
+    },
+    {
+      "nombreArchivo": "REP_L-084_76543210_Alma DeliaMejía Lozano.toro",
+      "idLeccion": "L-084",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 3",
+      "actividad": "Cuestionario de falso y verdadero acerca de la normativa del internet",
+      "estudiante": "Alma DeliaMejía Lozano",
+      "matricula": "76543210",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "28/6/2026, 2:59:25 p.m."
+        },
+        {
+          "numero": 2,
+          "calificacion": 10,
+          "fecha": "28/6/2026, 2:59:25 p.m."
+        }
+      ],
+      "promedioFinal": "10.00"
+    },
+    {
+      "nombreArchivo": "REP_L-084_76543219_Óscar DavidSoto Garza.toro",
+      "idLeccion": "L-084",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 3",
+      "actividad": "Cuestionario de falso y verdadero acerca de la normativa del internet",
+      "estudiante": "Óscar DavidSoto Garza",
+      "matricula": "76543219",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "28/6/2026, 2:59:25 p.m."
+        }
+      ],
+      "promedioFinal": "10.00"
+    },
+    {
+      "nombreArchivo": "REP_L-084_78901234_María JoséGonzález Castro.toro",
+      "idLeccion": "L-084",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 3",
+      "actividad": "Cuestionario de falso y verdadero acerca de la normativa del internet",
+      "estudiante": "María JoséGonzález Castro",
+      "matricula": "78901234",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "28/6/2026, 2:59:25 p.m."
+        }
+      ],
+      "promedioFinal": "10.00"
+    },
+    {
+      "nombreArchivo": "REP_L-084_87654309_Natalia SoledadCárdenas Niño.toro",
+      "idLeccion": "L-084",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 3",
+      "actividad": "Cuestionario de falso y verdadero acerca de la normativa del internet",
+      "estudiante": "Natalia SoledadCárdenas Niño",
+      "matricula": "87654309",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "28/6/2026, 2:59:25 p.m."
+        }
+      ],
+      "promedioFinal": "10.00"
+    },
+    {
+      "nombreArchivo": "REP_L-084_87654321_Ana MaríaLópez Fernández.toro",
+      "idLeccion": "L-084",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 3",
+      "actividad": "Cuestionario de falso y verdadero acerca de la normativa del internet",
+      "estudiante": "Ana MaríaLópez Fernández",
+      "matricula": "87654321",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "28/6/2026, 2:59:25 p.m."
+        },
+        {
+          "numero": 2,
+          "calificacion": 10,
+          "fecha": "28/6/2026, 2:59:25 p.m."
+        }
+      ],
+      "promedioFinal": "10.00"
+    },
+    {
+      "nombreArchivo": "REP_L-084_89012345_Daniela PaolaRamírez Flores.toro",
+      "idLeccion": "L-084",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 3",
+      "actividad": "Cuestionario de falso y verdadero acerca de la normativa del internet",
+      "estudiante": "Daniela PaolaRamírez Flores",
+      "matricula": "89012345",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "28/6/2026, 2:59:25 p.m."
+        }
+      ],
+      "promedioFinal": "10.00"
+    },
+    {
+      "nombreArchivo": "REP_L-084_90123456_Fernando DavidTorres Vargas.toro",
+      "idLeccion": "L-084",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 3",
+      "actividad": "Cuestionario de falso y verdadero acerca de la normativa del internet",
+      "estudiante": "Fernando DavidTorres Vargas",
+      "matricula": "90123456",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "28/6/2026, 2:59:25 p.m."
+        }
+      ],
+      "promedioFinal": "10.00"
+    },
+    {
+      "nombreArchivo": "REP_L-084_98765430_Mónica PaolaMárquez Trejo.toro",
+      "idLeccion": "L-084",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 3",
+      "actividad": "Cuestionario de falso y verdadero acerca de la normativa del internet",
+      "estudiante": "Mónica PaolaMárquez Trejo",
+      "matricula": "98765430",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "28/6/2026, 2:59:25 p.m."
+        }
+      ],
+      "promedioFinal": "10.00"
+    },
+    {
+      "nombreArchivo": "REP_L-084_98765432_Adrián ManuelMendoza Chávez.toro",
+      "idLeccion": "L-084",
+      "grupo": "1B-BT",
+      "materia": "Cultura digital I",
+      "parcial": "Parcial 1",
+      "progresion": "ProgresiÀ³n 3",
+      "actividad": "Cuestionario de falso y verdadero acerca de la normativa del internet",
+      "estudiante": "Adrián ManuelMendoza Chávez",
+      "matricula": "98765432",
+      "intentos": [
+        {
+          "numero": 1,
+          "calificacion": 10,
+          "fecha": "28/6/2026, 2:59:25 p.m."
+        }
+      ],
+      "promedioFinal": "10.00"
+    }
+  ]
+}
