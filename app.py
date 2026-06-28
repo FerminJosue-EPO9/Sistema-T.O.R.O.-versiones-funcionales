@@ -1584,7 +1584,7 @@ def api_estadisticas_calificaciones():
 
     resultados = []
 
-    numero_parcial = parcial.replace('Parcial ', '')
+    #numero_parcial = parcial.replace('Parcial ', '')
 
     def normalizar(texto):
         return (
@@ -1602,10 +1602,16 @@ def api_estadisticas_calificaciones():
 
         for registro in registros:
 
+            print("----------------------")
+            print(registro)
+
+            print("grupo:", normalizar(registro.get("grupo")), "==", normalizar(grupo))
+            print("materia:", normalizar(registro.get("materia")), "==", normalizar(materia))
+            print("parcial:", normalizar(registro.get("parcial")), "==", normalizar(parcial))
             if (
                 normalizar(registro.get('grupo')) == normalizar(grupo)
                 and normalizar(registro.get('materia')) == normalizar(materia)
-                and str(registro.get('parcial')) == numero_parcial
+                and normalizar(registro.get('parcial')) == normalizar(parcial)
             ):
                 resultados.append(registro)
 
