@@ -235,7 +235,11 @@
 /* Columna de Nombre del Alumno */
 /* --- COLUMNAS FIJAS (STICKY CALIFICACIONES) --- */
 
-/* Columna de Nombre del Alumno: Fijamos un ancho idéntico en min, max y width */
+/* ==========================================================================
+   --- COLUMNAS FIJAS (STICKY CALIFICACIONES - CORREGIDO) ---
+   ========================================================================== */
+
+/* 1. Definición Obligatoria del Ancho del Alumno (Evita el hueco divisorio) */
 .calificaciones-table th.th-alumno,
 .calificaciones-table td.td-alumno {
     position: sticky !important;
@@ -246,61 +250,60 @@
     max-width: 220px !important;
     width: 220px !important;
     box-sizing: border-box !important;
+    text-align: left !important;
+    padding-left: 20px !important;
 }
 
+/* Encabezado del Alumno (Fondo grisáceo arriba) */
 .calificaciones-table thead th.th-alumno {
     background: #f8f9fa !important;
     z-index: 35 !important;
 }
 
-/* Columna de Lección: Su 'left' debe ser exactamente igual al width de la columna alumno (220px) */
+/* 2. Columna de Lección: Su 'left' se acopla EXACTAMENTE donde termina el alumno (220px) */
 .calificaciones-table th.th-leccion-fija,
 .calificaciones-table td.td-leccion {
     position: sticky !important;
-    left: 220px !important; /* Perfectamente alineado con el final de la columna alumno */
+    left: 220px !important; /* Alineación perfecta e inmediata */
     z-index: 15 !important;
     background: white !important;
     min-width: 90px !important;
     max-width: 90px !important;
     width: 90px !important;
     box-sizing: border-box !important;
+    text-align: center !important; 
+    padding-left: 0 !important;   
 }
 
+/* Encabezado de la Lección */
 .calificaciones-table thead th.th-leccion-fija {
     background: #f8f9fa !important;
     z-index: 30 !important;
 }
 
-/* Forzar que la tabla respete los anchos de columna fijos en las celdas sticky */
+/* Forzar que la tabla respete estrictamente las dimensiones en px */
 .calificaciones-table {
     table-layout: fixed !important;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
 }
 
-
-
-
-
-
-
-
-.calificaciones-table thead th.th-leccion-fija {
-    background: #f8f9fa !important;
-    z-index: 25 !important;
-}
+/* --- TAMAÑO DE CELDAS RESTANTES --- */
 
 /* Columnas de intentos con tamaño fijo */
 .calificaciones-table th.th-intento,
 .calificaciones-table td.td-intento {
-    min-width: 55px !important;
+    min-width: 60px !important;
     max-width: 70px !important;
-    width: 60px !important;
+    width: 65px !important;
     text-align: center !important;
 }
 
 /* Columna de Promedio */
 .calificaciones-table th.th-promedio-general,
 .calificaciones-table td.td-promedio-general {
-    min-width: 80px !important;
+    min-width: 85px !important;
     max-width: 100px !important;
     width: 90px !important;
     text-align: center !important;
@@ -315,38 +318,29 @@
     text-align: center !important;
 }
 
-/* Sombra entre columnas fijas y el resto */
+/* Bordes y sombras separadoras */
 .calificaciones-table td.td-alumno {
-    border-right: 2px solid #e0e0e0 !important;
-    box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+    border-right: 1px solid #e2e8f0 !important;
 }
 
 .calificaciones-table td.td-leccion {
-    border-right: 2px solid #e0e0e0 !important;
-    box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+    border-right: 2px solid #cbd5e1 !important; /* Línea divisoria marcada al terminar la sección fija */
+    box-shadow: 3px 0 6px rgba(0,0,0,0.05);
 }
 
-/* Hover en filas - mantener fondo blanco en columnas fijas */
+/* Mantener el fondo blanco limpio en hovers sobre zonas fijas */
 .calificaciones-table tbody tr:hover td.td-alumno,
 .calificaciones-table tbody tr:hover td.td-leccion {
-    background: white !important;
+    background: #ffffff !important;
 }
 
 .calificaciones-table tbody tr:hover td:not(.td-alumno):not(.td-leccion) {
-    background: #fafafa;
+    background: #f8fafc;
 }
 
-/* Ajuste para el sticky en la cabecera */
+/* Ajuste general de posiciones en cabeceras superiores */
 .calificaciones-table thead th {
     position: sticky;
     top: 0;
     z-index: 10;
-}
-
-.calificaciones-table thead th.th-alumno {
-    z-index: 30 !important;
-}
-
-.calificaciones-table thead th.th-leccion-fija {
-    z-index: 25 !important;
 }

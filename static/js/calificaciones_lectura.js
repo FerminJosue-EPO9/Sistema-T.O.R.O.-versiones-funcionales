@@ -155,7 +155,13 @@ function generarTablaCalificaciones(calificaciones) {
     const leccionMeta = new Map();
 
     calificaciones.forEach(c => {
-        const prog = c.progresion?.trim() || '(Sin progresión)';
+let prog = c.progresion?.trim() || '(Sin progresión)';
+        
+        // 🔥 CORRECCIÓN DE CODIFICACIÓN EN EL FRONTEND
+        // Si viene con los caracteres rotos de la base de datos o codificación errónea, los reparamos aquí
+        prog = prog.replace(/ProgresiÃ³n/g, 'Progresión')
+                   .replace(/progresiÃ³n/g, 'progresión');
+
         const lec  = c.idLeccion;
         if (!leccionMeta.has(lec)) {
             leccionMeta.set(lec, { progresion: prog, actividad: c.actividad?.trim() || lec });
@@ -230,10 +236,20 @@ function generarTablaCalificaciones(calificaciones) {
     });
 
     // --- CUERPO DE LA TABLA (CORREGIDO) ---
-    let tbody = '';
+let tbody = '';
     alumnosMap.forEach(alumno => {
         const nombreCompleto = obtenerNombreCompleto(alumno.alumnoData || alumno);
+        
+        // 1. Filtramos las lecciones que tiene el alumno
         const leccionesAlumno = leccionesOrdenadas.filter(lec => alumno.lecciones[lec]);
+        
+        // 🔥 FIJACIÓN: Ordenamos las lecciones de este alumno numéricamente (L-084, L-085, L-086, L-087...)
+        leccionesAlumno.sort((a, b) => {
+            const numA = parseInt(a.match(/\d+/)?.[0] || 0);
+            const numB = parseInt(b.match(/\d+/)?.[0] || 0);
+            return numA - numB;
+        });
+
         const numFilas    = leccionesAlumno.length || 1;
         const promGeneral = calcularPromedioGeneral(alumno.lecciones, leccionesOrdenadas);
         const promTexto   = promGeneral !== null ? promGeneral.toFixed(1) : '—';
@@ -269,13 +285,13 @@ function generarTablaCalificaciones(calificaciones) {
             if (idx === 0) {
                 tr += `
                     <td rowspan="${numFilas}" class="td-alumno"
-                        style="width:200px;min-width:200px;max-width:200px;">
-                        <div style="display:flex;flex-direction:column;gap:4px;width:100%;">
-                            <strong style="display:block;word-break:break-word;white-space:normal;line-height:1.3;">
+                        style="width:220px; min-width:220px; max-width:220px; background-color: #fff; vertical-align: middle;">
+                        <div style="width:100%; max-width:200px; word-break: break-word; white-space: normal;">
+                            <strong style="display:block; font-size: 0.95rem; line-height:1.4; color: #1e293b;">
                                 ${escapeHtml(nombreCompleto)}
                             </strong>
                             ${alumno.matricula ? `
-                                <span style="display:block;word-break:break-word;white-space:normal;font-size:0.75rem;color:#666;">
+                                <span style="display:block; margin-top: 4px; font-size:0.8rem; color:#64748b; font-weight: 500;">
                                     ${escapeHtml(alumno.matricula)}
                                 </span>` : ''}
                         </div>
@@ -704,8 +720,23 @@ async function procesarArchivos(files) {
         archivosParseados.push(datos);
     }
 
-    if (archivosParseados.length > 0) {
+if (archivosParseados.length > 0) {
+        // 🔥 CORRECCIÓN: Ordenar alfabética y numéricamente los archivos parseados antes de meterlos a la lista general
+        archivosParseados.sort((a, b) => {
+            const numA = parseInt(a.idLeccion?.match(/\d+/)?.[0] || 0);
+            const numB = parseInt(b.idLeccion?.match(/\d+/)?.[0] || 0);
+            return numA - numB;
+        });
+
         archivosProcesadosTemp.push(...archivosParseados);
+        
+        // Opcional: También podemos ordenar toda la lista acumulada para que la vista previa ('Preview') quede impecable
+        archivosProcesadosTemp.sort((a, b) => {
+            const numA = parseInt(a.idLeccion?.match(/\d+/)?.[0] || 0);
+            const numB = parseInt(b.idLeccion?.match(/\d+/)?.[0] || 0);
+            return numA - numB;
+        });
+
         mostrarPreview(archivosProcesadosTemp);
         mostrarMensaje(`✓ ${archivosParseados.length} archivo(s) listo(s) para guardar`, false);
         return true;
