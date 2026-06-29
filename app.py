@@ -22,6 +22,8 @@ import hashlib
 import unicodedata
 import base64
 import zipfile
+import webbrowser
+import threading
 
 # ==========================================
 # IMPORTS DE TERCEROS (Flask y sus extensiones)
@@ -2138,5 +2140,18 @@ def desofuscar_texto(texto_ofuscado: str) -> str:
 # ==========================================
 # PUNTO DE ENTRADA
 # ==========================================
-if __name__ == '__main__':
-    app.run(debug=True)
+
+#if __name__ == '__main__':
+#    app.run(debug=True)
+
+def abrir_navegador():
+    webbrowser.open("http://127.0.0.1:5000")
+
+if __name__ == "__main__":
+    threading.Timer(1.5, abrir_navegador).start()
+    app.run(
+        host="127.0.0.1",
+        port=5000,
+        debug=False,
+        use_reloader=False
+    )
