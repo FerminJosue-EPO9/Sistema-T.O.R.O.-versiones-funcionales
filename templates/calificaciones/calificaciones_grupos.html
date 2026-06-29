@@ -33,7 +33,8 @@
                                 {% if not materia.parciales %}
                                     <span class="sin-dato">Sin parciales creados</span>
                                 {% else %}
-                                    {% for parcial in materia.parciales %}
+                                    {% set parciales_ordenados = materia.parciales | sort(attribute='nombre') %}
+                                    {% for parcial in parciales_ordenados %}
                                     <a href="{{ url_for('vista_tabla_calificaciones',
                                                 nombre_grupo=grupo.nombre,
                                                 nombre_materia=materia.nombre,
@@ -61,4 +62,5 @@
     {% endif %}
 
 </div>
+
 {% endblock %}

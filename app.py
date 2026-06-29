@@ -1006,11 +1006,9 @@ def leer_grupos():
     i = 0
     while i < len(lineas):
         if lineas[i] == '%':
-            # Inicio de un grupo
             i += 1
             if i >= len(lineas):
                 break
-            # Siguiente línea debe ser @nombre@
             if not lineas[i].startswith('@') or not lineas[i].endswith('@'):
                 i += 1
                 continue
@@ -1018,56 +1016,52 @@ def leer_grupos():
             i += 1
             materias = []
             alumnos = []
-            # Ahora leemos hasta encontrar un '-' que separa estructura de alumnos
+            
             while i < len(lineas) and lineas[i] != '-':
-                # Procesar materias, parciales, progresiones
                 linea = lineas[i]
                 if linea.startswith('#') and linea.endswith('#'):
-                    # Materia
                     nombre_materia = linea[1:-1]
                     materia_actual = {'nombre': nombre_materia, 'parciales': []}
                     materias.append(materia_actual)
                     i += 1
-                    # Leer parciales y progresiones de esta materia
                     while i < len(lineas) and lineas[i] != '-' and not (lineas[i].startswith('#') and lineas[i].endswith('#')):
                         if lineas[i].startswith('*') and lineas[i].endswith('*'):
                             nombre_parcial = lineas[i][1:-1]
                             parcial_actual = {'nombre': nombre_parcial, 'progresiones': []}
                             materia_actual['parciales'].append(parcial_actual)
                             i += 1
-                            # Leer progresiones de este parcial
                             while i < len(lineas) and lineas[i] != '-' and not (lineas[i].startswith('*') and lineas[i].endswith('*')) and not (lineas[i].startswith('#') and lineas[i].endswith('#')):
                                 if lineas[i].startswith('&') and lineas[i].endswith('&'):
                                     nombre_progresion = lineas[i][1:-1]
                                     parcial_actual['progresiones'].append(nombre_progresion)
                                     i += 1
                                 else:
-                                    # Si no es &, rompemos (no debería pasar)
                                     break
                         else:
-                            # Si no es *, avanzamos (por si hay líneas mal formadas)
                             i += 1
                 else:
-                    # Si no es #, avanzamos (por si hay espacios)
                     i += 1
-            # Ahora estamos en el '-' que separa estructura de alumnos
+            
             if i < len(lineas) and lineas[i] == '-':
                 i += 1
-                # Leer alumnos hasta encontrar otro '-' o el final del grupo
                 while i < len(lineas) and lineas[i] != '-':
                     if '|' in lineas[i]:
                         partes = lineas[i].split('|')
                         if len(partes) >= 3:
+                            matricula = partes[0].strip()
+                            nombres = partes[1].strip()
+                            apellidos = partes[2].strip()
+                            # 🔥 MODIFICACIÓN: Agregar nombre_completo
                             alumnos.append({
-                                'matricula': partes[0].strip(),
-                                'nombres': partes[1].strip(),
-                                'apellidos': partes[2].strip()
+                                'matricula': matricula,
+                                'nombres': nombres,
+                                'apellidos': apellidos,
+                                'nombre_completo': f"{nombres} {apellidos}".strip()
                             })
                     i += 1
-                # Saltar el '-' que cierra la lista de alumnos (si está)
                 if i < len(lineas) and lineas[i] == '-':
                     i += 1
-            # Ahora debe venir el '%' que cierra el grupo, pero lo omitimos
+            
             grupos.append({
                 'nombre': nombre_grupo,
                 'materias': materias,
@@ -1079,6 +1073,9 @@ def leer_grupos():
 
 def escribir_grupos(grupos):
     """Escribe la lista de grupos en data/grupos.txt con el formato requerido."""
+    # Reordenar automáticamente antes de guardar
+    grupos = reordenar_grupos(grupos)
+    
     ruta = os.path.join(app.root_path, 'data', 'grupos.txt')
     os.makedirs(os.path.dirname(ruta), exist_ok=True)
     lineas = []
@@ -1093,7 +1090,10 @@ def escribir_grupos(grupos):
                     lineas.append(f"&{prog}&")
         lineas.append('-')
         for alumno in grupo.get('alumnos', []):
-            lineas.append(f"{alumno['matricula']}|{alumno['nombres']}|{alumno['apellidos']}")
+            if isinstance(alumno, dict):
+                lineas.append(f"{alumno.get('matricula', '')}|{alumno.get('nombres', '')}|{alumno.get('apellidos', '')}")
+            else:
+                lineas.append(str(alumno))
         lineas.append('-')
     lineas.append('%')
     with open(ruta, 'w', encoding='utf-8') as f:
@@ -1258,31 +1258,42 @@ def api_crear_progresion():
         return jsonify({'exito': True})
     except Exception as e:
         return jsonify({'exito': False, 'mensaje': str(e)})
+    
+
 
 @app.route('/api/eliminar_elemento', methods=['POST'])
 def api_eliminar_elemento():
+    """
+    Elimina elementos de la jerarquía: grupo, materia, parcial o progresión.
+    También elimina lecciones asociadas y calificaciones según corresponda.
+    """
     data = request.json
     try:
         grupos = leer_grupos()
         grupo_idx = data.get('grupo')
         
+        # ============================================================
+        # VALIDACIÓN DEL GRUPO
+        # ============================================================
         if grupo_idx is None:
             return jsonify({'exito': False, 'mensaje': 'Se requiere el índice del grupo'})
         if grupo_idx < 0 or grupo_idx >= len(grupos):
             return jsonify({'exito': False, 'mensaje': 'Grupo no válido'})
         
-        # Guardamos referencias limpias para no repetir código largo
         grupo_a_eliminar = grupos[grupo_idx]
         grupo_nombre = grupo_a_eliminar['nombre']
+        lecciones_afectadas = []
         
-        # ── 1. Eliminar grupo completo ───────────────────────────────────────────
+        # ============================================================
+        # CASO 1: ELIMINAR GRUPO COMPLETO
+        # ============================================================
         if 'materia' not in data:
-            # A. Eliminar lecciones asociadas
+            # A. Eliminar lecciones asociadas al grupo
             lecciones_afectadas = buscar_lecciones_por_elemento('grupo', grupo_nombre)
             for carpeta in lecciones_afectadas:
                 eliminar_leccion_por_carpeta(carpeta)
             
-            # B. Borrar calificaciones de TODAS las materias y parciales
+            # B. Borrar calificaciones de TODAS las materias y parciales del grupo
             todas = leer_calificaciones()
             for materia in grupo_a_eliminar.get('materias', []):
                 for parcial in materia.get('parciales', []):
@@ -1294,21 +1305,34 @@ def api_eliminar_elemento():
                     todas.pop(clave, None)
             escribir_calificaciones(todas)
             
-            # C. Actualizar JSON de grupos
+            # C. Eliminar el grupo y reordenar
             grupos.pop(grupo_idx)
+            grupos = reordenar_grupos(grupos)
             escribir_grupos(grupos)
-            return jsonify({'exito': True, 'lecciones_eliminadas': len(lecciones_afectadas)})
+            
+            return jsonify({
+                'exito': True, 
+                'lecciones_eliminadas': len(lecciones_afectadas),
+                'mensaje': f'Grupo "{grupo_nombre}" eliminado correctamente'
+            })
 
-        # ── 2. Eliminar materia ──────────────────────────────────────────────────
+        # ============================================================
+        # VALIDACIÓN DE LA MATERIA
+        # ============================================================
         materia_idx = data.get('materia')
-        if materia_idx is None or materia_idx < 0 or materia_idx >= len(grupo_a_eliminar['materias']):
+        if materia_idx is None:
+            return jsonify({'exito': False, 'mensaje': 'Se requiere el índice de la materia'})
+        if materia_idx < 0 or materia_idx >= len(grupo_a_eliminar['materias']):
             return jsonify({'exito': False, 'mensaje': 'Materia no válida'})
         
         materia_a_eliminar = grupo_a_eliminar['materias'][materia_idx]
         materia_nombre = materia_a_eliminar['nombre']
         
+        # ============================================================
+        # CASO 2: ELIMINAR MATERIA
+        # ============================================================
         if 'parcial' not in data:
-            # A. Eliminar lecciones asociadas
+            # A. Eliminar lecciones asociadas a la materia
             lecciones_afectadas = buscar_lecciones_por_elemento('materia', materia_nombre)
             for carpeta in lecciones_afectadas:
                 eliminar_leccion_por_carpeta(carpeta)
@@ -1324,23 +1348,36 @@ def api_eliminar_elemento():
                 todas.pop(clave, None)
             escribir_calificaciones(todas)
             
-            # C. Actualizar JSON de grupos
+            # C. Eliminar la materia y reordenar
             grupo_a_eliminar['materias'].pop(materia_idx)
+            grupos = reordenar_grupos(grupos)
             escribir_grupos(grupos)
-            return jsonify({'exito': True, 'lecciones_eliminadas': len(lecciones_afectadas)})
+            
+            return jsonify({
+                'exito': True, 
+                'lecciones_eliminadas': len(lecciones_afectadas),
+                'mensaje': f'Materia "{materia_nombre}" eliminada correctamente'
+            })
 
-        # ── 3. Eliminar parcial ──────────────────────────────────────────────────
+        # ============================================================
+        # VALIDACIÓN DEL PARCIAL
+        # ============================================================
         parcial_idx = data.get('parcial')
         parciales_list = materia_a_eliminar['parciales']
         
-        if parcial_idx is None or parcial_idx < 0 or parcial_idx >= len(parciales_list):
+        if parcial_idx is None:
+            return jsonify({'exito': False, 'mensaje': 'Se requiere el índice del parcial'})
+        if parcial_idx < 0 or parcial_idx >= len(parciales_list):
             return jsonify({'exito': False, 'mensaje': 'Parcial no válido'})
         
         parcial_a_eliminar = parciales_list[parcial_idx]
         parcial_nombre = parcial_a_eliminar['nombre']
         
+        # ============================================================
+        # CASO 3: ELIMINAR PARCIAL
+        # ============================================================
         if 'progresion' not in data:
-            # A. Eliminar lecciones asociadas
+            # A. Eliminar lecciones asociadas al parcial
             lecciones_afectadas = buscar_lecciones_por_elemento('parcial', parcial_nombre)
             for carpeta in lecciones_afectadas:
                 eliminar_leccion_por_carpeta(carpeta)
@@ -1355,12 +1392,20 @@ def api_eliminar_elemento():
             todas.pop(clave, None)
             escribir_calificaciones(todas)
             
-            # C. Actualizar JSON de grupos
+            # C. Eliminar el parcial y reordenar
             parciales_list.pop(parcial_idx)
+            grupos = reordenar_grupos(grupos)
             escribir_grupos(grupos)
-            return jsonify({'exito': True, 'lecciones_eliminadas': len(lecciones_afectadas)})
+            
+            return jsonify({
+                'exito': True, 
+                'lecciones_eliminadas': len(lecciones_afectadas),
+                'mensaje': f'Parcial "{parcial_nombre}" eliminado correctamente'
+            })
 
-        # ── 4. Eliminar progresión ───────────────────────────────────────────────
+        # ============================================================
+        # VALIDACIÓN DE LA PROGRESIÓN
+        # ============================================================
         prog_idx = data.get('progresion')
         if prog_idx is None:
             return jsonify({'exito': False, 'mensaje': 'Se requiere el índice de la progresión'})
@@ -1369,17 +1414,31 @@ def api_eliminar_elemento():
         
         prog_nombre = parcial_a_eliminar['progresiones'][prog_idx]
         
-        # Aquí no hay conflicto de calificaciones, solo eliminamos lecciones y actualizamos grupos
+        # ============================================================
+        # CASO 4: ELIMINAR PROGRESIÓN
+        # ============================================================
+        # A. Eliminar lecciones asociadas a la progresión
         lecciones_afectadas = buscar_lecciones_por_elemento('progresion', prog_nombre)
         for carpeta in lecciones_afectadas:
             eliminar_leccion_por_carpeta(carpeta)
         
+        # B. Eliminar la progresión y reordenar
         parcial_a_eliminar['progresiones'].pop(prog_idx)
+        grupos = reordenar_grupos(grupos)
         escribir_grupos(grupos)
-        return jsonify({'exito': True, 'lecciones_eliminadas': len(lecciones_afectadas)})
-    
+        
+        return jsonify({
+            'exito': True, 
+            'lecciones_eliminadas': len(lecciones_afectadas),
+            'mensaje': f'Progresión "{prog_nombre}" eliminada correctamente'
+        })
+        
     except Exception as e:
-        return jsonify({'exito': False, 'mensaje': str(e)})
+        print(f"Error en api_eliminar_elemento: {e}")
+        return jsonify({
+            'exito': False, 
+            'mensaje': f'Error interno: {str(e)}'
+        }), 500
 
 @app.route('/api/obtener_progresiones', methods=['GET'])
 def api_obtener_progresiones():
@@ -1416,10 +1475,61 @@ def vista_progresiones():
 # CLAVE ESTABLE PARA CALIFICACIONES
 # ----------------------------------------------------------
 
+def obtener_nombre_completo(alumno):
+    """
+    Retorna el nombre completo del alumno manejando diferentes formatos.
+    """
+    if not alumno:
+        return 'Sin nombre'
+    
+    # Si es un diccionario con campos separados
+    if isinstance(alumno, dict):
+        if 'nombres' in alumno and 'apellidos' in alumno:
+            nombre = f"{alumno.get('nombres', '').strip()} {alumno.get('apellidos', '').strip()}".strip()
+            if nombre:
+                return nombre
+        if 'nombre' in alumno:
+            return alumno['nombre'].strip()
+        if 'nombre_completo' in alumno:
+            return alumno['nombre_completo'].strip()
+        if 'estudiante' in alumno:
+            return alumno['estudiante'].strip()
+        if 'matricula' in alumno:
+            return alumno['matricula'].strip()
+
+    # Si es un string
+    if isinstance(alumno, str):
+        return alumno.strip()
+    
+    return 'Sin nombre'
+
+
+def reordenar_grupos(grupos):
+    """
+    Reordena los grupos para que los números sean consecutivos desde 1.
+    Mantiene el orden original (por índice) y asigna números secuenciales.
+    """
+    if not grupos:
+        return grupos
+    
+    # Asignar números secuenciales basados en el orden actual
+    for idx, grupo in enumerate(grupos, 1):
+        grupo['numero'] = idx
+    
+    return grupos
+
+
 def _normalizar_clave(s):
     """Elimina acentos y pasa a minúsculas para que tildes/mayúsculas no afecten la clave."""
+    if not s:
+        return ''
+    # Normalizar UNICODE: separar caracteres base y diacríticos
     s = unicodedata.normalize('NFD', str(s))
+    # Eliminar los diacríticos (tildes, virgulillas, etc.)
     s = ''.join(c for c in s if unicodedata.category(c) != 'Mn')
+    # Eliminar caracteres no alfanuméricos excepto espacios
+    s = re.sub(r'[^\w\s-]', '', s)
+    # Convertir a minúsculas y recortar espacios
     return s.strip().lower()
 
 def _generar_context_key(nombre_grupo, nombre_materia, nombre_parcial):
@@ -1468,10 +1578,6 @@ def vista_calificaciones():
 
 @app.route('/calificaciones/<string:nombre_grupo>/<string:nombre_materia>/<string:nombre_parcial>')
 def vista_tabla_calificaciones(nombre_grupo, nombre_materia, nombre_parcial):
-    # BUG CORREGIDO: la URL anterior solo tenía /<nombre_grupo>, sin materia ni parcial.
-    # El JS necesita context_key, nombre_grupo, nombre_materia, nombre_parcial y alumnos
-    # inyectados como JSON en el tag <script id="datos-servidor">.
-    # La versión anterior pasaba info_grupo/columnas/filas que el template actual no usa.
     grupos = leer_grupos()
     grupo  = next((g for g in grupos if g['nombre'] == nombre_grupo), None)
     if not grupo:
@@ -1488,16 +1594,24 @@ def vista_tabla_calificaciones(nombre_grupo, nombre_materia, nombre_parcial):
     todas          = leer_calificaciones()
     calificaciones = todas.get(context_key, [])
 
+    # --- CORRECCIÓN: Agregar nombre_completo a cada alumno ---
+    alumnos_con_nombre_completo = []
+    for alumno in grupo.get('alumnos', []):
+        alumno_copy = alumno.copy() if isinstance(alumno, dict) else {'matricula': str(alumno)}
+        alumno_copy['nombre_completo'] = obtener_nombre_completo(alumno)
+        alumnos_con_nombre_completo.append(alumno_copy)
+
     return render_template(
         'calificaciones/calificaciones.html',
         nombre_grupo=nombre_grupo,
         nombre_materia=nombre_materia,
         nombre_parcial=nombre_parcial,
-        alumnos=grupo.get('alumnos', []),
+        alumnos=alumnos_con_nombre_completo,  # ← AHORA CON nombre_completo
         calificaciones_json=json.dumps(calificaciones, ensure_ascii=False),
         context_key=context_key,
         active_page='calificaciones'
     )
+
 
 @app.route('/api/calificaciones/guardar', methods=['POST'])
 def api_guardar_calificaciones():
@@ -1586,7 +1700,7 @@ def api_estadisticas_calificaciones():
 
     resultados = []
 
-    numero_parcial = parcial.replace('Parcial ', '')
+    #numero_parcial = parcial.replace('Parcial ', '')
 
     def normalizar(texto):
         return (
@@ -1604,10 +1718,16 @@ def api_estadisticas_calificaciones():
 
         for registro in registros:
 
+            print("----------------------")
+            print(registro)
+
+            print("grupo:", normalizar(registro.get("grupo")), "==", normalizar(grupo))
+            print("materia:", normalizar(registro.get("materia")), "==", normalizar(materia))
+            print("parcial:", normalizar(registro.get("parcial")), "==", normalizar(parcial))
             if (
                 normalizar(registro.get('grupo')) == normalizar(grupo)
                 and normalizar(registro.get('materia')) == normalizar(materia)
-                and str(registro.get('parcial')) == numero_parcial
+                and normalizar(registro.get('parcial')) == normalizar(parcial)
             ):
                 resultados.append(registro)
 
