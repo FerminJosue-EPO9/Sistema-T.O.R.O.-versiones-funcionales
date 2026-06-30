@@ -220,7 +220,7 @@ def guardar_actividad_txt():
             nombre_archivo = f"{base}_{contador}{ext}"
             ruta_completa = os.path.join(actividades_dir, nombre_archivo)
 
-        # 🔐 OFUSCAR antes de guardar
+        #  OFUSCAR antes de guardar
         contenido_ofuscado = ofuscar_texto(contenido)
         with open(ruta_completa, 'w', encoding='utf-8') as f:
             f.write(contenido_ofuscado)
