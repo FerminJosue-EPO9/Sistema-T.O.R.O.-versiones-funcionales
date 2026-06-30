@@ -56,6 +56,14 @@ function calcularPromedio(listaNumeros) {
     return (suma / listaNumeros.length).toFixed(1); // Divide y corta a 1 solo decimal
 }
 
+function corregirProgresion(texto) {
+    if (!texto) return '(Sin progresión)';
+
+    return texto.trim()
+        .replace(/ProgresiÀ³n/g, 'Progresión')
+        .replace(/progresiÀ³n/g, 'progresión');
+}
+
 // C. Función para sacar promedios de cada lección
 // Recibe la matriz grande y le aplica la función de arriba a cada renglón
 function procesarPromediosGrupo(matrizLecciones) {
@@ -357,10 +365,9 @@ async function cargarListaActividades() {
         if (!actividadesUnicas[registro.idLeccion]) {
 
             actividadesUnicas[registro.idLeccion] = {
-
                 idLeccion: registro.idLeccion,
                 actividad: registro.actividad,
-                progresion: registro.progresion
+                progresion: corregirProgresion(registro.progresion)
 
             };
         }

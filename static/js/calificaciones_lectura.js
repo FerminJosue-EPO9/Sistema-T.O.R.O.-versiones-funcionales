@@ -157,7 +157,7 @@ function generarTablaCalificaciones(calificaciones) {
     calificaciones.forEach(c => {
 let prog = c.progresion?.trim() || '(Sin progresión)';
         
-        // 🔥 CORRECCIÓN DE CODIFICACIÓN EN EL FRONTEND
+        // CORRECCIÓN DE CODIFICACIÓN EN EL FRONTEND
         // Si viene con los caracteres rotos de la base de datos o codificación errónea, los reparamos aquí
         prog = prog.replace(/ProgresiÃ³n/g, 'Progresión')
                    .replace(/progresiÃ³n/g, 'progresión');
@@ -721,7 +721,7 @@ async function procesarArchivos(files) {
     }
 
 if (archivosParseados.length > 0) {
-        // 🔥 CORRECCIÓN: Ordenar alfabética y numéricamente los archivos parseados antes de meterlos a la lista general
+        // CORRECCIÓN: Ordenar alfabética y numéricamente los archivos parseados antes de meterlos a la lista general
         archivosParseados.sort((a, b) => {
             const numA = parseInt(a.idLeccion?.match(/\d+/)?.[0] || 0);
             const numB = parseInt(b.idLeccion?.match(/\d+/)?.[0] || 0);
