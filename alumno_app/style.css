@@ -1,0 +1,1046 @@
+:root {
+    --primary-green: #4CAF50;
+    --dark-green: #2E7D32;
+    --bg-light: #F8F9FA;
+    --modal-blue: #2b59a2;
+    --color-header-text: #1a8f3d;
+    --color-text-blue: #3b5998;
+    --bg-lesson-container: #dcece2;
+    --border-lesson-container: #8ebf9e;
+    --btn-green-bg: #619b6b;
+    --btn-gray-bg: #637388;
+    --primary-green: #4CAF50;
+    --dark-green: #2E7D32;
+    --bg-light: #f7f9fc;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-light);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.login-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+    text-align: center;
+    min-height: 100vh;
+}
+
+.mobile-container {
+    width: 100%;
+    max-width: 800px; /* Le damos mucho espacio para que respire en tablets/PC */
+    margin: 0 auto;   /* Lo pegamos a los bordes superior e inferior */
+    padding: 20px;    /* Espacio interno para que el texto no toque la orilla de la pantalla */
+    display: flex;
+    flex-direction: column;
+    
+    /* ELIMINADOS: border-radius, box-shadow, background-color y el max-width pequeñito */
+}
+
+.section-title {
+    color: var(--color-text-blue);
+    font-size: 15px;
+    text-align: left;
+    margin-bottom: 8px;
+}
+
+.section-divider {
+    border: 0;
+    border-top: 1px solid #eee;
+    margin: 8px 0;
+}
+
+.upload-icon {
+    font-size: 35px;
+    margin-bottom: 10px;
+}
+
+.btn-upload {
+    background: #7baacb;
+    color: #1976d2;
+    border: 1px dashed #1976d2;
+}
+
+.file-status {
+    font-size: 11px;
+    margin-top: 8px;
+    color: #888;
+}
+
+.btn-green {
+    background: var(--btn-green-bg);
+}
+
+.btn-gray {
+    background: var(--btn-gray-bg);
+}
+
+.welcome-box {
+    margin-bottom: 25px;
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+    gap: 6px;
+    color: #444;
+}
+
+.welcome-text {
+    font-size: 18px;
+    font-weight: 400;
+}
+
+.user-name {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.course-title-container {
+    margin-bottom: 30px;
+}
+
+.course-label {
+    color: #aaa;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    display: block;
+    margin-bottom: 6px;
+    text-align: center;
+}
+
+.course-name {
+    color: var(--dark-green);
+    font-size: 22px;
+    font-weight: 800;
+    text-align: center;
+}
+
+.thin-line {
+    border: 0;
+    height: 1px;
+    background: #e0e0e0;
+    width: 80%;
+    margin: 12px auto 0;
+}
+
+.lesson-container {
+    background: var(--bg-lesson-container);
+    border: 1px solid var(--border-lesson-container);
+    border-radius: 20px;
+    padding: 20px 15px;
+    margin-bottom: 6px;
+}
+
+.lesson-card {
+    background: white;
+    border-radius: 10px;
+    padding: 12px 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    margin-bottom: 10px;
+    transition: transform 0.2s;
+}
+
+.lesson-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.upload-area {
+    border: 2px dashed #ccc;
+    border-radius: 15px;
+    padding: 18px;
+    margin: 8px 0 4px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.upload-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.info-text {
+    font-size: 13px;
+    color: #666;
+    margin: 0;
+    text-align: center;
+}
+
+.action-button {
+    width: 100%;
+    max-width: 260px;
+}
+
+@media (max-width: 480px) {
+    .modal-actions { flex-direction: column; }
+    .modal-actions button { width: 100%; }
+    .upload-area {
+        padding: 18px;
+        margin: 8px 0 4px;
+    }
+    .action-button { max-width: 100%; }
+}
+
+.modal-content .info-text {
+    margin-bottom: 5px;
+}
+
+.test-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.btn-test {
+    background: white;
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 15px;
+    font-size: 12px;
+    cursor: pointer;
+    color: #333;
+    transition: all 0.2s;
+    width: auto;
+}
+
+.btn-test:hover {
+    background: #f0f0f0;
+    border-color: #999;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    overflow: hidden;
+    border: none;
+    max-width: 450px;
+    background: white;
+    width: 90%;
+    border-radius: 25px;
+    text-align: center;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+#lesson-modal .modal-content {
+    max-width: 90%;
+}
+
+#actividad-modal .modal-content {
+    max-width: 90%;
+    min-height: 40vh;
+}
+
+
+.modal-header {
+    padding: 30px 20px;
+    color: white;
+    background-color: var(--modal-blue);
+}
+
+.modal-header-bg {
+    background-color: #2b59a2;
+    padding: 40px 20px;
+    text-align: center;
+    color: white;
+}
+
+#modal-icon {
+    margin-bottom: 15px;
+    font-size: 3rem;
+}
+
+#modal-title {
+    font-size: 1.6rem;
+    margin: 0;
+    font-weight: 600;
+    line-height: 1.2;
+
+}
+
+.modal-body {
+    padding: 30px;
+    text-align: center;
+}
+
+#modal-text-inicio {
+    color: #555;
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+}
+
+#modal-footer-btns {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 0 30px 0;
+}
+
+#modal-footer-btns .btn-toro {
+    flex: 0 1 auto;
+    width: 130px;
+    padding: 12px 0;
+    border-radius: 50px;
+    margin: 0 12px;
+    font-size: 16px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+#modal-footer-btns .contenedor-botones{
+    display: flex;
+}
+
+.btn-izq {
+    background-color: #637388;
+}
+
+.btn-der {
+    background-color: #619b6b;
+}
+
+.score-value {
+    font-size: 3.5rem;
+    font-weight: 900;
+    margin: 10px 0;
+}
+
+#score-section p {
+    /* Puntaje obtenido */
+    color: #888;
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+#score-number {
+    font-size: 4rem;
+    font-weight: 900;
+    margin: 5px 0;
+    line-height: 1;
+}
+
+#intentos-info {
+    color: #444;
+    margin-top: 10px;
+    font-size: 0.95rem;
+}
+
+.text-green {
+    color: #2e7d32;
+}
+
+.text-orange {
+    color: #f9a825;
+}
+
+.text-red {
+    color: #c62828;
+}
+
+.hidden {
+    display: none;
+}
+
+.btn-toro {
+    display: block;   
+    font-weight: bold;
+    color: white;
+    transition: opacity 0.2s;
+    padding: 12px;
+    width: auto;
+    text-align: center;
+    margin: 10px auto; 
+    border: none;
+    cursor: pointer;
+    border-radius: 25px;
+}
+
+.btn-toro:hover {
+    opacity: 0.9;
+}
+
+#lesson-modal .btn-toro {
+    background-color: var(--btn-green-bg);
+    width: 80%;
+    margin: 15px auto;
+    display: block;
+}
+
+#actividad-viewer-content h2 {
+    text-align: center;
+    color: var(--modal-blue);
+    margin-top: 20px;
+}
+
+#actividad-viewer-content p {
+    text-align: center;
+    color: #888;
+}
+
+#btn-finalizar-actividad {
+    background: var(--btn-gray-bg);
+    width: auto;
+    margin: 15px auto;
+    display: block;
+}
+
+#lesson-viewer-content,
+#actividad-viewer-content {
+    padding: 20px;
+    text-align: left;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.question-card {
+    background: #f9f9f9;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #e0e0e0;
+}
+
+.option-btn {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+}
+
+.option-btn:hover {
+    background: #f0f0f0;
+    border-color: var(--modal-blue);
+}
+
+.option-btn.selected {
+    background: #e3f2fd;
+    border-color: var(--modal-blue);
+}
+
+.alert {
+    padding: 10px;
+    border-radius: 8px;
+    margin: 10px 0;
+    text-align: center;
+}
+
+.alert-error {
+    background: #ffebee;
+    color: #c62828;
+    border: 1px solid #ef9a9a;
+}
+
+.alert-success {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #a5d6a7;
+}
+
+/* 1. Forzamos que el fondo ocupe TODO el visor del celular */
+html,
+body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-light);
+    /* Fondo uniforme en toda la pantalla */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    /* Permite que el contenido empiece desde arriba */
+}
+
+.login-container {
+    width: 100%;
+    max-width: 500px;
+    /* Para que no se estire de más en tablets */
+    min-height: 100vh;
+    padding: 2rem 1.5rem;
+    /* Espaciado interno para que los inputs no toquen los bordes */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-sizing: border-box;
+    /* Crucial para que el padding no rompa el ancho */
+    background: transparent;
+    /* Quitamos el recuadro blanco */
+    box-shadow: none;
+    /* Quitamos la sombra */
+    border-radius: 0;
+    /* No necesita bordes redondeados si es pantalla completa */
+}
+
+.login-centered {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+/* Título principal */
+.app-title {
+    font-size: 3rem;
+    color: #33691E;
+    font-weight: 900;
+    margin-bottom: 10px;
+}
+
+.logo-wrapper {
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.login-input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+}
+
+.btn-continuar-login {
+    background: #689F38;
+    width: auto;
+    padding: 12px;
+    border-radius: 10px;
+}
+
+.logo-cbta {
+    width: 150px;
+    margin: 1.5rem 0;
+}
+
+.instruction {
+    color: #888;
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+    text-align: center;
+    line-height: 1.4;
+}
+
+#loginForm {
+    width: 100%;
+}
+
+.input-group {
+    width: 100%;
+    margin-bottom: 1.5rem;
+}
+
+input {
+    width: 100%;
+    padding: 1rem;
+    border: 1.5px solid #d1d1d1;
+    border-radius: 15px;
+    box-sizing: border-box;
+    font-size: 1rem;
+    background-color: white;
+}
+
+
+
+/* 5. El botón verde grande de tu referencia */
+.btn-continuar {
+    width: auto;
+    padding: 1.1rem;
+    background-color: #689f38;
+    color: white;
+    border: none;
+    border-radius: 30px;
+    /* Muy redondeado como en la imagen */
+    font-size: 1.2rem;
+    font-weight: bold;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-top: 1rem;
+}
+
+
+
+.modal-overlay.hidden {
+    display: none;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content.materia-form {
+    background: white;
+    padding: 2rem;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.modal-title-dark {
+    color: var(--dark-green);
+    margin-bottom: 1.5rem;
+}
+
+.input-group input {
+    margin-bottom: 1rem;
+    border: 1px solid #ddd;
+    padding: 12px;
+    border-radius: 10px;
+}
+
+/* --- PANTALLA DE MATERIAS (ESTILOS DE TUS CAPTURAS) --- */
+
+.materias-view-container {
+    padding: 20px;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.titulo-mis-materias {
+    color: var(--color-header-text); /* El verde de tu root */
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    text-align: left;
+}
+
+.bienvenida-texto {
+    color: #666;
+    font-size: 16px;
+    margin-bottom: 30px;
+    text-align: left;
+}
+
+/* Mensaje cuando no hay nada */
+
+
+
+/* --- MODAL DE CREAR MATERIA (ESTILO FLOTANTE) --- */
+
+.container-crear-materia {
+    background: white;
+    border-radius: 25px; /* Bordes muy redondeados como tu diseño */
+    padding: 30px;
+    width: 90%;
+    max-width: 380px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+    text-align: center;
+    border: none;
+}
+
+.titulo-seccion-azul {
+    color: var(--modal-blue);
+    font-size: 24px;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.linea-separadora {
+    border: 0;
+    border-top: 1px solid #969494;
+    margin: 15px 0;
+}
+
+.instruccion-verde {
+    color: #4f4caf;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.formulario-materia {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.formulario-materia input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-size: 16px;
+    outline: none;
+}
+
+.formulario-materia input:focus {
+    border-color: var(--modal-blue);
+}
+
+.pie-formulario {
+    font-size: 14px;
+    color: #888;
+    margin-bottom: 15px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    margin-top: 12px;
+}
+
+/* Botones del modal de crear materia */
+.btn-cancelar-materia {
+    background-color: #777;
+    color: white;
+    border:none;
+    padding: 12px;
+    border-radius: 25px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+    width: auto;
+    margin:auto;
+}
+
+.btn-crear-materia {
+    background-color: var(--btn-green-bg);
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 25px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+    width: 30%;
+    margin:auto;
+}
+
+.btn-crear-materia:hover {
+    background-color: var(--dark-green);
+}
+
+/* --- AJUSTES DE GRID DE MATERIAS --- */
+.materias-grid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding-bottom: 100px;
+}
+
+/* Botón flotante para que siempre esté arriba */
+.fab-add {
+    z-index: 999;
+}
+
+
+/* --- ESTILOS PARA LA PANTALLA DE MIS MATERIAS --- */
+
+
+
+.materias-view-container {
+    padding: 20px;
+    max-width: 600px; /* Un poco más ancho para que se vea bien */
+    margin: 0 auto;
+    text-align: left; /* Alineado a la izquierda como tu diseño */
+}
+
+.titulo-mis-materias {
+    color: #3B5998; 
+    font-size: 32px;
+    font-weight: 800;
+    margin-bottom: 5px;
+    margin-top: 10px;
+}
+
+.bienvenida-texto {
+    color: #555;
+    font-size: 18px;
+    margin-bottom: 40px;
+}
+
+/* Contenedor del mensaje de "Sin materias" */
+.sin-materias-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 250px;
+    width: 100%;
+}
+
+
+
+/* 1. Definición de colores (se repiten cada 6 tarjetas) */
+.card-materia:nth-child(6n+1) { --color-materia: #91c693; } /* Verde */
+.card-materia:nth-child(6n+2) { --color-materia: #4787cf; } /* Azul */
+.card-materia:nth-child(6n+3) { --color-materia: #ad79cd; } /* Morado */
+.card-materia:nth-child(6n+4) { --color-materia: #b96767; } /* Rojo */
+.card-materia:nth-child(6n+5) { --color-materia: #be906b; } /* Naranja */
+.card-materia:nth-child(6n+6) { --color-materia: #79a4a8; } /* Cian */
+
+/* Grid de tarjetas de materias */
+.materias-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    padding-bottom: 100px; /* Espacio para el footer */
+}
+
+/* Estilo de la Tarjeta de Materia (COMO TU DISEÑO) */
+.card-materia {
+    /* TRUCO: 80px de color sólido arriba y el resto blanco */
+    
+    border-radius: 16px;
+    border: 1px solid #ddd;
+    padding: 0; /* Quitamos el padding para que el color llegue a las orillas */
+    margin: 15px;
+    overflow: hidden; /* Importante para que el color respete las esquinas redondeadas */
+    position: relative;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.card-materia:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+}
+
+.card-header-color {
+    background: linear-gradient(to bottom, var(--color-materia) 85px, #ffffff 85px) !important;
+    height: 60px; /* Franja de color arriba */
+    width: 100%;
+}
+
+.card-body {
+    padding: 15px 20px;
+}
+
+.card-body h3 {
+    color:#1a1a1a;
+    margin: 0;
+    font-size: 18px;
+    font-weight: lighter;
+    font-family:open sans,sans-serif;
+
+}
+
+.card-body p {
+    margin: 5px 0 0 0;
+    color: #777;
+    font-size: 14px;
+}
+
+/* Botón flotante (+) */
+.fab-add {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    background-color: var(--dark-green);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 30px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background 0.3s;
+}
+
+.fab-add:hover {
+    background-color: #1b5e20;
+}
+
+/* Footer de acciones */
+.footer-acciones {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: var(--bg-light);
+    padding: 15px;
+    text-align: center;
+    border-top: 1px solid #eee;
+}
+
+.btn-cambiar-usuario {
+    background: none;
+    border: 1px solid #ccc;
+    color: #777;
+    padding: 8px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+
+/* Contenedor para colocar la flecha al inicio */
+.nav-top {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    padding: 10px 0 0 5px; /* Ajusta el margen superior e izquierdo */
+}
+
+/* Estilo de la flecha negra y posicionada */
+.btn-regresar-flecha {
+    background: none;
+    border: none;
+    color: #000000; /* Color Negro */
+    font-size: 17px; /* Tamaño un poco más grande para que resalte */
+    font-weight: lighter;
+    cursor: pointer;
+    padding: 10px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+}
+
+.btn-regresar-flecha:active {
+    transform: scale(0.85);
+}
+
+/* Ajuste del welcome-box para que no quede pegado a la flecha */
+.welcome-box {
+    margin-top: 5px;
+}
+
+.btn-borrar-card {
+    position: absolute;
+    /* Cambiamos top por bottom */
+    bottom: 8px; 
+    right: 8px;
+    
+    background: rgba(255, 255, 255, 0.3); /* Un poco más visible */
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    z-index: 10; /* Asegura que esté por encima de otros elementos */
+}
+
+.btn-borrar-card:hover {
+    background: #919090; /* Rojo sólido al pasar el mouse */
+    color: rgb(77, 75, 75);
+    transform: scale(1.1); /* Efecto de crecimiento sutil */
+}
+
+
+
+/* Busca la sección de #modal-footer-btns y reemplázala por esta */
+.modal-footer {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    padding: 20px 0;
+}
+
+.btn-toro {
+    border: none;
+    padding: 12px 25px;
+    font-weight: bold;
+    cursor: pointer;
+    color: white;
+    border-radius: 25px;
+    font-size: 16px;
+    min-width: 120px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s, opacity 0.2s;
+    text-align: center;
+}
+
+/* Colores específicos de tus botones */
+.btn-gray {
+    background-color: #637388 !important;
+}
+
+#btn-der, .btn-green {
+    background-color: #619b6b !important;
+}
+
+.btn-toro:active {
+    transform: scale(0.95);
+}
+
+
+/* --- VISOR DE PDF INTEGRADO --- */
+.recurso-pdf {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f1f3f5;
+    border-radius: 12px;
+    border: 1px solid #e0e4e8;
+}
+
+.pdf-viewer-frame {
+    width: 100%;
+    height: 500px; /* Altura cómoda para lectura en móvil/tablet */
+    border: none;
+    border-radius: 8px;
+    background: white;
+}
+
+/* En celulares muy pequeños, ajustamos la altura */
+@media (max-width: 480px) {
+    .pdf-viewer-frame {
+        height: 400px;
+    }
+}
+

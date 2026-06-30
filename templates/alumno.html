@@ -1,0 +1,410 @@
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='contenido.css') }}">
+
+<div class="container-alumno">
+
+     <div style="position: relative; margin-bottom: 10px;">
+        <a href="/alumno_dashboard" style="text-decoration: none; font-size: 2.5rem; color: #000; display: inline-block; padding: 5px 10px; font-weight: bold; line-height: 1;">
+            &#8592;
+        </a>
+    </div>
+
+    <h1>Zona de Sincronización Local</h1>
+
+    <!-- Sección 1: Descargar actividades -->
+    <div class="section">
+        <h2>1. Descargar Actividades Disponibles</h2>
+        <div style="display: flex; justify-content: center; margin: 20px 0;">
+            <button onclick="buscarActividades()" class="btn btn-green" style="width: 100%; max-width: 400px; padding: 14px 20px; font-size: 1.1rem;">
+                🔍 Buscar Tareas en la Red
+            </button>
+        </div>
+        <ul id="listaActividades" class="lista-items">
+            <li style="color:#777; text-align: center; padding: 20px 0;">Presiona el botón para escanear el servidor escolar.</li>
+        </ul>
+    </div>
+
+    <!-- Sección 2: Entregar calificación -->
+    <div class="section">
+        <h2>2. Entregar Reporte de Calificación (.TXT)</h2>
+        <div class="form-group-calificacion">
+            <form id="formCalificacion">
+                <p style="margin-top:0; font-size:14px; color:#5d4037; margin-bottom: 15px;">
+                    Selecciona el archivo cifrado que exportaste al terminar tu actividad:
+                </p>
+                
+                <!-- Selector de archivo personalizado -->
+                <div class="file-upload-wrapper" style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+                    <button type="button" id="btnSeleccionarArchivo" class="btn btn-file-selector">
+                        📂 Seleccionar archivo
+                    </button>
+                    <span id="nombreArchivo" style="color: #555; font-size: 0.9rem; flex: 1;">Ningún archivo seleccionado</span>
+                    <input type="file" id="archivoTxt" accept=".toro" required style="display: none;">
+                </div>
+
+                <button type="submit" class="btn btn-brown">Subir al Servidor del Profesor</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sección 3: Mis calificaciones entregadas -->
+    <div class="section">
+        <h2>3. Mis calificaciones entregadas</h2>
+        <div id="listaMisCalificaciones">
+            <p class="mensaje-vacio">Cargando tus calificaciones entregadas...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ==========================================
+    // VARIABLES Y URLS
+    // ==========================================
+    const URL_LISTA_ACTIVIDADES = "{{ url_for('lista_actividades') }}";
+    const URL_DESCARGAR_ACTIVIDAD = "{{ url_for('descargar_actividad', nombreZip='') }}";
+    const URL_SUBIR_CALIFICACION = "{{ url_for('subir_calificacion') }}";
+    const URL_LISTA_CALIFICACIONES = "{{ url_for('lista_calificaciones') }}";
+
+    // ==========================================
+    // SELECTOR DE ARCHIVO PERSONALIZADO
+    // ==========================================
+    const btnSeleccionar = document.getElementById('btnSeleccionarArchivo');
+    const inputArchivo = document.getElementById('archivoTxt');
+    const nombreArchivoSpan = document.getElementById('nombreArchivo');
+
+    btnSeleccionar.addEventListener('click', () => {
+        inputArchivo.click();
+    });
+
+    inputArchivo.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            nombreArchivoSpan.textContent = this.files[0].name;
+            nombreArchivoSpan.style.color = '#2e7d32';
+        } else {
+            nombreArchivoSpan.textContent = 'Ningún archivo seleccionado';
+            nombreArchivoSpan.style.color = '#555';
+        }
+    });
+
+    // ==========================================
+    // BUSCAR ACTIVIDADES
+    // ==========================================
+    async function buscarActividades() {
+        const contenedor = document.getElementById('listaActividades');
+        try {
+            const res = await fetch(URL_LISTA_ACTIVIDADES);
+            const actividades = await res.json();
+
+            if (actividades.length === 0) {
+                contenedor.innerHTML = '<li style="text-align: center; padding: 20px 0; color: #888;">No hay actividades nuevas publicadas en este momento.</li>';
+                return;
+            }
+
+            const gruposPorDia = {};
+            actividades.forEach(act => {
+                if (!gruposPorDia[act.fecha]) gruposPorDia[act.fecha] = [];
+                gruposPorDia[act.fecha].push(act.nombre);
+            });
+
+            let htmlFinal = '';
+            for (const fecha in gruposPorDia) {
+                htmlFinal += `
+                    <li style="list-style: none; margin-top: 20px; margin-bottom: 5px;">
+                        <strong style="display: block; background: #e0f2f1; color: #004d40; padding: 8px 12px; border-radius: 4px; font-size: 14px;">
+                            📅 Publicado: ${fecha}
+                        </strong>
+                    </li>
+                `;
+                gruposPorDia[fecha].forEach(nombre => {
+                    htmlFinal += `
+                        <li style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid #eee; background: #fff; gap: 10px; border-radius: 4px; margin-bottom: 4px;">
+                            <span style="font-weight: 500; color: #333; font-size: 14px; word-break: break-word; flex: 1;">
+                                📦 ${nombre}
+                            </span>
+                            <button onclick="descargarActividad('${nombre}')" 
+                                    style="background: #2E9443; color: white; border: none; padding:8px 16px; font-size: 13px; border-radius: 6px; cursor: pointer; font-weight: bold; white-space: nowrap;">
+                                Descargar
+                            </button>
+                        </li>
+                    `;
+                });
+            }
+            contenedor.innerHTML = htmlFinal;
+        } catch (err) {
+            console.error(err);
+            contenedor.innerHTML = '<li style="text-align: center; padding: 20px 0; color: #d32f2f;">Error al conectar con el servidor de la escuela.</li>';
+        }
+    }
+
+    // ==========================================
+    // DESCARGAR ACTIVIDAD
+    // ==========================================
+    function descargarActividad(nombre) {
+        const url = `${URL_DESCARGAR_ACTIVIDAD}${encodeURIComponent(nombre)}`;
+        const enlace = document.createElement('a');
+        enlace.href = url;
+        enlace.download = nombre;
+        document.body.appendChild(enlace);
+        enlace.click();
+        document.body.removeChild(enlace);
+    }
+
+    // ==========================================
+    // CARGAR MIS CALIFICACIONES ENTREGADAS (solo visualización)
+    // ==========================================
+    async function cargarMisCalificaciones() {
+        const contenedor = document.getElementById('listaMisCalificaciones');
+        try {
+            const res = await fetch(URL_LISTA_CALIFICACIONES);
+            const archivos = await res.json();
+
+            if (archivos.length === 0) {
+                contenedor.innerHTML = '<p class="mensaje-vacio">Aún no has entregado ninguna calificación.</p>';
+                return;
+            }
+
+            // Agrupar por fecha (igual que en el profesor)
+            const gruposPorDia = {};
+            archivos.forEach(a => {
+                if (!gruposPorDia[a.fecha]) gruposPorDia[a.fecha] = [];
+                gruposPorDia[a.fecha].push(a.nombre);
+            });
+
+            let html = '<ul class="lista-items calificaciones-alumno">';
+            for (const fecha in gruposPorDia) {
+                html += `
+                    <li style="list-style: none; margin-top: 15px; margin-bottom: 5px;">
+                        <strong style="display: block; background: #e0f2f1; color: #004d40; padding: 6px 10px; border-radius: 4px; font-size: 13px;">
+                            📅 Entregado: ${fecha}
+                        </strong>
+                    </li>
+                `;
+                gruposPorDia[fecha].forEach(nombre => {
+                    html += `
+                        <li style="display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-bottom: 1px solid #eee; background: #fff; gap: 10px; border-radius: 4px; margin-bottom: 4px;">
+                            <span style="font-weight: 500; color: #333; font-size: 13px; word-break: break-word; flex: 1;">
+                                📄 ${nombre}
+                            </span>
+                            <span style="color: #888; font-size: 12px;">✅ Entregado</span>
+                        </li>
+                    `;
+                });
+            }
+            html += '</ul>';
+            contenedor.innerHTML = html;
+        } catch (error) {
+            console.error('Error al cargar mis calificaciones:', error);
+            contenedor.innerHTML = '<p class="mensaje-vacio" style="color: #d32f2f;">Error al cargar tus calificaciones.</p>';
+        }
+    }
+
+    // ==========================================
+    // SUBIR CALIFICACIÓN
+    // ==========================================
+    document.getElementById('formCalificacion').onsubmit = async (e) => {
+        e.preventDefault();
+        const fileInput = document.getElementById('archivoTxt');
+        if (!fileInput.files.length) return alert('Selecciona un archivo .txt.');
+
+        const formData = new FormData();
+        formData.append('archivoTxt', fileInput.files[0]);
+
+        try {
+            const response = await fetch(URL_SUBIR_CALIFICACION, { method: 'POST', body: formData });
+            const data = await response.json();
+            if (response.ok) {
+                alert(data.mensaje);
+                fileInput.value = '';
+                nombreArchivoSpan.textContent = 'Ningún archivo seleccionado';
+                nombreArchivoSpan.style.color = '#555';
+                // Recargar la lista de calificaciones después de subir
+                cargarMisCalificaciones();
+            } else {
+                alert(data.error);
+            }
+        } catch (err) {
+            alert('Error crítico al intentar transmitir el archivo.');
+        }
+    };
+
+    // ==========================================
+    // INICIALIZACIÓN
+    // ==========================================
+    // Cargar las calificaciones al abrir la página
+    cargarMisCalificaciones();
+</script>
+
+<style>
+    /* Estilos específicos para la página del alumno */
+    .container-alumno {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    .container-alumno h1 {
+        color: #1b5e20;
+        border-bottom: 2px solid #2e7d32;
+        padding-bottom: 10px;
+        margin-bottom: 30px;
+    }
+    .section {
+        margin-bottom: 30px;
+        background: white;
+        padding: 20px 25px;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .section h2 {
+        color: #2e7d32;
+        margin-top: 0;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    .lista-items {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .form-group-calificacion {
+        background: #efebe9;
+        padding: 20px;
+        border-radius: 8px;
+    }
+
+    /* Botón verde para buscar tareas */
+    .btn-green {
+        background: #2e7d32 !important;
+        color: white !important;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: background 0.2s, transform 0.1s;
+    }
+    .btn-green:hover {
+        background: #1b5e20 !important;
+        transform: translateY(-2px);
+    }
+    .btn-green:active {
+        transform: scale(0.98);
+    }
+
+    /* Botón café para subir calificación */
+    .btn-brown {
+        background: #5d4037 !important;
+        color: white !important;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 1rem;
+        width: 100%;
+        transition: background 0.2s, transform 0.1s;
+    }
+    .btn-brown:hover {
+        background: #3e2c23 !important;
+        transform: translateY(-2px);
+    }
+    .btn-brown:active {
+        transform: scale(0.98);
+    }
+
+    /* Botón selector de archivo (gris redondeado) */
+    .btn-file-selector {
+        background: #e0e0e0;
+        color: #333;
+        border: 2px solid #ccc;
+        padding: 10px 20px;
+        border-radius: 30px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+    .btn-file-selector:hover {
+        background: #d0d0d0;
+        border-color: #999;
+    }
+    .btn-file-selector:active {
+        transform: scale(0.96);
+    }
+
+    /* Mensaje vacío */
+    .mensaje-vacio {
+        color: #888;
+        font-style: italic;
+        text-align: center;
+        padding: 20px 0;
+    }
+
+    /* Estilos para la lista de calificaciones del alumno */
+    .calificaciones-alumno li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 10px;
+        border-bottom: 1px solid #eee;
+        background: #fff;
+        gap: 10px;
+        border-radius: 4px;
+        margin-bottom: 4px;
+    }
+    .calificaciones-alumno li:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+
+    /* Ajustes para celular */
+    @media (max-width: 768px) {
+        .container-alumno {
+            padding: 10px;
+            max-width: 100%;
+        }
+        .container-alumno h1 {
+            font-size: 1.8rem;
+        }
+        .section {
+            padding: 15px;
+        }
+        .section h2 {
+            font-size: 1.3rem;
+        }
+        .btn-green, .btn-brown {
+            font-size: 1.1rem;
+            padding: 14px 20px;
+            width: 100%;
+        }
+        .btn-file-selector {
+            font-size: 0.9rem;
+            padding: 10px 16px;
+        }
+        .lista-items li {
+            font-size: 0.95rem;
+            padding: 10px 8px;
+        }
+        .lista-items li button {
+            font-size: 0.85rem !important;
+            padding: 6px 12px !important;
+        }
+        .form-group-calificacion p {
+            font-size: 0.95rem !important;
+        }
+        .file-upload-wrapper {
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .file-upload-wrapper span {
+            font-size: 0.85rem;
+        }
+        .calificaciones-alumno li {
+            font-size: 0.9rem;
+            padding: 8px 8px;
+        }
+        .calificaciones-alumno li span {
+            font-size: 0.85rem !important;
+        }
+    }
+</style>
+{% endblock %}

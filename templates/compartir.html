@@ -6,21 +6,33 @@
 <div class="container-compartir">
     <h1>Compartir Lecciones</h1>
 
-    <!-- Sección 1: Subir ZIP -->
+    <!-- Sección 1: Publicar lecciones desde ZIPs disponibles -->
     <div class="section">
         <h2>1. Publicar una lección (ZIP)</h2>
         <div class="form-group">
-            <form id="formActividad">
-                <input type="file" id="archivoZip" accept=".zip" required>
-                <br>
-                <button type="submit" class="btn btn-primary">Publicar en la Red</button>
-            </form>
+            <p style="text-align: center; margin-bottom: 15px; color: #555;">
+                Selecciona las lecciones que quieres publicar desde la lista de lecciones disponibles.
+            </p>
+            <div id="listaZipsDisponibles">
+                <p class="mensaje-vacio">Cargando lecciones disponibles...</p>
+            </div>
+            <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center;">
+                <button type="button" id="btnPublicarSeleccionados" class="btn btn-primary">Publicar lecciones seleccionadas</button>
+            </div>
         </div>
     </div>
 
-    <!-- Sección 2: Calificaciones -->
+    <!-- Sección 2: Actividades publicadas (visibles para alumnos) -->
+    <div class="section">
+        <h2>2. Actividades publicadas (visibles para alumnos)</h2>
+        <div id="listaActividadesProfesor">
+            <p class="mensaje-vacio">Cargando actividades publicadas...</p>
+        </div>
+    </div>
+
+    <!-- Sección 3: Calificaciones entregadas (Buzón) -->
     <div class="section clearfix">
-        <h2>2. Calificaciones entregadas (Buzón)</h2>
+        <h2>3. Calificaciones entregadas (Buzón)</h2>
         <div class="mb-15 mt-15 clearfix">
             <button onclick="cargarCalificaciones()" class="btn btn-blue">🔄 Actualizar Buzón</button>
             <button onclick="limpiarBuzon()" class="btn btn-red float-right">🗑️ Vaciar Buzón</button>
@@ -29,52 +41,184 @@
             <p class="mensaje-vacio">Presiona "Actualizar Buzón" para cargar los datos...</p>
         </div>
     </div>
+
+        <p style="color: #666; font-size: 0.9rem; margin-top: 10px;">
+            Los alumnos tendrán que escribie esta URL en el navegador de sus celulares: <strong>{{ base_url }}alumno_dashboard</strong>
+        </p>
+
+    <!-- 🔹 Botón de regreso a Contenido -->
+    <div style="margin-top: 30px; text-align: center; border-top: 1px solid #e0e0e0; padding-top: 30px;">
+        <a href="{{ url_for('vista_contenido') }}" class="btn btn-secondary" style="text-decoration: none; display: inline-block; min-width: 200px;">
+            ← Regresar a Contenido
+        </a>
+    </div>
 </div>
 
-<script src="{{ url_for('static', filename='js/jszip.min.js') }}"></script>
 <script>
     // ==========================================
     // VARIABLES Y URLS
     // ==========================================
-    const URL_SUBIR = "{{ url_for('subir_actividad') }}";
-    const URL_LISTA = "{{ url_for('lista_calificaciones') }}";
-    const URL_DESCARGAR = "{{ url_for('descargar_calificacion', nombre='') }}";
-    const URL_LIMPIAR = "{{ url_for('limpiar_buzon') }}";
+    const URL_ZIPS_DISPONIBLES = "{{ url_for('lista_zips_disponibles') }}";
+    const URL_PUBLICAR_ZIP = "{{ url_for('publicar_zip') }}";
+    const URL_LISTA_ACTIVIDADES = "{{ url_for('lista_actividades') }}";
+    const URL_ELIMINAR_ACTIVIDAD_PUBLICADA = "{{ url_for('eliminar_actividad_publicada') }}";
+    const URL_LISTA_CALIFICACIONES = "{{ url_for('lista_calificaciones') }}";
+    const URL_DESCARGAR_CALIFICACION = "{{ url_for('descargar_calificacion', nombre='') }}";
+    const URL_LIMPIAR_BUZON = "{{ url_for('limpiar_buzon') }}";
 
     let calificacionesGlobal = [];
 
     // ==========================================
-    // SUBIR ZIP
+    // CARGAR ZIPS DISPONIBLES (desde LECCIONES-LISTAS-PARA-ENVIAR)
     // ==========================================
-    document.getElementById('formActividad').onsubmit = async (e) => {
-        e.preventDefault();
-        const fileInput = document.getElementById('archivoZip');
-        if (!fileInput.files.length) return alert('Selecciona un archivo ZIP.');
+    async function cargarZipsDisponibles() {
+        const contenedor = document.getElementById('listaZipsDisponibles');
+        try {
+            const res = await fetch(URL_ZIPS_DISPONIBLES);
+            const zips = await res.json();
 
-        const formData = new FormData();
-        formData.append('archivoZip', fileInput.files[0]);
+            if (zips.length === 0) {
+                contenedor.innerHTML = '<p class="mensaje-vacio">No hay lecciones disponibles para publicar. Crea una lección primero.</p>';
+                return;
+            }
+
+            let html = '<ul class="lista-items zips-disponibles">';
+            zips.forEach(zip => {
+                html += `
+                    <li>
+                        <input type="checkbox" class="zip-checkbox" value="${zip}">
+                        <span>📦 ${zip}</span>
+                    </li>
+                `;
+            });
+            html += '</ul>';
+            contenedor.innerHTML = html;
+        } catch (error) {
+            console.error('Error al cargar zips disponibles:', error);
+            contenedor.innerHTML = '<p class="mensaje-vacio" style="color: #d32f2f;">Error al cargar las lecciones disponibles.</p>';
+        }
+    }
+
+    // ==========================================
+    // CARGAR ACTIVIDADES PUBLICADAS (visibles para alumnos) CON BOTÓN ELIMINAR
+    // ==========================================
+    async function cargarActividadesPublicadas() {
+        const contenedor = document.getElementById('listaActividadesProfesor');
+        try {
+            const res = await fetch(URL_LISTA_ACTIVIDADES);
+            const actividades = await res.json();
+
+            if (actividades.length === 0) {
+                contenedor.innerHTML = '<p class="mensaje-vacio">No hay actividades publicadas en este momento.</p>';
+                return;
+            }
+
+            let html = '<ul class="lista-items actividades-publicadas">';
+            actividades.forEach(act => {
+                html += `
+                    <li>
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <div style="flex: 1;">
+                                <div class="nombre">📦 ${act.nombre}</div>
+                                <div class="fecha">📅 ${act.fecha}</div>
+                            </div>
+                            <button onclick="eliminarActividadPublicada('${act.nombre}')" 
+                                    class="btn-eliminar-actividad" 
+                                    title="Eliminar actividad publicada"
+                                    style="background: none; border: none; cursor: pointer; font-size: 1.2rem; color: #d32f2f; padding: 5px 10px; transition: transform 0.2s;">
+                                🗑️
+                            </button>
+                        </div>
+                    </li>
+                `;
+            });
+            html += '</ul>';
+            contenedor.innerHTML = html;
+        } catch (error) {
+            console.error('Error al cargar actividades publicadas:', error);
+            contenedor.innerHTML = '<p class="mensaje-vacio" style="color: #d32f2f;">Error al cargar las actividades publicadas.</p>';
+        }
+    }
+
+    // ==========================================
+    // ELIMINAR ACTIVIDAD PUBLICADA
+    // ==========================================
+    async function eliminarActividadPublicada(nombreZip) {
+        const confirmar = confirm(`¿Estás seguro de que deseas eliminar la actividad "${nombreZip}"? Los alumnos ya no podrán descargarla.`);
+        if (!confirmar) return;
 
         try {
-            const response = await fetch(URL_SUBIR, { method: 'POST', body: formData });
-            const data = await response.json();
-            if (response.ok) {
+            const res = await fetch(URL_ELIMINAR_ACTIVIDAD_PUBLICADA, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre_zip: nombreZip })
+            });
+            const data = await res.json();
+            if (res.ok) {
                 alert(data.mensaje);
-                fileInput.value = '';
+                cargarActividadesPublicadas();
             } else {
                 alert(data.error);
             }
-        } catch {
-            alert('Error de conexión con el servidor.');
+        } catch (error) {
+            console.error('Error al eliminar actividad:', error);
+            alert('Error al eliminar la actividad.');
         }
-    };
+    }
 
     // ==========================================
-    // CARGAR CALIFICACIONES
+    // PUBLICAR ZIPS SELECCIONADOS
+    // ==========================================
+    document.getElementById('btnPublicarSeleccionados').addEventListener('click', async function() {
+        const checkboxes = document.querySelectorAll('.zip-checkbox:checked');
+        if (checkboxes.length === 0) {
+            alert('Selecciona al menos una lección para publicar.');
+            return;
+        }
+
+        const confirmar = confirm(`¿Publicar ${checkboxes.length} lección(es) en la red?`);
+        if (!confirmar) return;
+
+        let publicados = 0;
+        let errores = [];
+
+        for (const checkbox of checkboxes) {
+            const nombreZip = checkbox.value;
+            try {
+                const res = await fetch(URL_PUBLICAR_ZIP, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombre_zip: nombreZip })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    publicados++;
+                } else {
+                    errores.push(`${nombreZip}: ${data.error}`);
+                }
+            } catch (error) {
+                errores.push(`${nombreZip}: Error de conexión`);
+            }
+        }
+
+        if (errores.length === 0) {
+            alert(`✅ ${publicados} lección(es) publicada(s) con éxito.`);
+        } else {
+            alert(`⚠️ ${publicados} publicada(s), ${errores.length} error(es):\n${errores.join('\n')}`);
+        }
+
+        // Actualizar ambas listas después de publicar
+        cargarZipsDisponibles();
+        cargarActividadesPublicadas();
+    });
+
+    // ==========================================
+    // CARGAR CALIFICACIONES (Buzón)
     // ==========================================
     async function cargarCalificaciones() {
         const contenedor = document.getElementById('contenedorCalificaciones');
         try {
-            const res = await fetch(URL_LISTA);
+            const res = await fetch(URL_LISTA_CALIFICACIONES);
             const archivos = await res.json();
 
             if (archivos.length === 0) {
@@ -84,7 +228,6 @@
 
             calificacionesGlobal = archivos;
 
-            // Agrupar por fecha
             const gruposPorDia = {};
             archivos.forEach(a => {
                 if (!gruposPorDia[a.fecha]) gruposPorDia[a.fecha] = [];
@@ -106,7 +249,7 @@
                                     <tr>
                                         <td>📂 ${nombre}</td>
                                         <td style="width:130px;">
-                                            <a href="${URL_DESCARGAR}/${nombre}" class="btn btn-green">Individual</a>
+                                            <a href="${URL_DESCARGAR_CALIFICACION}/${nombre}" class="btn btn-green">Individual</a>
                                         </td>
                                     </tr>
                                 `).join('')}
@@ -133,7 +276,7 @@
         const archivosDia = calificacionesGlobal.filter(a => a.fecha === fecha).map(a => a.nombre);
 
         for (const nombre of archivosDia) {
-            const res = await fetch(`${URL_DESCARGAR}/${nombre}`);
+            const res = await fetch(`${URL_DESCARGAR_CALIFICACION}/${nombre}`);
             const blob = await res.blob();
             zip.file(nombre, blob);
         }
@@ -153,7 +296,7 @@
     async function limpiarBuzon() {
         if (!confirm('¿Eliminar TODOS los reportes? Esta acción no se puede deshacer.')) return;
         try {
-            const res = await fetch(URL_LIMPIAR, { method: 'POST' });
+            const res = await fetch(URL_LIMPIAR_BUZON, { method: 'POST' });
             const data = await res.json();
             alert(data.mensaje || data.error);
             cargarCalificaciones();
@@ -161,5 +304,96 @@
             alert('Error al vaciar el buzón.');
         }
     }
+
+    // ==========================================
+    // INICIALIZACIÓN
+    // ==========================================
+    // Cargar todas las listas al abrir la página
+    cargarZipsDisponibles();
+    cargarActividadesPublicadas();
 </script>
+
+<style>
+    /* =========================================
+       ESTILOS ADICIONALES PARA COMPARTIR
+       ========================================= */
+    .lista-items {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .lista-items li {
+        padding: 10px 14px;
+        border-bottom: 1px solid #eee;
+        background: #f9f9f9;
+        margin-bottom: 6px;
+        border-radius: 4px;
+    }
+    .lista-items li:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+
+    /* --- SECCIÓN 1: Zips disponibles (checkbox horizontal) --- */
+    .lista-items.zips-disponibles li {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-direction: row;
+    }
+    .lista-items.zips-disponibles li input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+    .lista-items.zips-disponibles li span {
+        flex: 1;
+        font-weight: 500;
+        color: #333;
+        word-break: break-word;
+    }
+
+    /* --- SECCIÓN 2: Actividades publicadas (nombre y fecha vertical) --- */
+    .lista-items.actividades-publicadas li {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .lista-items.actividades-publicadas li .nombre {
+        font-weight: 500;
+        color: #333;
+        word-break: break-word;
+        width: 100%;
+    }
+    .lista-items.actividades-publicadas li .fecha {
+        color: #888;
+        font-size: 0.8rem;
+        margin-top: 4px;
+    }
+
+    /* Estilo para el botón de regreso */
+    .btn-secondary {
+        background: #ffffff;
+        border: 2px solid #ccc;
+        color: #000000;
+        padding: 10px 24px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.2s;
+    }
+    .btn-secondary:hover {
+        background: #f0f0f0;
+        border-color: #bbb;
+    }
+
+    /* Mensaje de éxito animado (si se usa) */
+    @keyframes fadeOut {
+        0% { opacity: 1; }
+        70% { opacity: 1; }
+        100% { opacity: 0; visibility: hidden; }
+    }
+</style>
 {% endblock %}

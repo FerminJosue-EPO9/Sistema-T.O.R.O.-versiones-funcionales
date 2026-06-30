@@ -19,6 +19,7 @@
 *Parcial 1*
 *Parcial 2*
 *Parcial 3*
+&qqq&
 -
 019283377|shoyo|fuentes
 872748272674|Andrés|Peña Muñóz
@@ -28,5 +29,6 @@
 098762|Jorge Luis|Rodríguez Antoni
 1624352|Carlos Torres|Gallegos Flores
 12306472|David Jacinto|Martines Gomez
+1234|Josue|Jimenez
 -
 %

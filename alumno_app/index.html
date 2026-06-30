@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>T.O.R.O - Sistema Estudiantil</title>
+    <link rel="manifest" href="/alumno_app/manifest.json">
+    <meta name="theme-color" content="#2e7d32">
+    <link rel="icon" href="/alumno_app/logo_toro.png">
+    <link rel="stylesheet" href="/alumno_app/style.css">
+    
+</head>
+
+<body>
+
+
+    <!-- Excepcion 2.2-->
+    <noscript>
+    <main style="padding: 2rem; text-align: center; font-family: sans-serif;">
+      <h1>Sistema T.O.R.O. requiere JavaScript</h1>
+      <p>Para funcionar sin internet, este sistema necesita que JavaScript esté habilitado en tu navegador.</p>
+      <section>
+        <h2>Navegadores recomendados:</h2>
+        <ul>
+          <li>Google Chrome (v.60+)</li>
+          <li>Mozilla Firefox (v.55+)</li>
+          <li>Safari (v.11+) o Microsoft Edge (v.79+)</li>
+        </ul>
+        <p><strong>Nota:</strong> Internet Explorer y Opera Mini en modo "Ahorro Extremo" no son compatibles.</p>
+      </section>
+    </main>
+  </noscript>
+
+    <div id="main-content"></div>
+
+    <!-- Modal de confirmación/resultado -->
+    <div id="modal-container" class="modal-overlay hidden" style="display: none;">
+    <div class="modal-content">
+        <div id="modal-header-bg" class="modal-header">
+            <div id="modal-icon"><i class="fas fa-award"></i></div>
+            <h2 id="modal-title"></h2>
+        </div>
+        <div class="modal-body">
+            <div id="score-section" class="hidden">
+                <p>Puntaje obtenido:</p>
+                <div id="score-number"></div>
+                <p id="intentos-info"></p>
+            </div>
+            <p id="modal-text-inicio"></p>
+            <div id="modal-footer" class="modal-footer">
+                <button id="btn-izq" class="btn-toro btn-gray"></button>
+                <button id="btn-der" class="btn-toro"></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal-materia" class="modal-overlay hidden" style="display: none;">
+    <div class="modal-content container-crear-materia">
+        <h1 class="titulo-seccion-azul">Crear materias</h1>
+        <hr class="linea-separadora">
+        <p class="instruccion-verde">Rellena los datos</p>
+        <div class="formulario-materia">
+            <input type="text" id="reg-nombre-materia" placeholder="Nombre de la materia" required>
+            <input type="text" id="reg-grupo" placeholder="Grupo" required>
+            <input type="text" id="reg-ciclo" placeholder="Ciclo escolar" required>
+        </div>
+        <p class="pie-formulario">Pulsa para crear materia</p>
+        <div class="modal-actions">
+            <button onclick="cerrarModalMateria()" class="btn-cancelar-materia">Cancelar</button>
+            <button onclick="guardarMateria()" class="btn-crear-materia">Crear</button>
+        </div>
+    </div>
+</div>
+
+<div id="lesson-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <div id="lesson-viewer-content"></div>
+        <!--Tarjeta 8.1: InterfazPantallaLecciones (Delegación de Control)
+        Evento disparado por el alumno tras visualizar los recursos informativos. 
+        Cumple con la responsabilidad de capturar la elección del usuario, cerrar la 
+        vista de materiales y delegar la inyección del entorno evaluativo al ManejadorActividad-->
+        <button class="btn-toro" onclick="iniciarActividadDesdeLeccion()">Realizar Actividad</button>
+        <button class="btn-toro btn-gray" onclick="document.getElementById('lesson-modal').style.display='none'">Cerrar</button>
+    </div>
+</div>
+
+<!-- Modal para realizar la Actividad (Quiz) -->
+
+<div id="actividad-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <div id="actividad-viewer-content"></div>
+        
+        <button id="btn-finalizar-actividad" class="btn-toro">Guardar respuestas</button>
+    </div>
+</div>
+
+    <script src="/alumno_app/jszip.min.js"></script>
+
+
+    <script>
+
+
+        //============== SERVIDOR SW =====================
+      if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/alumno_app/sw.js')
+            .then(registration => {
+                console.log('T.O.R.O. SW registrado con éxito:', registration.scope);
+            })
+            .catch(err => {
+                console.error('Fallo al registrar el SW:', err);
+            });
+    });
+}
+
+        // ========== VARIABLES GLOBALES ==========
+        let leccionesMemoria = JSON.parse(localStorage.getItem('toro_lecciones_html')) || [];
+        let leccionActual = null;
+        window.toro_recursos = {};
+
+        
+       // ========== INDEXEDDB CONFIGURACION ==========
+let db; 
+
+function inicializarDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open("ToroDB", 3);
+        request.onupgradeneeded = (e) => {
+            const dbInstance = e.target.result;
+            if (!dbInstance.objectStoreNames.contains("materias")) {
+                dbInstance.createObjectStore("materias", { keyPath: "id", autoIncrement: true });
+            }
+            if (!dbInstance.objectStoreNames.contains("lecciones")) {
+                const store = dbInstance.createObjectStore("lecciones", { keyPath: "id", autoIncrement: true });
+                store.createIndex("matricula", "matricula", { unique: false });
+            }
+            if (!dbInstance.objectStoreNames.contains("historial")) {
+                const historialStore = dbInstance.createObjectStore("historial", { keyPath: "id", autoIncrement: true });
+                historialStore.createIndex("matricula_leccion", ["matricula", "leccionTitulo"], { unique: false });
+            }
+        };
+
+        request.onsuccess = (e) => {
+            db = e.target.result; 
+            resolve(db);
+        };
+        request.onerror = (e) => reject(e.target.error);
+    });
+}
+
+
+        // Esta función guarda una lección en IndexedDB para que el usuario pueda acceder a ella offline y no solo es
+        // sino que una vez terminada se guarde como terminada y se pueda bloquear el acceso de nuevo para evitar cuestiones 
+        // con las calificaciones
+
+        //Tarjeta 8.3: Entidad TipoActividad
+        //Recibe la estructura previamente extraída del paquete ZIP y persiste la 
+        //configuración fundamental de la actividad (HTML, archivos binarios vinculados, 
+        //intentos permitidos y respuestas correctas) asociándola al alumno en IndexedDB.
+
+        function guardarLeccionDB(matricula, leccion) {
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(['lecciones'], 'readwrite');
+        const store = transaction.objectStore('lecciones');
+
+        const data = {
+            matricula: matricula,
+            // Asociamos la lección a la materia actual que está en sesión
+            materia_id: parseInt(sessionStorage.getItem('materia_id_actual')),
+            
+  
+            id_leccion: leccion.id_leccion,
+            grupo: leccion.grupo,
+            materia: leccion.materia,
+            parcial: leccion.parcial,
+            progresion: leccion.progresion,
+            nombre_leccion: leccion.nombre_leccion,
+            titulo_actividad: leccion.titulo_actividad,
+            fecha_vencimiento: leccion.fecha_vencimiento,
+
+            titulo: leccion.titulo,
+            html: leccion.html,
+            respuestasCorrectas: leccion.respuestasCorrectas,
+            tipoPlantilla: leccion.tipoPlantilla,
+            intentosMax: leccion.intentosMax,
+
+            archivos: leccion.archivos, 
+            // ==================================================
+
+            fechaImportacion: new Date().toISOString()
+        };
+
+        const request = store.add(data);
+        request.onsuccess = () => resolve(request.result);
+
+        // Intercepción de Memoria Llena
+        request.onerror = (e) => {
+            const errorDB = e.target.error;
+            if (errorDB.name === 'QuotaExceededError') {
+                reject(new Error("ALMACENAMIENTO_LLENO"));
+            } else {
+                reject(errorDB);
+            }
+        };
+    });
+}
+        async function guardarMateria() {
+    const nombre = document.getElementById('reg-nombre-materia').value.trim();
+    const grupo = document.getElementById('reg-grupo').value.trim();
+    const ciclo = document.getElementById('reg-ciclo').value.trim();
+
+    if (!nombre || !grupo || !ciclo) {
+        alert("Por favor, rellena todos los campos.");
+        return;
+    }
+
+    const nuevaMateria = {
+        nombre: nombre,
+        grupo: grupo,
+        ciclo: ciclo,
+        color: "#82bda1" 
+    };
+
+    try {
+        
+        if (!db) await inicializarDB();
+
+        const transaction = db.transaction(['materias'], 'readwrite');
+        const store = transaction.objectStore('materias');
+        const request = store.add(nuevaMateria);
+
+        request.onsuccess = () => {
+            cerrarModalMateria();
+            cargarPantallaMaterias(); 
+        };
+    } catch (error) {
+        console.error("Error al guardar:", error);
+    }
+}
+
+function obtenerMateriasDB() {
+    return new Promise((resolve, reject) => {
+        if (!db) {
+            inicializarDB().then(() => ejecutarConsulta());
+        } else {
+            ejecutarConsulta();
+        }
+
+        function ejecutarConsulta() {
+            const transaction = db.transaction(['materias'], 'readonly');
+            const store = transaction.objectStore(['materias']);
+            const request = store.getAll();
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        }
+    });
+}
+
+async function eliminarMateria(event, idMateria, nombreMateria) {
+    
+    event.stopPropagation();
+
+    const confirmar = confirm(`¿Estás seguro de eliminar "${nombreMateria}"?\nSe borrarán permanentemente todas las lecciones asociadas.`);
+    
+    if (!confirmar) return;
+
+    try {
+        if (!db) await inicializarDB();
+        const transaction = db.transaction(['materias', 'lecciones'], 'readwrite');
+        const storeMaterias = transaction.objectStore('materias');
+        const storeLecciones = transaction.objectStore('lecciones');
+        storeMaterias.delete(idMateria);
+        const cursorRequest = storeLecciones.openCursor();
+        cursorRequest.onsuccess = (e) => {
+            const cursor = e.target.result;
+            if (cursor) {
+                if (cursor.value.materia_id === idMateria) {
+                    cursor.delete();
+                }
+                cursor.continue();
+            }
+        };
+
+        transaction.oncomplete = () => {
+            console.log(`Materia ${idMateria} y sus lecciones eliminadas.`);
+            cargarPantallaMaterias(); // Refrescar la vista
+        };
+
+    } catch (error) {
+        console.error("Error al eliminar materia:", error);
+        alert("Hubo un error al intentar eliminar la materia.");
+    }
+}
+        //Tarjeta 8.1: InterfazPantallaLecciones (Filtrado y Vista)
+        //Consulta en el repositorio local (IndexedDB) todas las lecciones del alumno 
+        //e implementa un filtro mediante el 'materia_id_actual' almacenado en sessionStorage 
+        //para renderizar y mostrar en pantalla únicamente los recursos de la materia seleccionada.
+
+/*CLASE CRC: ManejadorContenidoLección
+Tipo: Control
+
+Descripción:
+Coordina el acceso a las lecciones almacenadas
+en la base de datos y las prepara para ser
+mostradas al alumno.
+
+Responsabilidades:
+- Consultar contenido de lecciones.
+- Recuperar información desde IndexedDB.
+- Instanciar objetos Lección.
+- Gestionar el acceso al contenido.
+
+Hecha por Emanuel Ruiz Bielma
+*/
+        function cargarLeccionesDB(matricula) {
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(['lecciones'], 'readonly');
+        const store = transaction.objectStore('lecciones');
+        const index = store.index('matricula');
+        const request = index.getAll(matricula);
+
+        request.onsuccess = () => {
+            const materiaIdActual = parseInt(sessionStorage.getItem('materia_id_actual'));
+            const leccionesFiltradas = request.result.filter(lec => lec.materia_id === materiaIdActual);
+            
+            resolve(leccionesFiltradas);
+        };
+        request.onerror = () => reject(request.error);
+    });
+}
+        function buscarLeccionGlobalDB(matricula, titulo) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['lecciones'], 'readonly');
+                const store = transaction.objectStore('lecciones');
+                const index = store.index('matricula');
+                const request = index.getAll(matricula);
+ 
+                request.onsuccess = () => {
+                    const encontrada = request.result.find(lec => lec.titulo === titulo);
+                    resolve(encontrada || null); 
+                };
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        function guardarIntentoDB(matricula, leccionTitulo, calificacion) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['historial'], 'readwrite');
+                const store = transaction.objectStore('historial');
+
+                const data = {
+                    matricula: matricula,
+                    leccionTitulo: leccionTitulo,
+                    calificacion: calificacion,
+                    fecha: new Date().toISOString()
+                };
+
+                const request = store.add(data);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        function obtenerIntentosDB(matricula, leccionTitulo) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['historial'], 'readonly');
+                const store = transaction.objectStore('historial');
+                const index = store.index('matricula_leccion');
+                const request = index.getAll([matricula, leccionTitulo]);
+
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // ========== VISTA ESTUDIANTE ==========
+      async function cargarPantallaMaterias() {
+    const nombre = localStorage.getItem('toro_nombre') || "Estudiante";
+    const main = document.getElementById('main-content');
+    
+    let materias = [];
+    try {
+        materias = await obtenerMateriasDB();
+    } catch (e) {
+        console.error("Error cargando materias:", e);
+    }
+
+    main.innerHTML = `
+        <div class="materias-view-container">
+            <h1 class="titulo-mis-materias">Mis materias</h1>
+             <p class="bienvenida-texto">Materias disponibles</p>
+            <div id="lista-materias" class="materias-grid">
+                ${materias.length === 0 
+                    ? `<div class="sin-materias-container">
+                         <p class="mensaje-sin-materias">Aún no tienes materias agregadas</p>
+                       </div>`
+                    : materias.map(m => `
+
+                        <div class="card-materia" onclick="entrarAMateria(${m.id}, '${m.nombre}')">
+                            <div class="card-header-color" style="background-color: ${m.color}">
+                                </div>
+                            <div class="card-body">
+                                <h3>${m.nombre}</h3>
+                                <p>Grupo ${m.grupo}</p>
+                                <p>${m.ciclo}</p>
+                                 <button class="btn-borrar-card" onclick="eliminarMateria(event, ${m.id}, '${m.nombre}')">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')
+                }
+            </div>
+
+            <button class="fab-add" onclick="abrirModalMateria()">+</button>
+            <button class="btn-toro btn-gray" onclick="cerrarSesion()">Cambiar de usuario</button>
+            
+        </div>
+    `;
+}
+
+   function entrarAMateria(id, nombre) {
+    // Guardamos qué materia estamos viendo
+    sessionStorage.setItem('materia_id_actual', id);
+    sessionStorage.setItem('materia_nombre_actual', nombre);
+    
+    // Ahora sí mostramos la vista que ya tenías
+    const nombreUsuario = localStorage.getItem('toro_nombre');
+    mostrarVistaEstudiante(nombreUsuario);
+}/** CLASE CRC: InterfazCargarArchivo
+ * ESTEREOTIPO: Borde
+ *
+ * RESPONSABILIDADES:
+ * 1. Desplegar la interfaz de carga de archivos al alumno.
+ * 2. Solicitar al explorador de archivos que muestre los archivos disponibles.
+ * 3. Capturar el archivo ZIP seleccionado por el alumno.
+ * 4. Mostrar el nombre del archivo seleccionado en el mensajeEstado.
+ * 5. Enviar la solicitud de carga al ManejadorCargarArchivos al pulsar el botón.
+ * */
+
+
+
+   async function mostrarVistaEstudiante(nombre) {
+    const matricula = localStorage.getItem('toro_matricula');
+    const nombreMateria = sessionStorage.getItem('materia_nombre_actual') || 'Materia Seleccionada';
+    
+    // Cargar lecciones desde IndexedDB
+    leccionesMemoria = await cargarLeccionesDB(matricula);
+
+    const root = document.getElementById('main-content');
+    root.innerHTML = `
+        <div class="mobile-container">
+            <div class="nav-top">
+                <button class="btn-regresar-flecha" onclick="cargarPantallaMaterias()">
+                    &#10094;
+                </button>
+            </div>
+
+            <div class="welcome-box">
+                <span class="welcome-text">¡Hola!</span>
+                <span class="user-name">${nombre}</span>
+            </div>
+            
+            <div class="course-title-container">
+                <span class="course-label">Estás en el curso de</span>
+                <div class="course-name">${nombreMateria}</div>
+                <hr class="thin-line">
+            </div>
+            
+            <h2 class="section-title">Lecciones disponibles</h2>
+            <div id="contenedor-lecciones" class="lesson-container"></div>
+
+            <hr class="section-divider">
+
+            <h2 class="section-title">Importar nuevas lecciones</h2>
+            <div class="upload-area">
+                <span class="upload-icon">📂</span>
+                <input type="file" id="fileInput" accept=".zip" hidden onchange="actualizarNombreArchivo(this)">
+                <button class="btn-toro btn-upload" onclick="document.getElementById('fileInput').click()">Seleccionar ZIP</button>
+                <div id="file-status" class="file-status">Ningún archivo seleccionado</div>
+            </div>
+
+            <div class="upload-actions">
+                <p class="info-text">Pulsa para cargar las lecciones</p>
+                <button class="btn-toro btn-green action-button" onclick="procesarHTML()">Cargar archivos</button>
+            </div>
+            <div class="upload-actions" style="margin-top: 15px; background: #e8f5e9; padding: 15px; border-radius: 8px; border: 1px solid #c8e6c9;">
+                <p class="info-text" style="color: #2e7d32; font-weight: bold; margin-top:0; margin-bottom: 8px;">
+                    📡 Portal de Archivos
+                </p>
+                <button class="btn-toro action-button" style="background-color: #0288d1; width: 100%;" onclick="irAlCentroSincronizacion()">
+                    Carga y descarga de lecciones
+                </button>
+            </div>
+
+        </div>
+    `;
+    renderizarLecciones();
+}
+        function actualizarNombreArchivo(input) {
+            const statusDiv = document.getElementById('file-status');
+            if (input.files[0]) {
+                statusDiv.innerText = ` ${input.files[0].name}`;
+                statusDiv.style.color = '#2e7d32';
+            }
+        }
+
+        // Abrir el modal
+function abrirModalMateria() {
+    const modal = document.getElementById('modal-materia');
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+}
+
+// Cerrar el modal
+function cerrarModalMateria() {
+    const modal = document.getElementById('modal-materia');
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+    // Limpiamos los campos
+    document.getElementById('reg-nombre-materia').value = '';
+    document.getElementById('reg-grupo').value = '';
+    document.getElementById('reg-ciclo').value = '';
+}
+
+// Guardar la materia (con los 3 campos nuevos)
+async function guardarMateria() {
+    const nombre = document.getElementById('reg-nombre-materia').value;
+    const grupo = document.getElementById('reg-grupo').value;
+    const ciclo = document.getElementById('reg-ciclo').value;
+    const matricula = localStorage.getItem('toro_matricula');
+
+    if (!nombre || !grupo || !ciclo) {
+        alert("Todos los campos son obligatorios.");
+        return;
+    }
+
+    const nuevaMateria = {
+        nombre: nombre,
+        grupo: grupo,
+        ciclo: ciclo,
+        matricula: matricula,
+        color: "#82bda1", // Agregamos un color por defecto
+        fecha_creacion: new Date().toISOString()
+    };
+
+    if (!db) {
+        try {
+            await inicializarDB();
+        } catch (e) {
+            alert("Error crítico: No se pudo abrir la base de datos.");
+            return;
+        }
+    }
+
+    const transaction = db.transaction("materias", "readwrite");
+    const store = transaction.objectStore("materias");
+    
+    const request = store.add(nuevaMateria);
+
+    request.onsuccess = () => {
+        cerrarModalMateria();
+        cargarPantallaMaterias(); 
+    };
+
+    request.onerror = (e) => {
+        console.error("Error al guardar en IndexedDB:", e.target.error);
+        alert("No se pudo guardar la materia.");
+    };
+}
+        async function renderizarLecciones() {
+            const contenedor = document.getElementById('contenedor-lecciones');
+            if (!contenedor) return;
+            contenedor.innerHTML = "";
+            const matricula = localStorage.getItem('toro_matricula');
+            for (let index = 0; index < leccionesMemoria.length; index++) {
+                const lec = leccionesMemoria[index];
+                const intentos = await obtenerIntentosDB(matricula, lec.titulo);
+                const intentosRestantes = (lec.intentosMax || 3) - intentos.length;
+
+                const card = document.createElement('div');
+                card.className = 'lesson-card';
+
+                if (intentosRestantes > 0) {
+                    card.onclick = () => verLeccionImportada(index);
+                    card.style.cursor = 'pointer';
+                } else {
+                    card.style.opacity = '0.5';
+                    card.style.cursor = 'not-allowed';
+                    card.title = 'Sin intentos disponibles';
+                }
+
+                    card.innerHTML = `
+            <span>📖 ${lec.titulo}</span> 
+            
+        `;      <!--  Se cambio el metodo 'appendChild' por 'prepend' para invertir el encolamiento-->
+                contenedor.prepend(card);
+            }
+        }
+
+function prepararHTMLConRecursos(htmlOriginal, archivos) {
+    if (!archivos) return htmlOriginal;
+    let htmlReparado = htmlOriginal;
+    const estiloMovil = `
+        <style>
+            #game-board { 
+                transform: scale(0.85); /* Encogemos un poco el tablero para que quepa */
+                transform-origin: top center;
+                margin: 0 auto !important;
+                max-width: 100% !important;
+            }
+            .quiz-grid { gap: 0.5rem !important; }
+            .item { padding: 0.5rem !important; font-size: 0.9rem !important; }
+        </style>
+    `;
+    htmlReparado = estiloMovil + htmlReparado;
+
+    Object.keys(archivos).forEach(ruta => {
+        if (!window.toro_recursos[ruta]) {
+            window.toro_recursos[ruta] = URL.createObjectURL(archivos[ruta]);
+        }
+        const blobUrl = window.toro_recursos[ruta];
+        const nombreArchivo = ruta.split('/').pop();
+        htmlReparado = htmlReparado.split('./' + nombreArchivo).join(blobUrl);
+        htmlReparado = htmlReparado.split(nombreArchivo).join(blobUrl);
+    });
+    
+    return htmlReparado;
+}
+        //Esta funcion se encarga de mostrar el contenido de la lección importada en un modal, 
+        // permitiendo al usuario revisar el material antes de iniciar la actividad. Además de que las 
+        // imagenes se carguen correctamente desde el Zip 
+
+/*
+Responsabilidad CRC:
+Desplegar la interfaz con el contenido de la lección
+para que el alumno pueda visualizarla.
+*/
+
+    function verLeccionImportada(index) {
+    const leccion = leccionesMemoria[index];
+    leccionActual = leccion;
+
+    const contenedor = document.getElementById('lesson-viewer-content');
+    
+    // 1. Inyectamos el HTML original del profesor
+    let htmlFinal = prepararHTMLConRecursos(leccion.html, leccion.archivos);
+
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = htmlFinal;
+    let htmlPdfs = "";
+    if (leccion.archivos) {
+        Object.keys(leccion.archivos).forEach(ruta => {
+            if (ruta.toLowerCase().endsWith('.pdf')) {
+                const nombrePdf = ruta.split('/').pop(); 
+                let blobUrl = null;
+
+                const urlDefectuosa = window.toro_recursos ? window.toro_recursos[ruta] : null;
+
+                if (leccion.archivos[ruta]) {
+                    const archivoData = leccion.archivos[ruta];
+                    
+                    if (archivoData instanceof Blob || archivoData instanceof File) {
+                        const pdfBlob = new Blob([archivoData], { type: 'application/pdf' });
+                        blobUrl = URL.createObjectURL(pdfBlob);
+                    } else if (archivoData instanceof Uint8Array || archivoData instanceof ArrayBuffer) {
+                        const pdfBlob = new Blob([archivoData], { type: 'application/pdf' });
+                        blobUrl = URL.createObjectURL(pdfBlob);
+                    } else if (typeof archivoData === 'string') {
+                        if (archivoData.substring(0, 4) === '%PDF') {
+                            const bytes = new Uint8Array(archivoData.length);
+                            for (let i = 0; i < archivoData.length; i++) {
+                                bytes[i] = archivoData.charCodeAt(i) & 0xff;
+                            }
+                            const pdfBlob = new Blob([bytes], { type: 'application/pdf' });
+                            blobUrl = URL.createObjectURL(pdfBlob);
+                        } else {
+                            blobUrl = archivoData.startsWith('data:') ? archivoData : 'data:application/pdf;base64,' + archivoData;
+                            blobUrl = blobUrl.replace(/data:.*?;/, 'data:application/pdf;');
+                        }
+                    }
+                }
+                if (!blobUrl) blobUrl = urlDefectuosa;
+                tempDiv.querySelectorAll('iframe, embed, object').forEach(el => el.remove());
+                tempDiv.querySelectorAll('*').forEach(el => {
+                    const tagName = el.tagName.toLowerCase();
+                    const textoVisible = (el.textContent || "").trim();
+                    const textoMinuscula = textoVisible.toLowerCase();
+                    const href = el.getAttribute('href') || el.src || el.getAttribute('onclick') || "";
+                    if ((tagName === 'a' || tagName === 'button') && 
+                        (textoMinuscula === 'abrir' || href.includes('blob:') || href.includes(nombrePdf))) {
+                        
+                        let tarjetaCulpable = el;
+                        let padreContenedor = el.parentElement;
+                        for (let i = 0; i < 4; i++) {
+                            if (padreContenedor && padreContenedor !== tempDiv) {
+                                const textoContenedor = padreContenedor.textContent || "";
+                                if (textoContenedor.includes(' KB') || textoContenedor.includes(' MB') || 
+                                    textoContenedor.includes('PDF') || /[0-9a-f]{8}-/i.test(textoContenedor)) {
+                                    tarjetaCulpable = padreContenedor;
+                                }
+                                padreContenedor = padreContenedor.parentElement;
+                            }
+                        }
+                        
+                        if (tarjetaCulpable && tarjetaCulpable.parentNode) {
+                            tarjetaCulpable.remove();
+                        }
+                    }
+                    if (tagName === 'div' || tagName === 'span' || tagName === 'p') {
+                        if (textoVisible.length < 150 && /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}/i.test(textoVisible)) {
+                            if (el && el.parentNode) {
+                                el.remove(); 
+                            }
+                        }
+                    }
+                });
+                
+                if (blobUrl) {
+                    htmlPdfs += `
+                        <style>
+                            /* Ocultamos el iframe en pantallas de celular porque no lo soportan */
+                            @media (max-width: 768px) {
+                                .pdf-viewer-frame-${nombrePdf.replace(/[^a-zA-Z0-9]/g, '')} { 
+                                    display: none !important; 
+                                }
+                                .alerta-movil {
+                                    display: block !important;
+                                }
+                            }
+                            /* Lo ocultamos por defecto en PC para que no estorbe */
+                            .alerta-movil { display: none; }
+                        </style>
+
+                        <div class="recurso-pdf" style="margin-top: 30px; padding: 15px; background: #f1f3f5; border-radius: 12px; border: 1px solid #e0e4e8;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                <span style="font-size: 1.5rem;">📄</span>
+                                <strong style="color: var(--dark-green);">${nombrePdf}</strong>
+                            </div>
+                            
+                            <div class="alerta-movil" style="padding: 10px; background: #e3f2fd; color: #0277bd; border-radius: 8px; font-size: 13px; margin-bottom: 15px;">
+                                Toca el botón de abajo para visualizar el documento en tu lector de PDFs.
+                            </div>
+                            
+                            <iframe src="${blobUrl}" class="pdf-viewer-frame-${nombrePdf.replace(/[^a-zA-Z0-9]/g, '')}" style="width: 100%; height: 500px; border: none; border-radius: 8px; background: white;"></iframe>
+                            
+                            <div style="margin-top: 15px; text-align: right;">
+                                <a href="${blobUrl}" target="_blank" class="btn-toro" style="display: inline-block; width: auto; padding: 8px 15px; font-size: 14px; text-decoration: none; background: var(--dark-green, #2E9443); color: white; border-radius: 6px;">
+                                    Abrir en pantalla completa
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+        });
+    }
+
+    // 4. Unimos el HTML ya limpio (sin la tarjeta gris) con tus nuevos iframes
+    contenedor.innerHTML = tempDiv.innerHTML + htmlPdfs;
+
+    // 5. Mostramos el modal de la lección
+    document.getElementById('lesson-modal').style.display = 'flex';
+}
+
+        // ========== FLUJO DE ACTIVIDAD ==========
+
+        //Esta función se llama cuando el usuario decide iniciar la actividad desde la vista de la lección
+
+        // Tarjeta para la clase ManejadorConfirmarActividad 
+        //Documatado por María Fernanda
+
+/*
+Responsabilidad CRC:
+Redireccionar al alumno desde la lección hacia
+la actividad correspondiente.
+*/
+        function iniciarActividadDesdeLeccion() {
+            // cierra el modal de la lección para evitar superposiciones y luego llama a abrirmodal con el tipo inicio para
+            //  mostrar el modal de confirmación antes de entrar a la actividad donde se controla el accceso a la actividad
+            // o el regreso al contenido
+            document.getElementById('lesson-modal').style.display = 'none';
+            abrirModal('inicio');
+        }
+
+        //Esta función se encarga de cerrar el modal de confirmación y abirir el modal de actividad con el contenido de 
+        // la actividad para que el usuario pueda responder el quiz 
+
+        function aceptarEIrAActividad() {
+            document.getElementById('modal-container').style.display = 'none';
+            if (leccionActual && leccionActual.html) {
+                mostrarActividad();
+            } else {
+                alert("Error: No se encontró el contenido de la actividad.");
+            }
+        }
+
+        // Esta función se encarga de mostrar el contenido de la actividad, ocultando secciones no relevantes y preparando el quiz
+function mostrarActividad() {
+    const contenedor = document.getElementById('actividad-viewer-content');
+    
+    // 1. Mostrar la pantalla completa
+    document.getElementById('lesson-modal').style.display = 'none';
+    document.getElementById('actividad-modal').style.display = 'flex';
+    document.getElementById('actividad-modal').scrollTop = 0;
+
+    const htmlReparado = prepararHTMLConRecursos(leccionActual.html, leccionActual.archivos);
+    contenedor.innerHTML = ""; 
+    const iframe = document.createElement('iframe');
+    iframe.id = 'iframe-actividad';
+    iframe.style.width = '100%';
+    iframe.style.minHeight = '700px'; 
+    iframe.style.border = 'none';
+    iframe.style.overflow = 'hidden';
+    const parcheAntiaplastamiento = `
+        <style>
+            body { margin: 0; padding: 10px; background: transparent !important; }
+            .container { 
+                min-width: 850px !important; 
+                margin: 0 auto !important;
+                zoom: 0.40; /* El zoom ocurre adentro del blindaje, sin afectar tu app */
+            }
+            @media (min-width: 500px) { .container { zoom: 0.55; } }
+            @media (min-width: 800px) { .container { zoom: 0.8; } }
+            @media (min-width: 1100px) { .container { zoom: 1; } }
+        </style>
+    `;
+    
+    
+    iframe.srcdoc = parcheAntiaplastamiento + htmlReparado;
+    contenedor.appendChild(iframe);
+
+    iframe.onload = () => {
+        try {
+            const iframeWindow = iframe.contentWindow;
+            const iframeDoc = iframe.contentDocument || iframeWindow.document;
+            const secLectura = iframeDoc.querySelector('#lectura');
+            const secQuiz = iframeDoc.querySelector('#quiz');
+            const tabs = iframeDoc.querySelector('.tabs');
+            const btnInterno = iframeDoc.querySelector('.btn');
+
+            if (secLectura) secLectura.style.setProperty('display', 'none', 'important');
+            if (tabs) tabs.style.setProperty('display', 'none', 'important');
+            if (btnInterno) btnInterno.style.display = 'none';
+            
+            if (secQuiz) {
+                secQuiz.style.setProperty('display', 'block', 'important');
+                secQuiz.classList.add('active');
+            }
+
+            iframeWindow.erroresRanita = 0; 
+            const panelIzq = iframeDoc.getElementById('izquierda');
+            
+            if (panelIzq) { 
+                const observer = new MutationObserver((mutations) => {
+                    mutations.forEach(m => {
+                        const el = m.target;
+                        
+                        if (m.attributeName === 'class' && el.classList.contains('wrong')) {
+                            
+                            if (!el.dataset.errorContado) {
+                                iframeWindow.erroresRanita++; 
+                                el.dataset.errorContado = "true";
+                                setTimeout(() => { el.dataset.errorContado = ""; }, 600);
+                            }
+                        }
+                    });
+                });
+                
+                observer.observe(panelIzq, { attributes: true, subtree: true, attributeFilter: ['class'] });
+            }
+        } catch(e) {
+            console.log("Aislamiento y espía configurados con éxito.");
+        }
+    };
+
+    const btnToro = document.getElementById('btn-finalizar-actividad');
+    
+    btnToro.onclick = async function () {
+        try {
+            const iframeDoc = document.getElementById('iframe-actividad').contentDocument || document.getElementById('iframe-actividad').contentWindow.document;
+            const iframeWindow = document.getElementById('iframe-actividad').contentWindow;
+            const matricula = localStorage.getItem('toro_matricula');
+            let notaFinal = 0;
+            const tipoPlantilla = (leccionActual.tipoPlantilla || "").trim().toUpperCase();
+            const esSopa = (tipoPlantilla === 'SOPA DE LETRAS');
+            const esRanita = (tipoPlantilla === 'COMPLETAR CAMINO');
+
+            if (esRanita) {
+                
+                const itemsIzquierda = iframeDoc.querySelectorAll('#izquierda .item');
+                const n = itemsIzquierda.length || leccionActual.respuestasCorrectas.length || 15;
+                const aciertosDOM = iframeDoc.querySelectorAll('#izquierda .item.correct').length;
+
+                if (aciertosDOM < n) {
+                    alert("¡La ranita aún no llega a su destino! Completa todos los pares antes de finalizar la actividad.");
+                    return; 
+                }
+
+                const errores = iframeWindow.erroresRanita || 0;
+                const resta = 10 / (n * 2); 
+                let calificacion = 10 - (errores * resta);
+                if (calificacion < 0) calificacion = 0;
+                
+                notaFinal = calificacion;
+
+            } else if (esSopa) {
+                
+                const palabrasEnLista = iframeDoc.querySelectorAll('#word-list li'); 
+                const total = palabrasEnLista.length || 4; 
+                const encontradasDOM = iframeDoc.querySelectorAll('#word-list li.found-word').length;
+
+                notaFinal = (encontradasDOM / total) * 10;
+
+            } else {
+                
+                const respuestasProfe = leccionActual.respuestasCorrectas || [];
+                
+                // 🚨 SEGURO ANTI-NaN
+                if (respuestasProfe.length === 0) {
+                    alert("Error de sistema: No se encontraron las respuestas correctas. Pide al profesor que verifique el archivo.");
+                    return;
+                }
+
+                let aciertos = 0;
+                let respondidas = 0;
+
+                respuestasProfe.forEach((res, i) => {
+                    const radio = iframeDoc.querySelector(`input[name="p${i + 1}"]:checked`);
+                    if (radio) {
+                        respondidas++;
+                        let valorHTML = radio.value.trim().toLowerCase();
+                        let respuestaTXT = res.trim().toLowerCase();
+
+                        if ((valorHTML === 'v' && respuestaTXT === 'verdadero') || 
+                            (valorHTML === 'f' && respuestaTXT === 'falso')) {
+                            aciertos++;
+                        } else if (valorHTML === respuestaTXT) {
+                            aciertos++;
+                        }
+                    }
+                });
+
+                if (respondidas < respuestasProfe.length) {
+                    alert(`¡Alto ahí! Te faltan preguntas por responder. Llevas ${respondidas} de ${respuestasProfe.length}.`);
+                    return;
+                }
+                
+                notaFinal = (aciertos / respuestasProfe.length) * 10;
+            }
+            await guardarIntentoDB(matricula, leccionActual.titulo, notaFinal);
+            document.getElementById('actividad-modal').style.display = 'none';
+            abrirModal('resultado', notaFinal);
+
+        } catch (e) {
+            console.error("Error al procesar la calificación:", e);
+        }
+    
+    };
+}
+        
+        // ========== SISTEMA DE MODALES UNIFICADO ==========
+async function abrirModal(tipo, puntos = 0) {
+    const modal = document.getElementById('modal-container');
+    const title = document.getElementById('modal-title');
+    const scoreNum = document.getElementById('score-number');
+    const scoreSec = document.getElementById('score-section');
+    const intentosInfo = document.getElementById('intentos-info');
+    const modalTextInicio = document.getElementById('modal-text-inicio');
+    const btnIzq = document.getElementById('btn-izq');
+    const btnDer = document.getElementById('btn-der');
+    const modalIcon = document.getElementById('modal-icon'); 
+
+    modal.style.display = 'flex';
+
+    const matricula = localStorage.getItem('toro_matricula');
+    const intentosHechos = await obtenerIntentosDB(matricula, leccionActual.titulo);
+    const limiteMax = leccionActual.intentosMax || 3;
+    const restantes = limiteMax - intentosHechos.length;
+
+    // LIMPIEZA VISUAL
+    if (modalIcon) modalIcon.style.display = 'block';
+    modalTextInicio.style.color = "#555"; 
+
+    // Documentación de la tarjeta de la clase InterfazComprobaciónLección
+
+        //Aquí identiifcamos que el usuario quiere iniciar la actividad para esto se muestra la interfaz de
+        // comprobación de lección donde se le pregunta al usuario si esta seguro de continuar y se le informa sobre 
+        // el número de intentos que lleva y el máximo permitido
+    if (tipo === 'inicio') {
+        //Aquí mostramos el texto de advertencia 
+        title.innerText = "¿Te sientes listo para poner a prueba lo aprendido?";
+        scoreSec.classList.add('hidden');
+        modalTextInicio.classList.remove('hidden');
+        modalTextInicio.innerText = `Este es tu intento ${intentosHechos.length + 1} de ${limiteMax}. Una vez que comiences, no podrás volver a consultar el contenido.`;
+        //Aquí tenemos el botón volver que regresa a la pantalla de lectura 
+        btnIzq.innerText = "Volver";
+        btnIzq.style.display = "block";
+        //Esta es la acción que ocurre al presionar el botón volver que es cerrar el modal de comprobación y regresar a la lectura
+        btnIzq.onclick = () => { modal.style.display = 'none'; };
+        //Este es el botón de aceptar que inicia la actividad y lleva al usuario a la pantalla de la actividad
+        btnDer.innerText = "Aceptar";
+        //Esta es la accción que ocurre al presionar el botón aceptar que es cerrar el modal y abrir el modal de la actividad
+        btnDer.onclick = () => { aceptarEIrAActividad(); };
+
+    } else if (tipo === 'resultado') {
+        const nombre = localStorage.getItem('toro_nombre') || "Estudiante";
+        title.innerText = `¡${puntos >= 6 ? 'Buen trabajo' : 'Puedes mejorar'}, ${nombre}!`;
+
+        scoreSec.classList.remove('hidden');
+        modalTextInicio.classList.add('hidden');
+
+        scoreNum.innerText = `${puntos.toFixed(1)}/10`;
+        scoreNum.style.color = puntos >= 6 ? '#2e7d32' : '#c62828';
+        intentosInfo.innerHTML = `Número de intentos disponibles: <span style="color: ${restantes > 0 ? '#2e7d32' : '#c62828'}; font-weight: bold;">${restantes}</span>`;
+
+        btnIzq.innerText = "Reintentar";
+        btnIzq.style.display = restantes > 0 ? "block" : "none";
+        btnIzq.onclick = () => { abrirModal('inicio'); };
+
+        btnDer.innerText = "Aceptar Calificación";
+        btnDer.onclick = () => { abrirModal('confirmar_cierre', puntos); }; 
+
+    } else if (tipo === 'confirmar_cierre') {
+        // --- PANTALLA FLOTANTE FINAL ---
+        if (modalIcon) modalIcon.style.display = 'none'; 
+        
+        title.innerText = "¿Estas seguro de finalizar la actividad?";
+        
+        scoreSec.classList.add('hidden');
+        modalTextInicio.classList.remove('hidden');
+        modalTextInicio.innerHTML = `"Al aceptar la calificación, perderás la oportunidad de volver a realizar esta actividad."`;
+        modalTextInicio.style.color = "#777"; 
+
+        btnIzq.innerText = "volver"; 
+        btnIzq.style.display = "block"; 
+        
+        btnIzq.onclick = () => { abrirModal('resultado', puntos); };
+
+        btnDer.innerText = "De acuerdo";
+        btnDer.onclick = async () => {
+            const mat = localStorage.getItem('toro_matricula') || "0000";
+    const nombre = localStorage.getItem('toro_nombre') || "Estudiante";
+    const idActivo = leccionActual.id; 
+    const leccionEnDB = await obtenerLeccionPorId(idActivo); 
+    const datos = leccionEnDB || leccionActual; 
+    const todosIntentos = await obtenerIntentosDB(mat, datos.titulo);
+
+    leccionActual.intentosMax = todosIntentos.length;
+    try {
+        const transaction = db.transaction(['lecciones'], 'readwrite');
+        transaction.objectStore('lecciones').put(leccionActual);
+    } catch (e) {
+        console.error("Error al bloquear lección:", e);
+    }
+
+    let cuerpo = `REPORTE DE CONTROL T.O.R.O\n`;
+    cuerpo += `---------------------------------------\n`;
+    cuerpo += `ID_LECCION: ${leccionActual.id_leccion || leccionActual.id || 'N/A'}\n`;
+    cuerpo += `GRUPO: ${leccionActual.grupo || 'N/A'}\n`;
+    cuerpo += `MATERIA: ${leccionActual.materia || 'N/A'}\n`;
+    cuerpo += `PARCIAL: ${leccionActual.parcial || 'N/A'}\n`;
+    cuerpo += `PROGRESION: ${leccionActual.progresion || 'N/A'}\n`; 
+    cuerpo += `ACTIVIDAD: ${leccionActual.titulo_actividad || 'N/A'}\n`; 
+    cuerpo += `---------------------------------------\n`;
+    cuerpo += `ESTUDIANTE: ${nombre}\n`;
+    cuerpo += `MATRICULA: ${mat}\n\n`; 
+    cuerpo += `DETALLE DE EVALUACIÓN:\n`;
+    todosIntentos.forEach((intento, i) => {
+        cuerpo += `Intento ${i + 1}: ${intento.calificacion.toFixed(1)}/10 - ${new Date(intento.fecha).toLocaleString()}\n`;
+    });
+
+            const promedio = (todosIntentos.reduce((a, b) => a + b.calificacion, 0) / todosIntentos.length).toFixed(2);
+            cuerpo += `\nPROMEDIO FINAL: ${promedio}/10\n`;
+            cuerpo += `---------------------------------------`;
+            const cuerpoOfuscado = ofuscarReporte(cuerpo);
+            const nombreArchivo = `REP_${leccionActual.id_leccion}_${mat}_${nombre}.toro`;
+            descargarArchivoTxt(cuerpoOfuscado, nombreArchivo); 
+            
+            modal.style.display = 'none';
+            
+            leccionesMemoria = await cargarLeccionesDB(mat);
+            await renderizarLecciones();
+                    };
+                }
+}
+
+async function obtenerLeccionPorId(id) {
+    return new Promise((resolve) => {
+        const transaction = db.transaction(['lecciones'], 'readonly');
+        const store = transaction.objectStore('lecciones');
+        const request = store.get(id);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => resolve(null);
+    });
+}
+        
+       // ========== PROCESAMIENTO ZIP ==========
+async function procesarHTML() {
+    const input = document.getElementById('fileInput');
+    if (!input.files[0]) return;
+
+    try {
+        const matricula = localStorage.getItem('toro_matricula');
+        const file = input.files[0];
+        const tituloNuevo = file.name.replace('.zip', '');
+
+        // --- Excepcion 2.1 Prevención de OOM (Out Of Memory) ---
+        // Definimos un límite seguro para teléfonos de gama de entrada (35 MB)
+        const limiteMB = 700;
+        const maxSize = limiteMB * 1024 * 1024;
+        
+        if (file.size > maxSize) {
+            alert(`El archivo "${file.name}" es demasiado pesado (${(file.size / 1024 / 1024).toFixed(1)} MB).\n\nEl límite máximo permitido es de ${limiteMB} MB para evitar que el sistema colapse en tu celular. Pide al profesor una versión más ligera.`);
+            input.value = '';
+            document.getElementById('file-status').innerText = 'Ningún archivo seleccionado';
+            return;
+        }
+        
+        const leccionDuplicada = await buscarLeccionGlobalDB(matricula, tituloNuevo);
+ 
+        if (leccionDuplicada) {
+            const transaction = db.transaction(['materias'], 'readonly');
+            const store = transaction.objectStore('materias');
+            const reqMateria = store.get(leccionDuplicada.materia_id);
+ 
+            reqMateria.onsuccess = () => {
+                const nombreMateria = reqMateria.result?.nombre || 'otra materia';
+                alert(`La lección "${tituloNuevo}" ya fue importada en "${nombreMateria}".\nNo puedes importar la misma lección en dos materias diferentes.`);
+            };
+            reqMateria.onerror = () => {
+                alert(`La lección "${tituloNuevo}" ya existe en otra materia. No puedes importarla de nuevo.`);
+            };
+ 
+            input.value = '';
+            document.getElementById('file-status').innerText = 'Ningún archivo seleccionado';
+            document.getElementById('file-status').style.color = '#888';
+            return;
+        }
+        // ----------------------------------------------------------
+        
+        const arrayBuffer = await file.arrayBuffer();
+        const zip = await JSZip.loadAsync(arrayBuffer);
+
+        let htmlOriginal = "";
+        let rutaHtml = "";
+        let intentosTxt = 3;
+        let respuestasTxt = [];
+        let tipoPlantillaExtraida = "";
+
+        let id_leccion = "", grupo = "", materia = "", parcial = "", 
+            progresion = "", nombre_leccion = "", titulo_actividad = "", fecha_vencimiento = "";
+
+        let archivosBlobs = {}; 
+        const promesas = [];
+
+        zip.forEach((rutaCompleta, entry) => {
+            if (!entry.dir) {
+                const p = entry.async("blob").then(async blob => {
+
+                    let blobFinal = blob;
+                    
+                    archivosBlobs[rutaCompleta] = blobFinal; 
+                    window.toro_recursos[rutaCompleta] = URL.createObjectURL(blobFinal);
+                    
+                    
+                    if (rutaCompleta.toLowerCase().endsWith('.txt')) {
+                        // 1. Obtenemos el texto crudo del archivo
+                        const textoCrudo = await blobFinal.text(); 
+                        let texto = "";
+
+                        try {
+                            const base64Limpio = textoCrudo.replace(/\s+/g, '');
+                            const textoCifrado = atob(base64Limpio);
+                            let textoOriginal = '';
+                            
+                            // Revertimos el cifrado César (-3)
+                            for (let i = 0; i < textoCifrado.length; i++) {
+                                textoOriginal += String.fromCharCode(textoCifrado.charCodeAt(i) - 3);
+                            }
+                            
+                            
+                            if (textoOriginal.includes('||')) {
+                                texto = textoOriginal.split('||')[0]; 
+                            } else {
+                                texto = textoOriginal;
+                            }
+                        } catch (error) {
+                           
+                            console.warn("El archivo TXT no estaba ofuscado. Leyendo en texto plano.");
+                            texto = textoCrudo;
+                        }
+                        
+                        
+                        const extraer = (campo) => {
+                            const regex = new RegExp(`${campo}:\\s*(.*)`, "i");
+                            const match = texto.match(regex);
+                            return match ? match[1].trim() : "No especificado";
+                        };
+
+                        // Extraer los 8 campos obligatorios
+                        id_leccion = extraer("ID_LECCION");
+                        grupo = extraer("GRUPO");
+                        materia = extraer("MATERIA");
+                        parcial = extraer("PARCIAL");
+                        progresion = extraer("TEMA");
+                        nombre_leccion = extraer("TITULO");
+                        titulo_actividad = extraer("NOMBRE_ACTIVIDAD");
+                        fecha_vencimiento = extraer("FECHA_VENCIMIENTO");
+
+                        const matchPlantilla = texto.match(/PLANTILLA:\s*([^\]]+)\]/i);
+                        tipoPlantillaExtraida = matchPlantilla ? matchPlantilla[1].trim().toUpperCase() : "";
+
+                       
+                        const mInt = texto.match(/INTENTOS_MAX:\s*(\d+)/);
+                        if (mInt) intentosTxt = parseInt(mInt[1]);
+
+                        const mResp = [...texto.matchAll(/(?:RESPUESTA|RESPUESTA_CORRECTA):\s*(.+)/gi)];
+                        respuestasTxt = mResp.map(m => m[1].trim());
+                    }
+                });
+                promesas.push(p);
+                
+                if (rutaCompleta.toLowerCase().endsWith('.html')) rutaHtml = rutaCompleta;
+            }
+        });
+
+        await Promise.all(promesas);
+        htmlOriginal = await zip.file(rutaHtml).async("string");
+        
+
+/*
+ CLASE CRC: Lección
+Tipo: Entidad
+
+Descripción:
+Representa una lección educativa dentro del sistema.
+Almacena el contenido, recursos multimedia, actividad
+asociada y datos académicos de la lección.
+
+Responsabilidades:
+- Guardar la información de la lección.
+- Mantener recursos multimedia.
+- Asociar actividades evaluables.
+- Almacenar datos académicos.
+
+Hecha por Emanuel Ruiz Bielma Tabla 6.3
+*/
+        // Construcción del objeto leccionNueva con los parámetros técnicos y los del cliente
+        const leccionNueva = {
+            titulo: tituloNuevo,
+            html: htmlOriginal,
+            rutaBase: rutaHtml.substring(0, rutaHtml.lastIndexOf('/') + 1),
+            intentosMax: intentosTxt,
+            respuestasCorrectas: respuestasTxt,
+            archivos: archivosBlobs, 
+            id_leccion: id_leccion,
+            grupo: grupo,
+            materia: materia,
+            parcial: parcial,
+            progresion: progresion,
+            nombre_leccion: nombre_leccion,
+            titulo_actividad: titulo_actividad,
+            fecha_vencimiento: fecha_vencimiento,
+            tipoPlantilla: tipoPlantillaExtraida
+        };
+
+        await guardarLeccionDB(matricula, leccionNueva);
+        leccionesMemoria = await cargarLeccionesDB(matricula);
+        renderizarLecciones();
+
+        alert(` Importado: ${leccionNueva.titulo}`);
+
+        input.value = '';
+        document.getElementById('file-status').innerText = 'Ningún archivo seleccionado';
+        document.getElementById('file-status').style.color = '#888';
+
+    } catch (e) {
+        console.error("Error exacto capturado:", e);
+        
+       
+        document.getElementById('fileInput').value = '';
+        document.getElementById('file-status').innerText = 'Ningún archivo seleccionado';
+        document.getElementById('file-status').style.color = '#888';
+        
+        // Manejo de excepciones para el usuario final
+        if (e.message === "ALMACENAMIENTO_LLENO"|| e.name === "QuotaExceededError") {
+            alert("¡Tu celular no tiene espacio suficiente!\n\nNo pudimos guardar la lección. Por favor, libera espacio y vuelve a intentarlo.");
+        } else {
+            alert("Ocurrió un error al intentar abrir el archivo ZIP.\n\nEs posible que la descarga se haya interrumpido o el archivo esté dañado. Vuelve a descargarlo del profesor.");
+        }
+    }
+}
+
+        // ========== UTILIDADES ==========
+
+        
+        function ofuscarReporte(texto) {
+            const firma = (texto.length * 77).toString();
+            const textoConFirma = texto + "||" + firma;
+
+    
+            const textoModificado = textoConFirma.split('').map(char => 
+                String.fromCharCode(char.charCodeAt(0) + 3) 
+            ).join('');
+    
+        return btoa(unescape(encodeURIComponent(textoModificado)));
+}
+        
+        function descargarArchivoTxt(contenido, nombreArchivo) {
+            const elemento = document.createElement('a');
+            const archivo = new Blob([contenido], { type: 'application/octet-stream' });
+            elemento.href = URL.createObjectURL(archivo);
+            const nombreFinal = nombreArchivo.replace(/\.(txt|toro)$/i, '') + '.toro';
+            elemento.download = nombreFinal;
+            document.body.appendChild(elemento);
+            elemento.click();
+            document.body.removeChild(elemento);
+        }
+
+        function volverALeccion() {
+            document.getElementById('modal-container').style.display = 'none';
+        }
+
+        async function cerrarSesion() {
+    if (confirm("¿Estás seguro? Se eliminarán tus datos y lecciones importadas.")) {
+        
+        localStorage.clear();
+        sessionStorage.clear();
+        if (db) {
+            try {
+                const transaction = db.transaction(['materias', 'lecciones'], 'readwrite');
+                transaction.objectStore('materias').clear();
+                transaction.objectStore('lecciones').clear();
+                
+                console.log("Base de datos local limpiada con éxito.");
+            } catch (error) {
+                console.error("Error al limpiar base de datos:", error);
+            }
+        }
+
+        location.reload();
+    }
+}
+ /**
+ * CLASE CRC: InterfazPantallaAcceso
+ * ESTEREOTIPO: Borde
+ *
+ * RESPONSABILIDADES:
+ * 1. Desplegar la interfaz de inicio de sesión.
+ * 2. Solicitar nombre y matrícula al alumno.
+ * 3. Detectar la acción de pulsar el botón Continuar.
+ * 4. Enviar los datos capturados al ManejadorSesionAlumno.
+ * 
+ *Hecha por cris Tarjeta 1.1 
+ */
+        function mostrarLogin() {
+
+    // Construye y muestra la interfaz gráfica de acceso al usuario alumno.
+           document.getElementById('main-content').innerHTML = `
+        <div class="login-container login-centered">
+            <h1 class="app-title">T.O.R.O</h1>
+            
+            <div class="logo-wrapper">
+                <img src="/alumno_app/logo_toro.png" alt="Logo T.O.R.O" class="logo-cbta">
+            </div>
+
+            <form id="loginForm">
+
+                <!-- Solicita la matrícula al alumno la cual podra ingresar numeros y caracteres-->
+                <input type="text" id="matricula" placeholder="Matrícula" required class="login-input"
+                       oninput="this.value = this.value.replace(/[^a-zA-Z0-9]/g, '')">
+
+                <!-- Solicita el nombre al alumno solo podra ingresar caracteres -->
+                <input type="text" id="nombre" placeholder="Nombre completo" required class="login-input"
+                       oninput="this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ ]/g, '')">
+
+                <!-- hace la acción Continuar -->
+                <!-- Botón que permite al alumno enviar los datos y capturados e iniciar el proceso de acceso. -->
+                <button type="submit" class="btn-toro btn-continuar-login">Continuar</button>
+            </form>
+        </div>
+    `;
+     // Envía al ManejadorSesionAlumno los datos capturados
+      /**
+     * CLASE CRC: ManejadorSesionAlumno
+     * ESTEREOTIPO: Control
+     * RESPONSABILIDADES:
+     * 1. Recibir nombre y matrícula.
+     * 2. Gestionar la sesión del alumno.
+     * 3. Coordinar el acceso al sistema.
+     * Hecho por cris tarjeta 1.2
+     
+     */
+                document.getElementById('loginForm').onsubmit = async (e) => { // Agregamos async aquí
+                e.preventDefault();
+    // Recibe los datos proporcionados por el alumno.
+                const nombre = document.getElementById('nombre').value;
+                const mat = document.getElementById('matricula').value;
+                const nombreLimpio = nombre.replace(/\s+/g, '_');
+
+     // Guarda los datos de la sesión
+                localStorage.setItem('toro_nombre', nombre);
+                localStorage.setItem('toro_matricula', mat);
+                localStorage.setItem('toro_datos_listos', 'true');
+                
+    // EXPLICACIÓN: Antes de cargar las materias, nos aseguramos de que
+    // la base de datos esté abierta. Si no, las funciones fallarán esto 
+    // garantiza que la base de datos esté disponible.
+                if (!db) {
+                    await inicializarDB();
+                }
+     // Coordina el acceso a la siguiente pantalla
+                cargarPantallaMaterias();
+            };
+        }
+/**
+ * Verifica si existe una sesión previa del alumno.
+ * Si existe, permite continuar directamente.
+ * En caso contrario, muestra la pantalla de acceso.
+ *
+ * CRC relacionada:
+ * ManejadorSesionAlumno.
+ */
+        window.addEventListener('DOMContentLoaded', async () => {
+           
+    // Inicializa la base de datos al cargar la aplicación.
+            await inicializarDB();
+
+
+     // Comprueba si previamente se registraron
+    // los datos de acceso del alumno.
+            if (localStorage.getItem('toro_datos_listos') === 'true') {
+
+    // Existe una sesión válida, por lo que se
+    // permite el acceso directo a las materias
+                cargarPantallaMaterias();
+            } else {
+
+    // No existe una sesión activa, por lo que
+    // se muestra la interfaz de inicio de sesión.
+                mostrarLogin();
+            }
+        });
+    
+
+     function irAlCentroSincronizacion() {
+    // Esta URL apunta al servidor Flask, a la ruta /alumno (que muestra alumno.html)
+    window.location.href = '/alumno';
+}
+     </script>
+</body>
+
+</html>

@@ -22,6 +22,7 @@ import hashlib
 import unicodedata
 import base64
 import zipfile
+import time
 
 # ==========================================
 # IMPORTS DE TERCEROS (Flask y sus extensiones)
@@ -2050,7 +2051,8 @@ def eliminar_leccion(carpeta):
 
 @app.route('/compartir')
 def compartir():
-    return render_template('compartir.html', active_page='compartir')
+    base_url = request.host_url
+    return render_template('compartir.html', active_page='compartir', base_url=base_url)
 
 from werkzeug.utils import secure_filename
 import zipfile
@@ -2088,7 +2090,7 @@ def lista_calificaciones():
         for nombre in filtrados:
             ruta = os.path.join(CALIFICACIONES_DIR, nombre)
             stats = os.stat(ruta)
-            fecha = time.strftime('%Y-%m-%d', time.gmtime(stats.st_mtime))
+            fecha = time.strftime('%Y-%m-%d', time.localtime(stats.st_mtime))
             datos.append({'nombre': nombre, 'fecha': fecha})
         return jsonify(datos)
     except Exception as e:
@@ -2136,7 +2138,119 @@ def desofuscar_texto(texto_ofuscado: str) -> str:
         return texto_ofuscado
 
 # ==========================================
+# RUTAS PARA EL ALUMNO (públicas)
+# ==========================================
+
+@app.route('/alumno')
+def vista_alumno():
+    """Página pública para que los alumnos descarguen actividades y suban calificaciones."""
+    return render_template('alumno.html', active_page='alumno')
+
+@app.route('/api/lista-actividades', methods=['GET'])
+def lista_actividades():
+    """Lista los archivos ZIP disponibles en lecciones_compartidas con su fecha de modificación."""
+    try:
+        archivos = os.listdir(UPLOAD_FOLDER_ZIP)
+        zips = [f for f in archivos if f.endswith('.zip')]
+        datos = []
+        for nombre in zips:
+            ruta = os.path.join(UPLOAD_FOLDER_ZIP, nombre)
+            stats = os.stat(ruta)
+            fecha = time.strftime('%Y-%m-%d', time.localtime(stats.st_mtime))
+            datos.append({'nombre': nombre, 'fecha': fecha})
+        return jsonify(datos)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/descargar-actividad/<nombreZip>', methods=['GET'])
+def descargar_actividad(nombreZip):
+    """Descarga un archivo ZIP específico."""
+    ruta = os.path.join(UPLOAD_FOLDER_ZIP, nombreZip)
+    if not os.path.exists(ruta):
+        return jsonify({'error': 'Archivo no encontrado'}), 404
+    return send_file(ruta, as_attachment=True)
+
+@app.route('/api/subir-calificacion', methods=['POST'])
+def subir_calificacion():
+    """Recibe un archivo .txt del alumno y lo guarda en CALIFICACIONES_DIR."""
+    if 'archivoTxt' not in request.files:
+        return jsonify({'error': 'No hay archivo.'}), 400
+    archivo = request.files['archivoTxt']
+    if archivo.filename == '':
+        return jsonify({'error': 'Nombre de archivo vacío.'}), 400
+    if not archivo.filename.endswith('.toro'):
+        return jsonify({'error': 'Solo se permiten archivos .txt.'}), 400
+
+    nombre_seguro = secure_filename(archivo.filename)
+    ruta_destino = os.path.join(CALIFICACIONES_DIR, nombre_seguro)
+    archivo.save(ruta_destino)
+    return jsonify({'mensaje': '¡Calificación entregada con éxito!'}), 200
+
+# Directorio de ZIPs listos para enviar (lecciones generadas)
+LECCIONES_LISTAS_PARA_ENVIAR = os.path.join(app.root_path, 'data', 'LECCIONES-LISTAS-PARA-ENVIAR')
+
+@app.route('/api/lista-zips-disponibles', methods=['GET'])
+def lista_zips_disponibles():
+    """Lista los archivos ZIP disponibles en LECCIONES-LISTAS-PARA-ENVIAR."""
+    try:
+        if not os.path.exists(LECCIONES_LISTAS_PARA_ENVIAR):
+            return jsonify([])
+        archivos = os.listdir(LECCIONES_LISTAS_PARA_ENVIAR)
+        zips = [f for f in archivos if f.endswith('.zip')]
+        return jsonify(zips)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/publicar-zip', methods=['POST'])
+def publicar_zip():
+    """Copia un ZIP desde LECCIONES-LISTAS-PARA-ENVIAR a lecciones_compartidas."""
+    try:
+        data = request.get_json()
+        nombre_zip = data.get('nombre_zip')
+        if not nombre_zip or not nombre_zip.endswith('.zip'):
+            return jsonify({'error': 'Nombre de archivo inválido'}), 400
+        
+        origen = os.path.join(LECCIONES_LISTAS_PARA_ENVIAR, nombre_zip)
+        if not os.path.exists(origen):
+            return jsonify({'error': 'El archivo no existe'}), 404
+        
+        destino = os.path.join(UPLOAD_FOLDER_ZIP, nombre_zip)
+        shutil.copy2(origen, destino)
+        
+        return jsonify({'mensaje': f'¡{nombre_zip} publicado con éxito!'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/eliminar-actividad-publicada', methods=['POST'])
+def eliminar_actividad_publicada():
+    """Elimina un archivo ZIP de lecciones_compartidas."""
+    try:
+        data = request.get_json()
+        nombre_zip = data.get('nombre_zip')
+        if not nombre_zip or not nombre_zip.endswith('.zip'):
+            return jsonify({'error': 'Nombre de archivo inválido'}), 400
+        
+        ruta = os.path.join(UPLOAD_FOLDER_ZIP, nombre_zip)
+        if not os.path.exists(ruta):
+            return jsonify({'error': 'El archivo no existe'}), 404
+        
+        os.remove(ruta)
+        return jsonify({'mensaje': f'¡{nombre_zip} eliminado con éxito!'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+from flask import send_from_directory
+
+@app.route('/alumno_dashboard')
+def alumno_dashboard():             
+    return send_from_directory('alumno_app', 'index.html')
+
+@app.route('/alumno_app/<path:filename>')
+def alumno_app_files(filename):
+    return send_from_directory('alumno_app', filename)
+
+# ==========================================
 # PUNTO DE ENTRADA
 # ==========================================
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=8000)
