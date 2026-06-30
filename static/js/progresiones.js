@@ -154,18 +154,33 @@ function confirmarCrearProgresion() {
 // ==========================================
 function editarProgresion(index) {
     const { grupo, materia, parcial } = contexto;
+
     fetch(`/api/obtener_progresiones?grupo=${grupo}&materia=${materia}&parcial=${parcial}`)
         .then(r => r.json())
         .then(progresiones => {
-            if (index >= 0 && index < progresiones.length) {
-                editarProgresionIndex = index;
-                document.getElementById("inputEditarProgresion").value = progresiones[index];
-                const modal = document.getElementById("modalEditarProgresion");
-                modal.classList.add("activa");
-                setTimeout(() => document.getElementById("inputEditarProgresion").focus(), 100);
-            } else {
-                alert("Progresión no válida.");
+            if (!Array.isArray(progresiones)) {
+                mostrarModalInfoProg("Error", "No se pudieron cargar las progresiones.");
+                return;
             }
+
+            if (index < 0 || index >= progresiones.length) {
+                mostrarModalInfoProg("Error", "Progresión no válida.");
+                return;
+            }
+
+            editarProgresionIndex = index;
+
+            const input = document.getElementById("inputEditarProgresion");
+            input.value = progresiones[index];
+
+            const modal = document.getElementById("modalEditarProgresion");
+            modal.classList.add("activa");
+
+            setTimeout(() => input.focus(), 100);
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            mostrarModalInfoProg("Error", "Error de conexión con el servidor.");
         });
 }
 
@@ -177,11 +192,42 @@ function cerrarModalEditarProgresion() {
 
 function confirmarEditarProgresion() {
     const nuevoNombre = document.getElementById("inputEditarProgresion").value.trim();
-    if (!nuevoNombre) return;
+
+    if (!nuevoNombre) {
+        mostrarModalInfoProg("Aviso", "El nombre de la progresión no puede estar vacío.");
+        return;
+    }
+
     if (editarProgresionIndex === null) return;
-    // Nota: No hay endpoint de edición; por simplicidad, mostramos un mensaje.
-    alert("La edición directa no está disponible aún. Puedes eliminar y volver a crear.");
-    cerrarModalEditarProgresion();
+
+    const { grupo, materia, parcial } = contexto;
+
+    fetch("/api/editar_progresion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            grupo: grupo,
+            materia: materia,
+            parcial: parcial,
+            progresion: editarProgresionIndex,
+            nombre: nuevoNombre
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        cerrarModalEditarProgresion();
+
+        if (data.exito) {
+            cargarProgresiones();
+        } else {
+            mostrarModalInfoProg("Error", data.mensaje || "No se pudo editar la progresión.");
+        }
+    })
+    .catch(error => {
+        console.error("Error:", error);
+        cerrarModalEditarProgresion();
+        mostrarModalInfoProg("Error", "Error de conexión con el servidor.");
+    });
 }
 
 // ==========================================

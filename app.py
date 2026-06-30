@@ -22,6 +22,8 @@ import hashlib
 import unicodedata
 import base64
 import zipfile
+import webbrowser
+import threading
 
 # ==========================================
 # IMPORTS DE TERCEROS (Flask y sus extensiones)
@@ -1257,7 +1259,61 @@ def api_crear_progresion():
     except Exception as e:
         return jsonify({'exito': False, 'mensaje': str(e)})
     
+@app.route('/api/editar_progresion', methods=['POST'])
+def api_editar_progresion():
+    try:
+        data = request.get_json()
 
+        grupo_idx = data.get('grupo')
+        materia_idx = data.get('materia')
+        parcial_idx = data.get('parcial')
+        progresion_idx = data.get('progresion')
+        nuevo_nombre = data.get('nombre', '').strip()
+
+        if grupo_idx is None or materia_idx is None or parcial_idx is None or progresion_idx is None:
+            return jsonify({'exito': False, 'mensaje': 'Faltan parámetros'})
+
+        if not nuevo_nombre:
+            return jsonify({'exito': False, 'mensaje': 'El nombre de la progresión no puede estar vacío'})
+
+        grupos = leer_grupos()
+
+        if grupo_idx < 0 or grupo_idx >= len(grupos):
+            return jsonify({'exito': False, 'mensaje': 'Grupo no válido'})
+
+        materias = grupos[grupo_idx].get('materias', [])
+
+        if materia_idx < 0 or materia_idx >= len(materias):
+            return jsonify({'exito': False, 'mensaje': 'Materia no válida'})
+
+        parciales = materias[materia_idx].get('parciales', [])
+
+        if parcial_idx < 0 or parcial_idx >= len(parciales):
+            return jsonify({'exito': False, 'mensaje': 'Parcial no válido'})
+
+        progresiones = parciales[parcial_idx].get('progresiones', [])
+
+        if progresion_idx < 0 or progresion_idx >= len(progresiones):
+            return jsonify({'exito': False, 'mensaje': 'Progresión no válida'})
+
+        if nuevo_nombre in progresiones and progresiones[progresion_idx] != nuevo_nombre:
+            return jsonify({'exito': False, 'mensaje': 'Ya existe una progresión con ese nombre'})
+
+        progresiones[progresion_idx] = nuevo_nombre
+
+        escribir_grupos(grupos)
+
+        return jsonify({
+            'exito': True,
+            'mensaje': 'Progresión editada correctamente'
+        })
+
+    except Exception as e:
+        print(f"Error en api_editar_progresion: {e}")
+        return jsonify({
+            'exito': False,
+            'mensaje': f'Error interno: {str(e)}'
+        }), 500
 
 @app.route('/api/eliminar_elemento', methods=['POST'])
 def api_eliminar_elemento():
@@ -2258,5 +2314,18 @@ def desofuscar_texto(texto_ofuscado: str) -> str:
 # ==========================================
 # PUNTO DE ENTRADA
 # ==========================================
-if __name__ == '__main__':
-    app.run(debug=True)
+
+#if __name__ == '__main__':
+#    app.run(debug=True)
+
+def abrir_navegador():
+    webbrowser.open("http://127.0.0.1:5000")
+
+if __name__ == "__main__":
+    threading.Timer(1.5, abrir_navegador).start()
+    app.run(
+        host="127.0.0.1",
+        port=5000,
+        debug=False,
+        use_reloader=False
+    )
