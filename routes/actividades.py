@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 import base64
 from datetime import datetime
@@ -6,6 +7,23 @@ from flask import Blueprint, request, jsonify, current_app
 from werkzeug.utils import secure_filename
 
 actividades_bp = Blueprint('actividades', __name__)
+
+# ==========================================
+# RUTAS DE DATOS PERSISTENTES (CARPETA C:\TORO)
+# ==========================================
+def obtener_base_datos():
+    """Devuelve la ruta base donde se guardarán todos los datos del sistema."""
+    base = "C:\\TORO"
+    return base
+
+BASE_DIR = obtener_base_datos()
+TORO_DIR = os.path.join(BASE_DIR, "data")
+ACTIVIDADES_DIR = os.path.join(TORO_DIR, "actividades")
+CONTADORES_DIR = os.path.join(TORO_DIR, "contadores")
+
+# Crear las carpetas al inicio
+os.makedirs(ACTIVIDADES_DIR, exist_ok=True)
+os.makedirs(CONTADORES_DIR, exist_ok=True)
 
 # ==========================================
 # FUNCIONES DE OFUSCACIÓN
@@ -27,14 +45,13 @@ def desofuscar_texto(texto_ofuscado: str) -> str:
 # FUNCIONES AUXILIARES
 # ==========================================
 def ensure_actividades_folder():
-    base_dir = current_app.root_path
-    actividades_dir = os.path.join(base_dir, 'data', 'actividades')
-    os.makedirs(actividades_dir, exist_ok=True)
-    return actividades_dir
+    """Asegura que la carpeta de actividades exista y devuelve su ruta."""
+    os.makedirs(ACTIVIDADES_DIR, exist_ok=True)
+    return ACTIVIDADES_DIR
 
 def obtener_siguiente_id_actividad():
-    base_dir = current_app.root_path
-    ruta_contador = os.path.join(base_dir, 'data', 'contador_actividades.json')
+    """Genera el siguiente ID de actividad usando el contador en CONTADORES_DIR."""
+    ruta_contador = os.path.join(CONTADORES_DIR, 'contador_actividades.json')
     os.makedirs(os.path.dirname(ruta_contador), exist_ok=True)
     if os.path.exists(ruta_contador):
         with open(ruta_contador, 'r', encoding='utf-8') as f:
@@ -220,7 +237,7 @@ def guardar_actividad_txt():
             nombre_archivo = f"{base}_{contador}{ext}"
             ruta_completa = os.path.join(actividades_dir, nombre_archivo)
 
-        #  OFUSCAR antes de guardar
+        # OFUSCAR antes de guardar
         contenido_ofuscado = ofuscar_texto(contenido)
         with open(ruta_completa, 'w', encoding='utf-8') as f:
             f.write(contenido_ofuscado)

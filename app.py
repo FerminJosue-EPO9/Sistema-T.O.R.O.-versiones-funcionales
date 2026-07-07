@@ -47,7 +47,36 @@ app = Flask(__name__)
 app.secret_key = 'toro_secret_key_2026'
 app.register_blueprint(actividades_bp)
 
-LECCIONES_DIR = os.path.join(app.root_path, 'data', 'LECCIONES DISPONIBLES')
+# ==========================================
+# RUTAS DE DATOS PERSISTENTES (CARPETA C:\TORO)
+# ==========================================
+import sys
+
+def obtener_base_datos():
+    """Devuelve la ruta base donde se guardarán todos los datos del sistema."""
+    # Usamos siempre C:\TORO (fijo) para que sea consistente
+    base = "C:\\TORO"
+    return base
+
+BASE_DIR = obtener_base_datos()
+TORO_DIR = os.path.join(BASE_DIR, "data")   # todo dentro de data/
+
+# Crear todas las subcarpetas necesarias
+os.makedirs(TORO_DIR, exist_ok=True)
+
+# Subdirectorios
+ACTIVIDADES_DIR = os.path.join(TORO_DIR, "actividades")
+LECCIONES_DIR = os.path.join(TORO_DIR, "LECCIONES DISPONIBLES")
+LECCIONES_LISTAS_PARA_ENVIAR = os.path.join(TORO_DIR, "LECCIONES-LISTAS-PARA-ENVIAR")
+LECCIONES_COMPARTIDAS_DIR = os.path.join(TORO_DIR, "lecciones_compartidas")
+CALIFICACIONES_DIR = os.path.join(TORO_DIR, "calificaciones")
+CONTADORES_DIR = os.path.join(TORO_DIR, "contadores")
+GRUPOS_FILE = os.path.join(TORO_DIR, "grupos.txt")
+
+# Crear todas las carpetas
+for carpeta in [ACTIVIDADES_DIR, LECCIONES_DIR, LECCIONES_LISTAS_PARA_ENVIAR,
+                LECCIONES_COMPARTIDAS_DIR, CALIFICACIONES_DIR, CONTADORES_DIR]:
+    os.makedirs(carpeta, exist_ok=True)
 
 CATALOGO_PLANTILLAS = {
     'P001': {'tipo': 'Crucigrama', 'img': 'img/imagenesActividades/CRUCIGRAMA.png'},
@@ -62,7 +91,7 @@ CATALOGO_PLANTILLAS = {
 # FUNCIONES PARA IDS AUTOINCREMENTALES
 # ==========================================
 def obtener_siguiente_id_actividad():
-    ruta_contador = os.path.join(app.root_path, 'data', 'contador_actividades.json')
+    ruta_contador = os.path.join(CONTADORES_DIR, 'contador_actividades.json')
     os.makedirs(os.path.dirname(ruta_contador), exist_ok=True)
     if os.path.exists(ruta_contador):
         with open(ruta_contador, 'r', encoding='utf-8') as f:
@@ -76,7 +105,7 @@ def obtener_siguiente_id_actividad():
     return f"ACT-{nuevo_num:03d}"
 
 def obtener_siguiente_id_leccion():
-    ruta_contador = os.path.join(app.root_path, 'data', 'contador_lecciones.json')
+    ruta_contador = os.path.join(CONTADORES_DIR, 'contador_lecciones.json')
     os.makedirs(os.path.dirname(ruta_contador), exist_ok=True)
     if os.path.exists(ruta_contador):
         with open(ruta_contador, 'r', encoding='utf-8') as f:
@@ -325,9 +354,7 @@ def generar_html_multimedia(archivos):
     return '\n'.join(etiquetas)
 
 def cargar_actividades():
-    ruta_carpeta = os.path.join(app.root_path, 'data', 'actividades')
-    if not os.path.exists(ruta_carpeta):
-        ruta_carpeta = os.path.join(app.root_path, 'data', 'Actividades')
+    ruta_carpeta = ACTIVIDADES_DIR
     lista_actividades = []
     if not os.path.exists(ruta_carpeta):
         os.makedirs(ruta_carpeta, exist_ok=True)
@@ -434,7 +461,7 @@ def eliminar_leccion_por_carpeta(carpeta):
         shutil.rmtree(ruta_carpeta)
         print(f"🗑️ Lección eliminada (carpeta): {ruta_carpeta}")
     
-    ruta_zip = os.path.join(app.root_path, 'data', 'LECCIONES-LISTAS-PARA-ENVIAR', carpeta + '.zip')
+    ruta_zip = os.path.join(LECCIONES_LISTAS_PARA_ENVIAR, carpeta + '.zip')
     if os.path.exists(ruta_zip):
         os.remove(ruta_zip)
         print(f"🗑️ ZIP eliminado: {ruta_zip}")
@@ -505,8 +532,8 @@ def login():
 
 @app.route('/formatear_actividades')
 def formatear_actividades():
-    ruta_origen = os.path.join(app.root_path, 'data', 'actividades')
-    ruta_destino = os.path.join(app.root_path, 'data', 'LECCIONES-LISTAS-PARA-ENVIAR')
+    ruta_origen = ACTIVIDADES_DIR
+    ruta_destino = LECCIONES_LISTAS_PARA_ENVIAR
     if not os.path.exists(ruta_destino):
         os.makedirs(ruta_destino)
     log_errores = []
@@ -640,7 +667,7 @@ def subir_leccion():
                     ruta_archivo = os.path.join(ruta_destino, nombre_seguro)
                     archivo.save(ruta_archivo)
                     nombres_archivos.append(nombre_seguro)
-            ruta_actividad_origen = os.path.join(app.root_path, 'data', 'actividades', actividad_seleccionada)
+            ruta_actividad_origen = os.path.join(ACTIVIDADES_DIR, actividad_seleccionada)
             if not os.path.exists(ruta_actividad_origen):
                 return f"El archivo de actividad {actividad_seleccionada} no existe", 400
 
@@ -799,7 +826,7 @@ def subir_leccion():
                 with open(ruta_metadatos, 'r', encoding='utf-8') as f:
                     texto_ofuscado = f.read()
                 
-                ruta_actividades_formateadas = os.path.join(app.root_path, 'data', 'LECCIONES-LISTAS-PARA-ENVIAR')
+                ruta_actividades_formateadas = LECCIONES_LISTAS_PARA_ENVIAR
                 os.makedirs(ruta_actividades_formateadas, exist_ok=True)
                 
                 nombre_carpeta_leccion = os.path.basename(ruta_destino)
@@ -843,9 +870,7 @@ def subir_leccion():
 
 @app.route('/actividad/eliminar/<string:nombre_archivo>')
 def eliminar_actividad(nombre_archivo):
-    carpeta_actividades = os.path.join(app.root_path, 'data', 'actividades')
-    if not os.path.exists(carpeta_actividades):
-        carpeta_actividades = os.path.join(app.root_path, 'data', 'Actividades')
+    carpeta_actividades = ACTIVIDADES_DIR
     ruta_completa = os.path.join(carpeta_actividades, nombre_archivo)
     try:
         if os.path.exists(ruta_completa):
@@ -859,7 +884,7 @@ def eliminar_actividad(nombre_archivo):
 
 @app.route('/actividad/editar/<string:nombre_archivo>', methods=['GET', 'POST'])
 def editar_actividad(nombre_archivo):
-    carpeta = os.path.join(current_app.root_path, 'data', 'actividades')
+    carpeta = ACTIVIDADES_DIR
     ruta_completa = os.path.join(carpeta, nombre_archivo)
     try:
         with open(ruta_completa, 'r', encoding='utf-8') as f:
@@ -948,7 +973,7 @@ def crear_actividad():
             for p in preguntas:
                 linea = f"{p['texto']}|{p['opA']}|{p['opB']}|{p['opC']}|{p['opD']}|{p['correcta_texto']}\n"
                 contenido_archivo += linea
-            ruta_carpeta = os.path.join(app.root_path, 'data', 'Actividades')
+            ruta_carpeta = ACTIVIDADES_DIR
             if not os.path.exists(ruta_carpeta):
                 os.makedirs(ruta_carpeta)
             nombre_archivo = f"{nombre_actividad.replace(' ', '_')}.txt"
@@ -996,7 +1021,7 @@ def validar_archivo_alumnos(archivo):
 
 def leer_grupos():
     """Lee el archivo data/grupos.txt y devuelve una lista de grupos en formato JSON."""
-    ruta = os.path.join(app.root_path, 'data', 'grupos.txt')
+    ruta = GRUPOS_FILE
     grupos = []
     if not os.path.exists(ruta):
         return grupos
@@ -1077,7 +1102,7 @@ def escribir_grupos(grupos):
     # Reordenar automáticamente antes de guardar
     grupos = reordenar_grupos(grupos)
     
-    ruta = os.path.join(app.root_path, 'data', 'grupos.txt')
+    ruta = GRUPOS_FILE
     os.makedirs(os.path.dirname(ruta), exist_ok=True)
     lineas = []
     for grupo in grupos:
@@ -1600,7 +1625,7 @@ def _generar_context_key(nombre_grupo, nombre_materia, nombre_parcial):
 # ----------------------------------------------------------
 
 def _ruta_calificaciones():
-    return os.path.join(app.root_path, 'data', 'calificaciones.json')
+    return os.path.join(TORO_DIR, 'calificaciones.json')
 
 def leer_calificaciones():
     ruta = _ruta_calificaciones()
@@ -1787,8 +1812,6 @@ def api_estadisticas_calificaciones():
                 resultados.append(registro)
 
     return jsonify(resultados)
-
-ACTIVIDADES_DIR = os.path.join(app.root_path, 'data', 'actividades')
 
 def leer_actividad(nombre_archivo):
     """Lee un archivo de actividad (JSON o texto plano) y devuelve un diccionario
@@ -1978,7 +2001,7 @@ def editar_leccion(carpeta):
         if not os.path.exists(ruta_antigua):
             return f"Error: La lección original '{carpeta}' no existe", 400
 
-        ruta_actividad = os.path.join(app.root_path, 'data', 'actividades', actividad_seleccionada)
+        ruta_actividad = os.path.join(ACTIVIDADES_DIR, actividad_seleccionada)
         if not os.path.exists(ruta_actividad):
             return f"El archivo de actividad {actividad_seleccionada} no existe", 400
 
@@ -2173,7 +2196,7 @@ def editar_leccion(carpeta):
             f.write(html_final)
 
         # --- 4. Generar ZIP usando el info_leccion.txt ofuscado que ya está en disco ---
-        ruta_zip_destino = os.path.join(app.root_path, 'data', 'LECCIONES-LISTAS-PARA-ENVIAR')
+        ruta_zip_destino = LECCIONES_LISTAS_PARA_ENVIAR
         os.makedirs(ruta_zip_destino, exist_ok=True)
         old_zip = os.path.join(ruta_zip_destino, original_carpeta + ".zip")
         if os.path.exists(old_zip):
@@ -2214,7 +2237,7 @@ def eliminar_leccion(carpeta):
         print(f"⚠️ La carpeta {ruta_carpeta} no existe")
 
     # 2. Eliminar el ZIP correspondiente en LECCIONES-LISTAS-PARA-ENVIAR
-    ruta_zip = os.path.join(app.root_path, 'data', 'LECCIONES-LISTAS-PARA-ENVIAR', carpeta + '.zip')
+    ruta_zip = os.path.join(LECCIONES_LISTAS_PARA_ENVIAR, carpeta + '.zip')
     if os.path.exists(ruta_zip):
         os.remove(ruta_zip)
         print(f"🗑️ ZIP eliminado: {ruta_zip}")
@@ -2233,7 +2256,7 @@ def compartir():
 from werkzeug.utils import secure_filename
 import zipfile
 
-UPLOAD_FOLDER_ZIP = os.path.join(app.root_path, 'data', 'lecciones_compartidas')
+UPLOAD_FOLDER_ZIP = LECCIONES_COMPARTIDAS_DIR
 os.makedirs(UPLOAD_FOLDER_ZIP, exist_ok=True)
 
 @app.route('/api/subir-actividad', methods=['POST'])
@@ -2247,19 +2270,19 @@ def subir_actividad():
         return jsonify({'error': 'Solo se permiten archivos ZIP.'}), 400
 
     nombre_seguro = secure_filename(archivo.filename)
-    ruta_destino = os.path.join(UPLOAD_FOLDER_ZIP, nombre_seguro)
+    ruta_destino = os.path.join(LECCIONES_COMPARTIDAS_DIR, nombre_seguro)
     archivo.save(ruta_destino)
 
     # Opcional: extraer el ZIP o simplemente guardarlo
     return jsonify({'mensaje': '¡Actividad publicada con éxito!'}), 200
 
-CALIFICACIONES_DIR = os.path.join(app.root_path, 'data', 'calificaciones')
+CALIFICACIONES_DIR = CALIFICACIONES_DIR  # Ya la definimos globalmente
 os.makedirs(CALIFICACIONES_DIR, exist_ok=True)
 
 @app.route('/api/lista-calificaciones', methods=['GET'])
 def lista_calificaciones():
     try:
-        archivos = os.listdir(CALIFICACIONES_DIR)
+        archivos = os.listdir(CALIFICACIONES_DIR)  # Ya usa la global
         # Filtrar archivos .txt o .toro
         filtrados = [f for f in archivos if f.endswith(('.txt', '.toro'))]
         datos = []
@@ -2326,7 +2349,7 @@ def vista_alumno():
 def lista_actividades():
     """Lista los archivos ZIP disponibles en lecciones_compartidas con su fecha de modificación."""
     try:
-        archivos = os.listdir(UPLOAD_FOLDER_ZIP)
+        archivos = os.listdir(LECCIONES_COMPARTIDAS_DIR)
         zips = [f for f in archivos if f.endswith('.zip')]
         datos = []
         for nombre in zips:
@@ -2362,9 +2385,6 @@ def subir_calificacion():
     archivo.save(ruta_destino)
     return jsonify({'mensaje': '¡Calificación entregada con éxito!'}), 200
 
-# Directorio de ZIPs listos para enviar (lecciones generadas)
-LECCIONES_LISTAS_PARA_ENVIAR = os.path.join(app.root_path, 'data', 'LECCIONES-LISTAS-PARA-ENVIAR')
-
 @app.route('/api/lista-zips-disponibles', methods=['GET'])
 def lista_zips_disponibles():
     """Lista los archivos ZIP disponibles en LECCIONES-LISTAS-PARA-ENVIAR."""
@@ -2390,7 +2410,7 @@ def publicar_zip():
         if not os.path.exists(origen):
             return jsonify({'error': 'El archivo no existe'}), 404
         
-        destino = os.path.join(UPLOAD_FOLDER_ZIP, nombre_zip)
+        destino = os.path.join(LECCIONES_COMPARTIDAS_DIR, nombre_zip)
         shutil.copy2(origen, destino)
         
         return jsonify({'mensaje': f'¡{nombre_zip} publicado con éxito!'}), 200
@@ -2406,7 +2426,7 @@ def eliminar_actividad_publicada():
         if not nombre_zip or not nombre_zip.endswith('.zip'):
             return jsonify({'error': 'Nombre de archivo inválido'}), 400
         
-        ruta = os.path.join(UPLOAD_FOLDER_ZIP, nombre_zip)
+        ruta = os.path.join(LECCIONES_COMPARTIDAS_DIR, nombre_zip)
         if not os.path.exists(ruta):
             return jsonify({'error': 'El archivo no existe'}), 404
         
@@ -2428,5 +2448,35 @@ def alumno_app_files(filename):
 # ==========================================
 # PUNTO DE ENTRADA
 # ==========================================
+import socket
+import threading
+import webbrowser
+
+def obtener_ip_local():
+    """Obtiene la dirección IP local de la máquina."""
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return "127.0.0.1"  # Fallback a localhost
+
+def abrir_navegador(ip_local):
+    """Abre el navegador en la IP local (solo para la máquina local)."""
+    webbrowser.open(f"http://{ip_local}:8000")
+
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=8000)
+    # Obtener IP local
+    ip_local = obtener_ip_local()
+    print(f"🚀 Servidor T.O.R.O. corriendo en:")
+    print(f"   ➡️ Local:   http://127.0.0.1:8000")
+    print(f"   ➡️ Red local: http://{ip_local}:8000")
+    print(f"📱 Desde tu celular u otros dispositivos, usa la IP de red local.")
+    
+    # Programar la apertura del navegador 1.5 segundos después de iniciar el servidor
+    threading.Timer(1.5, abrir_navegador, args=(ip_local,)).start()
+    
+    # Ejecutar la app en todas las interfaces (0.0.0.0) para que sea accesible desde otros dispositivos
+    app.run(debug=False, host='0.0.0.0', port=8000)
